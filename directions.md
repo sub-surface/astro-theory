@@ -134,7 +134,10 @@ Secrest 2021; Quaia 1.3M-quasar Bayesian analyses). Why it's the target quadrant
   yet at *higher* significance and rising. Nobody owns the **cross-catalogue consistency
   audit** (do CatWISE/Quaia/radio agree once a *common* selection mask + flux/colour cuts are
   imposed? how much excess survives?). That meta-analysis is a real, near-term contribution.
-- Anchors: Secrest et al. 2021 (arXiv:2009.14826); Böhme et al. 2025 (arXiv:2509.18689);
+- Anchors: Secrest et al. 2021 (arXiv:2009.14826); Land-Strykowski, Lewis & Murphy 2025
+  (arXiv:2509.18689, Bayesian cross-dataset tension — note CatWISE↔NVSS concordant but RACS
+  discordant); Guandalin et al. 2023 (arXiv:2212.04925, QLF-evolution systematic, the key
+  caveat); Böhme et al. 2025 (radio NVSS+RACS+LoTSS, ~5.4σ — ref to verify);
   Quaia Bayesian (MNRAS 527, 8497); "Kinematic contribution to the number-count dipole"
   (A&A 2025); "Testing the cosmological principle with quasars" (A&A 2026, aa56955-25).
 - **Sibling probe:** the **bulk-flow non-convergence** (peculiar-velocity flows not settling
