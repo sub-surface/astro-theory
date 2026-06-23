@@ -100,14 +100,70 @@ where the field spends its effort, then read the gaps.
   Copeland's own recent papers/talks to pin exactly which validation *he* is pursuing before
   committing F's framing. (Get the exact reference from Leon if he can find it.)
 
+## Round 2 — the neglected-anomaly hunt (the structural gap)
+
+After mapping effort (C′) and rejecting holography as high-effort/low-leverage, we asked the
+sharper question: *what do active cosmology departments structurally under-invest in?* The
+answer is consistent across the 2025 anomaly reviews (PNAS "Everyone wants something better
+than ΛCDM" 2025; the Oxford "Manifesto"; Peebles' "Anomalies in Physical Cosmology"):
+
+**Departments are organised around new data + new models. They under-reward three things we
+are unusually well-suited to do from a desk:** (1) **cross-catalogue consistency audits**,
+(2) **systematics / selection-function re-analysis of live anomalies**, (3) **living
+meta-analyses**. Our edge (theory judgment + tireless literature/data curation, no telescope)
+maps exactly onto that gap.
+
+Crucial steering signal from the reviews: the **CMB large-angle anomalies are *fading*** (peak
+smoothing, low-ℓ curiosities drifting back toward statistical noise), while the
+**catalogue-based isotropy anomalies are *growing*** (now >5σ). Point effort at the growing,
+catalogue-based, systematics-limited ones — not the fading CMB curiosities.
+
+### G. Cosmic number-count dipole / isotropy tests — *new top desk pick*
+The flagship instance and, on the leverage metric, the best thing we've found. Quasar/radio
+source counts show a dipole **3.7× larger than the CMB kinematic expectation — a 5.4σ
+violation** of the cosmological principle (Böhme et al. 2025, NVSS+RACS+LoTSS; CatWISE 4.9σ,
+Secrest 2021; Quaia 1.3M-quasar Bayesian analyses). Why it's the target quadrant:
+- **Foundational stakes** — it tests *isotropy / the Copernican principle* itself, not a
+  parameter. A higher-stakes target than yet another H₀ number.
+- **Genuinely simple work** — it is *source counting + dipole fitting* (the Ellis–Baldwin
+  test) on fully public catalogues (CatWISE2020, Quaia, NVSS, RACS-low, LoTSS-DR2). Simpler
+  than Gaia wide-binary vetting.
+- **The fight is systematics** — is the excess real, or selection/flux-calibration/masking
+  contamination? That is *exactly* our curation edge, mirroring the wide-binary logic.
+- **Uncrowded + growing** — ~12 papers/yr vs. 200 for the Hubble tension (~17× less worked),
+  yet at *higher* significance and rising. Nobody owns the **cross-catalogue consistency
+  audit** (do CatWISE/Quaia/radio agree once a *common* selection mask + flux/colour cuts are
+  imposed? how much excess survives?). That meta-analysis is a real, near-term contribution.
+- Anchors: Secrest et al. 2021 (arXiv:2009.14826); Böhme et al. 2025 (arXiv:2509.18689);
+  Quaia Bayesian (MNRAS 527, 8497); "Kinematic contribution to the number-count dipole"
+  (A&A 2025); "Testing the cosmological principle with quasars" (A&A 2026, aa56955-25).
+- **Sibling probe:** the **bulk-flow non-convergence** (peculiar-velocity flows not settling
+  to the CMB frame by the expected scale; ~18 papers/yr) is the same isotropy question from
+  CosmicFlows data — a natural second front in the same family.
+
+### H. Cosmic birefringence — strong but steeper
+A ~**0.3° rotation** of CMB polarization (E→B), a parity-violation smoking gun for axion-like
+fields, at ~3.6σ from Planck/ACT/SPIDER (~24 papers/yr). Genuinely live and not crowded, BUT
+the entire result is **limited by the instrumental polarization-angle miscalibration**, which
+needs detector-team calibration knowledge — far less desk-tractable than G. Keep as a
+"watch / partial-entry" candidate, not a first build.
+
 ## Updated shortlist
 
-| Project | Quadrant | Type | First build? |
-|---|---|---|---|
-| A wide-binary gravity | low-effort / desk | re-analysis, real result | **yes** |
-| C tension census | low-effort / desk | living DB | **yes (background)** |
-| C′ field effort map | low-effort / desk | meta / steering | start small alongside C |
-| F reheating GW scorecard | low-effort / desk | theory table, high payoff | strong next |
-| B Dyson re-analysis | low-effort / desk | frozen-archive re-analysis | later |
-| D PBH attack-surface | low-effort / desk | falsification map | later |
-| E galaxy-formation audit | flank of crowded | census/systematics | opportunistic |
+| Project | Quadrant | Type | 2025 vol. | First build? |
+|---|---|---|--:|---|
+| **G cosmic-dipole / isotropy audit** | **low-effort / desk** | **cross-catalogue re-analysis, >5σ live** | **~12/yr** | **NEW TOP PICK** |
+| A wide-binary gravity | low-effort / desk | re-analysis, real result | ~11/yr | yes (twin of G) |
+| F reheating→GW scorecard (narrow) | low-effort / desk | theory table, high ceiling | ~11–13/yr | strong next |
+| C / C′ census + field map | low-effort / desk | living DB + steering | — | background |
+| H cosmic birefringence | low-effort but calib-limited | anomaly, needs instrument cal | ~24/yr | watch |
+| B Dyson re-analysis | low-effort / desk | frozen-archive re-analysis | ~2/yr | later |
+| D PBH attack-surface | crowded | falsification map | ~353/yr | later (map only) |
+| E galaxy-formation audit | flank of crowded | systematics audit | ~313/yr | opportunistic |
+
+**Revised operating decision:** **G is the new lead** — it dominates A on stakes (isotropy vs.
+a binary-star test), matches it on tractability, beats it on simplicity (catalogue counting),
+and is comparably uncrowded but at *higher, rising* significance. G and A are methodological
+twins (both are "the anomaly is real iff the selection function is clean"), so doing G first
+builds the exact curation muscle A needs. Keep **F** as the high-ceiling theory bet and **C′**
+as the standing steering layer.
