@@ -55,6 +55,11 @@ prioritized "attack surface."
 **Plan:** start with **A** as the first concrete build; run **C** as the persistent
 background project. (A + C.)
 
+> See [`directions.md`](./directions.md) for the **leverage map** (effort × tractability),
+> two higher-leverage additions — **E** galaxy-formation systematics audit and **F**
+> reheating / post-inflationary GW scorecard (the Copeland thread) — and **C′**, the
+> field-cartography meta-project that steers which of A–F we invest in.
+
 ## State of the field — June 2026 snapshot
 
 > Captured at project start so we know our baseline. Cite-and-update as we go.
