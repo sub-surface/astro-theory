@@ -126,5 +126,10 @@ for C-side cosmology. Candidate DBs as SQLite/parquet under `data/` (git-ignored
 
 - [x] Repo + scaffold
 - [x] State-of-field baseline (June 2026)
+- [x] **C′:** field map built — [`field-map.md`](./field-map.md) (2025 census effort levels
+  + live arXiv trajectory tally via [`arxiv_tally.py`](./arxiv_tally.py)). **Data-backed
+  ranking: A first, F (narrow GW scorecard) in parallel, C′ steering.**
 - [ ] **A:** pull the Cookson et al. 2026 cut-list → reproduce as ADQL against Gaia DR3
+- [ ] **F:** start the (inflaton + reheating EoS) → GW feature → detector-band scorecard
 - [ ] **C:** schema for the H₀ measurement DB + first arXiv ingestion pass
+- [ ] re-run `arxiv_tally.py` quarterly to track trajectory shifts
