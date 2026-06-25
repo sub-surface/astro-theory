@@ -18,6 +18,121 @@ class ParsedRequest:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ResolvedTarget:
+    display_name: str
+    aliases: tuple[str, ...]
+    ra: float
+    dec: float
+    otype: str
+    object_class: str
+    confidence: float
+    match_kind: str
+    alternatives: tuple[dict[str, Any], ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ProductSourceCapability:
+    key: str
+    label: str
+    modalities: tuple[str, ...]
+    object_classes: tuple[str, ...]
+    access: str
+    coverage_hint: str
+    fetch_cost: str
+    status: str
+    service_module: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ObservationPlan:
+    target: ResolvedTarget
+    product: ProductSourceCapability
+    parameters: dict[str, Any]
+    recommendation: str
+    warnings: tuple[str, ...] = ()
+    next_action: str = "fetch"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
+    ProductSourceCapability(
+        key="ned",
+        label="NED spectra and cross-identifications",
+        modalities=("spectrum", "metadata", "redshift"),
+        object_classes=("galaxy_agn", "cluster"),
+        access="api",
+        coverage_hint="Extragalactic objects with literature metadata.",
+        fetch_cost="low",
+        status="metadata",
+        service_module="celestrium.sources.ned",
+    ),
+    ProductSourceCapability(
+        key="sdss",
+        label="SDSS spectra and optical imaging",
+        modalities=("spectrum", "colour_image", "photometry"),
+        object_classes=("galaxy_agn", "star"),
+        access="api",
+        coverage_hint="Optical footprint where SDSS imaging or spectra exist.",
+        fetch_cost="low",
+        status="planned",
+        service_module="celestrium.sources.sdss",
+    ),
+    ProductSourceCapability(
+        key="mast",
+        label="MAST ultraviolet and optical observations",
+        modalities=("image", "spectrum", "photometry"),
+        object_classes=("galaxy_agn", "nebula", "star"),
+        access="api",
+        coverage_hint="HST, GALEX, TESS, and other MAST-hosted missions.",
+        fetch_cost="medium",
+        status="planned",
+        service_module="celestrium.sources.mast",
+    ),
+    ProductSourceCapability(
+        key="exoplanet-archive",
+        label="NASA Exoplanet Archive planet and host-star tables",
+        modalities=("exoplanet", "metadata"),
+        object_classes=("star",),
+        access="api",
+        coverage_hint="Confirmed and candidate exoplanet systems.",
+        fetch_cost="low",
+        status="planned",
+        service_module="celestrium.sources.exoplanet_archive",
+    ),
+    ProductSourceCapability(
+        key="heasarc",
+        label="HEASARC high-energy observations",
+        modalities=("xray", "gamma", "high_energy", "metadata"),
+        object_classes=("galaxy_agn", "cluster", "nebula", "star"),
+        access="api",
+        coverage_hint="X-ray and gamma-ray mission catalogues and observations.",
+        fetch_cost="medium",
+        status="planned",
+        service_module="celestrium.sources.heasarc",
+    ),
+    ProductSourceCapability(
+        key="vizier",
+        label="VizieR catalogue photometry and measurements",
+        modalities=("photometry", "catalogue", "metadata"),
+        object_classes=("galaxy_agn", "cluster", "nebula", "star", "unknown"),
+        access="api",
+        coverage_hint="Broad catalogue coverage across object classes.",
+        fetch_cost="low",
+        status="metadata",
+        service_module="celestrium.sources.vizier",
+    ),
+)
+
+
 def parse_request(text: str) -> ParsedRequest:
     raw = text
     target_text = text.strip()
@@ -62,6 +177,38 @@ def classify_otype(otype: str | None) -> str:
         if otype in values:
             return label
     return "unknown"
+
+
+def recommend_plans(
+    target: ResolvedTarget,
+    modality: str | None = None,
+) -> list[ObservationPlan]:
+    plans = []
+    for capability in SOURCE_CAPABILITIES:
+        if target.object_class not in capability.object_classes:
+            continue
+        if modality is not None and modality not in capability.modalities:
+            continue
+
+        plans.append(
+            ObservationPlan(
+                target=target,
+                product=capability,
+                parameters={
+                    "ra": target.ra,
+                    "dec": target.dec,
+                    "modalities": capability.modalities,
+                },
+                recommendation=(
+                    f"Use {capability.label} for {target.display_name} "
+                    f"({target.object_class})."
+                ),
+                next_action="fetch"
+                if capability.status == "executable"
+                else "inspect",
+            )
+        )
+    return plans
 
 
 def _parse_coordinates(target_text: str) -> tuple[float, float] | None:
