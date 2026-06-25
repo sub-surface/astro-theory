@@ -1,7 +1,7 @@
 # G-Euclid — DR1-ready cosmic-dipole pipeline
 
 Opened **2026-06-25**, the day after Euclid Q2. Successor line to project **G**
-(now in [`Archive/2026-06-G-dipole/`](./Archive/2026-06-G-dipole/ARCHIVE.md)).
+(now in [`Archive/2026-06-G-dipole/`](../../Archive/2026-06-G-dipole/ARCHIVE.md)).
 Companion to [`directions.md`](./directions.md).
 
 ## The thesis in one line

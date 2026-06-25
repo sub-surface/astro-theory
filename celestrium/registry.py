@@ -29,7 +29,7 @@ class _LazyAdaptor:
     """Expose a uniform `.query(adql)` over a module whose real signature differs.
 
     The module is imported on first use (not at registry import) so optional deps
-    like `dl` (astro-datalab) and `pyvo` never break `import access.hub`.
+    like `dl` (astro-datalab) and `pyvo` never break `import celestrium.hub`.
     """
 
     def __init__(self, module: str, call: Callable):
@@ -53,22 +53,22 @@ class Archive:
 # importlib, exactly as the original hub did (keeps anonymous/optional deps lazy).
 # Non-uniform archives use a _LazyAdaptor so the registry stays import-safe.
 ARCHIVES = {
-    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "access.gaia"),
-    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "access.irsa"),
-    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "access.euclid"),
-    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, "access.heasarc"),
+    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "celestrium.gaia"),
+    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "celestrium.irsa"),
+    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "celestrium.euclid"),
+    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, "celestrium.heasarc"),
     "desi": Archive(
         "desi", "NOIRLab Astro Data Lab — DESI/Legacy", True,
-        _LazyAdaptor("access.datalab_desi", lambda m, q: m.query(q, fmt="table")),
+        _LazyAdaptor("celestrium.datalab_desi", lambda m, q: m.query(q, fmt="table")),
     ),
     "casda": Archive(
         "casda", "CSIRO CASDA — ASKAP/RACS (TAP)", True,
-        _LazyAdaptor("access.vo_generic",
+        _LazyAdaptor("celestrium.vo_generic",
                      lambda m, q: m.query(m.ENDPOINTS["casda"], q)),
     ),
     "vizier-tap": Archive(
         "vizier-tap", "VizieR over generic TAP", True,
-        _LazyAdaptor("access.vo_generic",
+        _LazyAdaptor("celestrium.vo_generic",
                      lambda m, q: m.query(m.ENDPOINTS["vizier"], q)),
     ),
 }

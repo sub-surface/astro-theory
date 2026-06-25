@@ -1,27 +1,27 @@
 #!/usr/bin/env python
-"""astro-hub — one operable front-end over the repo's access/ tools.
+"""Celestrium CLI — the operable front-end to the astrophysics instrument.
 
-Resolve an object, image a position, search the literature, run ADQL through the
-cache, cross-match a pulled table, build research packets. A thin presenter: all
-real logic lives in access/ (registry.py = data, packets.py = builders), so this
-CLI and the Textual TUI (tui/) share one brain. Built on typer + rich.
+Three wings, one tool: a **theory workshop** (literature in, ideas assessed), an
+**experimental validation** bench (pull data slices, test the empirical claims),
+and an **imaging & recreation** studio (scientific diagrams + beautiful renders).
+A thin presenter: all real logic lives in celestrium/ (registry.py = data,
+packets.py = builders), so this CLI and the Textual TUI (tui/) share one brain.
 
-    python -m access.hub --help
-    python -m access.hub resolve M87
-    python -m access.hub image 187.7059 12.3911
-    python -m access.hub where 213.6906 -12.5801
-    python -m access.hub cite 'abs:"cosmic dipole" year:2024-2026' --add
-    python -m access.hub query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
-    python -m access.hub match gaia-bright-nearby vizier:VIII/65/nvss --radius 5
-    python -m access.hub log                 # provenance; --open/--rerun a hash
-    python -m access.hub dossier M87 --ned
-    python -m access.hub field 213.6906 -12.5801
-    python -m access.hub papers year:2025-2026 --phrase "Euclid Quick Data Release"
-    python -m access.hub sample list
-    python -m access.hub atlas-targets
-    python -m access.hub poster M87 --resolution 1080p --style label
-    python -m access.hub runbook euclid-q1
-    python -m access.hub atlas | toolbox     # pretty-print the hub maps
+    python -m celestrium --help
+    python -m celestrium resolve M87
+    python -m celestrium image 187.7059 12.3911
+    python -m celestrium where 213.6906 -12.5801
+    python -m celestrium cite 'abs:"cosmic dipole" year:2024-2026' --add
+    python -m celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
+    python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss --radius 5
+    python -m celestrium log                 # provenance; --open/--rerun a hash
+    python -m celestrium dossier M87 --ned
+    python -m celestrium field 213.6906 -12.5801
+    python -m celestrium papers year:2025-2026 --phrase "Euclid Quick Data Release"
+    python -m celestrium sample list
+    python -m celestrium poster M87 --resolution 1080p --style label
+    python -m celestrium runbook euclid-q1
+    python -m celestrium atlas | toolbox     # pretty-print the repo maps
 
 Global: add --json before any subcommand for machine-readable output.
 """
@@ -39,10 +39,16 @@ from . import cache, cutouts, packets, registry, resolvers
 # Re-exported so the test suite (and any importer) can patch these on `hub`.
 from .registry import QUERY_ARCHIVES, SAMPLE_RECIPES, SampleRecipe, ATLAS_TARGETS  # noqa: F401
 
-app = typer.Typer(add_completion=False, no_args_is_help=True,
-                  help=("Desk-astronomy CLI: resolve | image | where | cite | query | "
-                        "match | log | dossier | field | papers | sample | "
-                        "atlas-targets | poster | runbook | atlas | toolbox."))
+# The three wings, surfaced as command groups in --help.
+THEORY = "Theory workshop"
+VALIDATION = "Experimental validation"
+IMAGING = "Imaging & recreation"
+WORKFLOWS = "Workflows & maps"
+
+app = typer.Typer(add_completion=False, no_args_is_help=True, rich_markup_mode="rich",
+                  help=("[bold cyan]Celestrium[/] — a three-wing astrophysics instrument: "
+                        "a theory workshop, an experimental-validation bench, and an "
+                        "imaging & recreation studio. Add [yellow]--json[/] for machine output."))
 console = Console()
 REPO = Path(__file__).resolve().parent.parent
 REPORTS_DIR = REPO / "data" / "reports"
@@ -112,7 +118,7 @@ def _contact_sheet(paths, out: Path, title: str):
 # --------------------------------------------------------------------------- #
 # Object / position
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=THEORY)
 def resolve(name: str):
     """Identify an object (SIMBAD) and list recent papers about it."""
     info = resolvers.identify(name)
@@ -138,14 +144,14 @@ def resolve(name: str):
     _emit(payload, render)
 
 
-@app.command(context_settings=_COORD_CONTEXT)
+@app.command(context_settings=_COORD_CONTEXT, rich_help_panel=IMAGING)
 def image(ra: float, dec: float,
           fov: Optional[float] = typer.Option(None, help="field of view in arcmin")):
     """Smart multi-wavelength + colour cutout of a position (auto survey/FOV)."""
     cutouts.smart(ra, dec, fov_arcmin=fov)
 
 
-@app.command(context_settings=_COORD_CONTEXT)
+@app.command(context_settings=_COORD_CONTEXT, rich_help_panel=VALIDATION)
 def where(ra: float, dec: float):
     """What's here + which deep survey covers this declination (no download)."""
     obj = cutouts.identify_field(ra, dec)
@@ -164,7 +170,7 @@ def where(ra: float, dec: float):
 # --------------------------------------------------------------------------- #
 # Literature
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=THEORY)
 def cite(query: List[str] = typer.Argument(..., help="ADS query"),
          add: bool = typer.Option(False, help="append to refs.bib"),
          rows: int = 8):
@@ -189,7 +195,7 @@ def cite(query: List[str] = typer.Argument(..., help="ADS query"),
         console.print(f"[green]+{n} new entries -> refs.bib[/]")
 
 
-@app.command()
+@app.command(rich_help_panel=THEORY)
 def papers(query: List[str] = typer.Argument(..., help="ADS query"),
            phrase: Optional[str] = typer.Option(None, help="exact phrase in abstracts"),
            add: bool = typer.Option(False, help="append returned records to refs.bib"),
@@ -229,7 +235,7 @@ def papers(query: List[str] = typer.Argument(..., help="ADS query"),
 # --------------------------------------------------------------------------- #
 # Data: query / sample / match / log
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=VALIDATION)
 def query(archive: str, adql: str,
           refresh: bool = typer.Option(False, help="bypass cached result"),
           show: int = typer.Option(12, help="rows to display")):
@@ -248,7 +254,7 @@ def query(archive: str, adql: str,
     _print_astropy_table(tab, f"{key}: {len(tab)} rows", limit=show)
 
 
-@app.command()
+@app.command(rich_help_panel=VALIDATION)
 def sample(recipe: str,
            refresh: bool = typer.Option(False, help="bypass cached result"),
            show: int = typer.Option(12, help="rows to display")):
@@ -261,7 +267,7 @@ def sample(recipe: str,
         return
     rec = SAMPLE_RECIPES.get(recipe)
     if rec is None:
-        console.print(f"[red]unknown recipe {recipe!r}; run: python -m access.hub sample list[/]")
+        console.print(f"[red]unknown recipe {recipe!r}; run: python -m celestrium sample list[/]")
         raise typer.Exit(1)
     source = registry.resolve_query_source(rec.archive, QUERY_ARCHIVES)
     try:
@@ -274,7 +280,7 @@ def sample(recipe: str,
     _print_astropy_table(tab, f"{recipe}: {len(tab)} rows", limit=show)
 
 
-@app.command()
+@app.command(rich_help_panel=VALIDATION)
 def match(source: str, catalog: str,
           radius: float = typer.Option(5.0, help="match radius in arcsec"),
           ra: str = typer.Option("ra", help="RA column in the local table"),
@@ -311,7 +317,7 @@ def match(source: str, catalog: str,
     _print_astropy_table(out, f"xmatch {source} x {catalog}: {len(out)} rows", limit=show)
 
 
-@app.command()
+@app.command(rich_help_panel=VALIDATION)
 def log(limit: int = typer.Option(20, help="manifest rows to show"),
         open: Optional[str] = typer.Option(None, "--open", help="reload a cached table by hash"),
         rerun: Optional[str] = typer.Option(None, help="re-run a past query by hash (refresh)")):
@@ -352,7 +358,7 @@ def log(limit: int = typer.Option(20, help="manifest rows to show"),
 # --------------------------------------------------------------------------- #
 # Packets: dossier / field
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=THEORY)
 def dossier(target: str,
             rows: int = typer.Option(6, help="ADS rows to include"),
             fov: Optional[float] = typer.Option(None, help="field of view in arcmin"),
@@ -371,7 +377,7 @@ def dossier(target: str,
           lambda: console.print(f"dossier -> [green]{path}[/]"))
 
 
-@app.command(context_settings=_COORD_CONTEXT)
+@app.command(context_settings=_COORD_CONTEXT, rich_help_panel=VALIDATION)
 def field(ra: float, dec: float,
           fov: float = typer.Option(5.0, help="field of view in arcmin"),
           images: bool = typer.Option(True, help="render colour and panel images")):
@@ -387,7 +393,7 @@ def field(ra: float, dec: float,
 # --------------------------------------------------------------------------- #
 # Visuals: atlas-targets / poster
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=IMAGING)
 def atlas_targets(limit: int = typer.Option(6, help="number of curated targets"),
                   fov_scale: float = typer.Option(1.0, help="multiply each target FOV")):
     """Render a curated contact sheet of visually useful astronomy targets."""
@@ -404,7 +410,7 @@ def atlas_targets(limit: int = typer.Option(6, help="number of curated targets")
     console.print(f"atlas -> [green]{sheet}[/]")
 
 
-@app.command()
+@app.command(rich_help_panel=IMAGING)
 def poster(target: str,
            resolution: str = typer.Option("1080p", help="1080p, 2k, or 4k"),
            style: str = typer.Option("clean", help="clean, label, or science"),
@@ -438,7 +444,7 @@ def poster(target: str,
 # --------------------------------------------------------------------------- #
 # Runbooks + map quick-reference
 # --------------------------------------------------------------------------- #
-@app.command()
+@app.command(rich_help_panel=WORKFLOWS)
 def runbook(name: str,
             limit: int = typer.Option(4, help="rows/images per runbook section"),
             images: bool = typer.Option(True, help="render field and atlas images"),
@@ -452,7 +458,7 @@ def runbook(name: str,
         console.print(t)
         return
     if name not in registry.RUNBOOKS:
-        console.print("[red]unknown runbook; run: python -m access.hub runbook list[/]")
+        console.print("[red]unknown runbook; run: python -m celestrium runbook list[/]")
         raise typer.Exit(1)
     result = packets.run_runbook(
         name, reports_dir=REPORTS_DIR, atlas_dir=ATLAS_DIR, posters_dir=POSTERS_DIR,
@@ -473,16 +479,16 @@ def _print_map(filename: str):
     console.print(Markdown(path.read_text(encoding="utf-8")))
 
 
-@app.command()
+@app.command(rich_help_panel=WORKFLOWS)
 def atlas():
     """Pretty-print the data atlas (what data exists)."""
-    _print_map("data-atlas.md")
+    _print_map("docs/data-atlas.md")
 
 
-@app.command()
+@app.command(rich_help_panel=WORKFLOWS)
 def toolbox():
     """Pretty-print the toolbox map (everything around the query)."""
-    _print_map("toolbox.md")
+    _print_map("docs/toolbox.md")
 
 
 if __name__ == "__main__":

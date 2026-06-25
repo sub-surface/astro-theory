@@ -1,155 +1,87 @@
-# astro-theory
+<h1 align="center">✦ Celestrium ✦</h1>
+<p align="center"><em>A three-wing astrophysics instrument for the desk.</em></p>
 
-Theory-driven **candidate-generation pipelines** for citizen cosmology & astronomy.
-The premise: from a desk, the binding constraint isn't photons — it's *ideas and analysis*.
-The public archives (Gaia, WISE, 2MASS, Planck, DESI) are richer than the community can
-exploit. So we work the literature side: turn a theoretical signature into concrete
-selection cuts, pull a *small* local dataset (a few thousand rows via TAP/ADQL, not a
-petabyte), produce a ranked candidate list, triage it against follow-up papers, iterate.
+---
 
-## The working loop
+Celestrium turns a laptop into a working astrophysics bench. The premise: from a desk the
+binding constraint isn't photons — it's *ideas and analysis*. The public archives (Gaia,
+Euclid, WISE, DESI, Planck) are far richer than the community can exploit, so Celestrium is
+built to work the *idea* side: bring in the literature, turn a theoretical signature into
+concrete selection cuts, pull a **small** slice of real data, test the empirical claim, and
+make something beautiful out of the sky while you're at it.
+
+## The three wings
+
+### 🔭 Theory workshop — *literature in, ideas assessed*
+Search ADS/SciX, resolve objects to their bibliographies, assemble paper sets and object
+dossiers, and maintain a living census of where a field spends its effort. The job: turn the
+literature into a ranked, defensible set of *things worth predicting*.
+→ `celestrium papers · cite · resolve · dossier`
+
+### 🧪 Experimental validation — *pull a data slice, test the claim*
+Run ADQL against eight public archives through a provenance-logging cache, cross-match a pull
+against any catalogue (the audit primitive), and inspect what's where — all row-capped, all
+reproducible. The job: take a theoretical implication and *check it against real data*.
+→ `celestrium query · sample · match · log · where · field`
+
+### 🎨 Imaging & recreation — *the quiet third wing*
+Multi-wavelength scientific panels, true-colour cutouts, and wallpaper-grade renders of any
+object or blank field — survey-aware, so you get Legacy DR10 depth where it exists, not blurry
+all-sky DSS. Diagrams for a paper; desktop backgrounds for the soul.
+→ `celestrium image · poster · atlas-targets`
+
+> One tool, one brain: every wing runs through the same `celestrium/` engine, so a literature
+> hit, a data pull, and an image of the same object are three commands apart.
+
+## Quickstart
+
+```bash
+pip install -r celestrium/requirements.txt
+python -m celestrium --help                  # grouped by the three wings
+python -m celestrium resolve M87             # identity + recent papers
+python -m celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
+python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # cross-catalogue audit
+python -m celestrium poster M87 --resolution 4k --style label       # a wallpaper
+python -m celestrium --json dossier M87      # machine-readable for agents
+```
+
+A free [ADS/SciX token](https://ui.adsabs.harvard.edu/user/settings/token) (in `~/.ads/dev_key`
+or `$ADS_DEV_KEY`) unlocks the literature commands. Pulls are cached under `data/` (git-ignored)
+with a provenance manifest, so every figure traces back to the exact query that made it.
+
+## How it's built
 
 ```
-theory / arXiv paper
-  → distinctive observable signature
-    → selection cuts (the intellectual core — where a theorist's judgment competes with pros)
-      → cross-match a small public catalog locally  (SQLite / parquet, kept and grown)
-        → ranked candidate list
-          → triage against follow-up literature
-            → iterate
+celestrium/   the instrument (Python package)
+  registry.py · packets.py   service layer: data + builders (one brain)
+  hub.py                      the CLI (a thin presenter); tui/ = Textual cockpit (next)
+  cache · cutouts · xmatch · resolvers · ads · <archive>.py   thin primitives
+docs/         data-atlas · toolbox · imaging-guide · roadmap · research/
+scripts/      arxiv_tally · fetch_papers   (field-cartography utilities)
+tests/        hermetic CLI + service-layer tests   (python -m pytest tests/ -q)
+Archive/      shelved, completed research lines
 ```
 
-The "small local dataset" is usually the *output* of the cuts, not a big download.
-
-> This repo is a **hub for astronomical/cosmological desk work at many scales**. Four standing
-> pillars, in the order you use them:
->
-> 1. 🗺️ [`data-atlas.md`](./data-atlas.md) — *what data exists*: every publicly queryable
->    archive (ESA, MAST, IRSA, HEASARC, NOIRLab, radio, CMB), ranked by quality **and** by
->    leverage for a desk team, + the 2026–2027 release calendar + an opportunity map.
-> 2. 🔌 [`access/`](./access/) — *how to pull it*: one known-good, smoke-tested query snippet
->    per archive (TAP/ADQL), plus `cache.py` (query cache + provenance manifest), `xmatch.py`
->    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), `cutouts.py`
->    (survey-aware multi-λ imaging; see [`imaging-guide.md`](./imaging-guide.md)), `ads.py`
->    (literature → [`refs.bib`](./refs.bib)). On top sits a shared service layer —
->    `registry.py` (archives/recipes/targets/runbooks as data) + `packets.py` (builders) — and a
->    thin **CLI front-end**: `python -m access.hub`
->    (`resolve · image · where · cite · query · match · log · dossier · field · papers · sample · atlas-targets · poster · runbook · atlas · toolbox`, all with `--json`)
->    — architecture + Textual-TUI roadmap in [`roadmap.md`](./roadmap.md).
-> 3. 🧰 [`toolbox.md`](./toolbox.md) — *everything around the query*: ADS/SciX, CDS X-Match,
->    MOCpy/healpy, dustmaps, reproducibility/QoL — leverage-ranked.
-> 4. 🎯 [`directions.md`](./directions.md) + [`euclid-dr1-prep.md`](./euclid-dr1-prep.md) —
->    *what to do with it*: the leverage thesis and the live build.
+The architecture rule — *all logic in `celestrium/`; the CLI and TUI only present* — is what
+lets a human and an AI agent drive the exact same tool. Full design + the Textual-TUI roadmap:
+[`docs/roadmap.md`](./docs/roadmap.md).
 
 ## Roles
-
 - **Leon** — physical judgment: what's worth predicting, which cuts are defensible.
-- **Claude** — literature throughput, turning signatures into ADQL/Python, bookkeeping,
-  maintaining the candidate DB and the literature census.
+- **Claude** — literature throughput, turning signatures into ADQL/Python, the candidate DB
+  and literature census.
 
-## The four candidate projects
+## What we're working on
 
-### A. Wide-binary gravity test (MOND vs. Newton) — *first build*
-Wide binaries at ~1–30 kAU separation probe accelerations near Milgrom's
-a₀ ≈ 1.2×10⁻¹⁰ m/s². The candidate list **is** the experiment, and the whole result
-hinges on sample-selection choices — exactly where careful, theory-aware curation moves
-the needle. Highest "real physics per laptop-hour."
+The active build is **G-Euclid DR1 prep** — a cosmic-dipole (isotropy) test ready to run on
+Euclid DR1 the day it lands (~1900 deg², 21 Oct 2026), the first deep optical/NIR sample with
+a selection function independent of WISE/Gaia. The research backlog (candidate projects A–H,
+the leverage thesis, and the field-effort map) lives in [`docs/research/`](./docs/research/):
+[candidates](./docs/research/candidates.md) · [directions](./docs/research/directions.md) ·
+[field-map](./docs/research/field-map.md) · [euclid-dr1-prep](./docs/research/euclid-dr1-prep.md).
 
-### B. Technosignature / Dyson-sphere IR-excess candidates
-Cross-match Gaia × 2MASS × WISE for stars with anomalous W3/W4 infrared excess not
-explained by debris disks / YSOs / blends. Reproduce a published template, then extend
-to new excess models and host types.
+Our edge is the neglected, desk-tractable middle: cross-catalogue consistency audits,
+selection-function re-analysis of live anomalies, and living meta-analyses — not new photons.
 
-### C. Tension census (living literature database) — *persistent background project*
-Pick a tension (Hubble H₀, or S₈) and build a structured DB of *every* measurement —
-method, value, error, sample, systematics, date — from continuous arXiv scraping.
-The dataset is the literature, distilled. Feeds future candidate hunts and plays to
-Claude's reading throughput.
-
-### D. Theory-falsification map for one non-standard model
-Pick one model (primordial black holes as DM, cosmic strings, a modified-gravity theory)
-and systematically extract *every* distinctive observable from the literature, then rank
-each by which public dataset could test it and how desk-tractable that is. Output: a
-prioritized "attack surface."
-
-**Plan:** start with **A** as the first concrete build; run **C** as the persistent
-background project. (A + C.)
-
-> See [`directions.md`](./directions.md) for the **leverage map** (effort × tractability),
-> two higher-leverage additions — **E** galaxy-formation systematics audit and **F**
-> reheating / post-inflationary GW scorecard (the Copeland thread) — and **C′**, the
-> field-cartography meta-project that steers which of A–F we invest in.
-
-## State of the field — June 2026 snapshot
-
-> Captured at project start so we know our baseline. Cite-and-update as we go.
-
-### A — Wide binaries: the tide has turned toward Newton (but on *method*)
-- **Cookson, Banik, El-Badry, Sutherland, Penoyre, Pittordis & Clarke (2026)**, *MNRAS*
-  547(2), "A quality framework for testing gravity with wide binaries: no evidence for
-  MOND." A rigorous quality checklist — degrouping to remove triples, `RUWE < 1.25`,
-  HR-diagram main-sequence selection, scaled-velocity cut ṽ < 2.5, ΔRV < 10 km/s —
-  applied to Gaia DR3 within **130 pc**, separations **1–30 kAU**, yields 1,421 clean
-  systems. Conclusion: **no MOND velocity boost; Newton up to ~1500× more likely** for
-  the cleanest sample. https://academic.oup.com/mnras/article/547/2/stag342/8497444
-- Banik et al. (2024, *MNRAS* 527) earlier claimed strong constraints *against* MOND;
-  Chae's independent analyses of the *same* Gaia data claimed the opposite. The fight has
-  always been about **contamination treatment** (hidden tertiaries, chance alignments,
-  projection/eccentricity priors) — i.e. sample selection. The 2025 OJA "realistic triple
-  modelling" paper (arXiv:2504.07569) found Newton fits better but flagged that the triple
-  population must be better understood to be decisive.
-- **Implication for us:** the frontier is now *purity of selection*, which is precisely a
-  desk task. A defensible independent re-derivation of the cuts (and an honest look at
-  which side's priors hold up) is a genuine contribution, not a toy.
-
-### B — Dyson spheres: archives are now *frozen*, raising the value of re-analysis
-- **Suazo et al. (2024)**, *Project Hephaistos II* (arXiv:2405.02927): pipeline over ~5M
-  objects → **7 M-dwarf candidates** with strong W3/W4 excess within ~900 ly (+~53 larger
-  hosts out to ~6500 ly).
-- **Contamination pushback:** arXiv:2405.14921 argues several candidates suffer background
-  contamination (e.g. blended galaxies); 2025 high-res radio imaging (arXiv:2501.05152,
-  *MNRAS Letters*) found no radio signal for one candidate.
-- **Amiri (2026)**, "Dyson spheres on the H-R diagram" (arXiv:2602.23270, accepted to
-  *Universe*): radiative-balance placement of spheres on the HRD, T ∝ R_D^(−1/2), arguing
-  **white dwarfs and M-dwarfs are the cleanest host regimes**. A fresh theoretical handle
-  for *new* cuts.
-- **Implication for us:** Gaia is decommissioned and WISE expired (2024) — no successor
-  wide IR survey imminent. So the *frozen* archive elevates the value of smarter
-  re-analysis (better confounder rejection, WD/M-dwarf-targeted cuts).
-
-### C — Hubble tension: persists, but the SH0ES-vs-CCHP gap is narrowing on *method*
-- **SH0ES (Cepheids):** ~73 km/s/Mpc, late 2025.
-- **CCHP (JWST):** TRGB H₀ = 69.85 ± 1.75(stat) ± 1.54(sys); Cepheids 72.05 ± 1.86 ± 3.10;
-  best TRGB-only ≈ 70.39 ± 1.22 ± 1.33. TRGB & JAGB agree at ~1%; differ from Cepheids at
-  2.5–4%. https://iopscience.iop.org/article/10.3847/1538-4357/adce78
-- Riess et al.: JWST **rejects Cepheid crowding** as the explanation at 8σ
-  (https://iopscience.iop.org/article/10.3847/2041-8213/ad1ddd).
-- **Implication for us:** the live question is the **distance-ladder method spread**
-  (Cepheid vs TRGB vs JAGB), not just "early vs late." A census structured by *method and
-  calibration choice* is the useful cut.
-
-### D — PBH dark matter: asteroid-mass window still (barely) open
-- The window sits between evaporation (~10¹⁷ g) and microlensing (~10²³ g). Recent work
-  (arXiv:2403.03839) says it stays open for all-DM **unless the mass function is wide**.
-- 2026 papers keep probing it: synchrotron constraints (arXiv:2601.19386), SUSY/MSSM
-  production shifting peaks into the window (arXiv:2604.26005). Near-future MeV telescopes
-  are the decisive probe (arXiv:2102.06714).
-- **Implication for us:** good **D** candidate — the "attack surface" is unusually
-  well-mapped and several rungs are desk-analysable.
-
-## Stack (planned)
-
-Python: `astropy`, `astroquery` (Gaia/Vizier TAP), `lightkurve`, `pandas`, `CAMB`/`CLASS`
-for C-side cosmology. Candidate DBs as SQLite/parquet under `data/` (git-ignored).
-
-## Status
-
-- [x] Repo + scaffold
-- [x] State-of-field baseline (June 2026)
-- [x] **C′:** field map built — [`field-map.md`](./field-map.md) (2025 census effort levels
-  + live arXiv trajectory tally via [`arxiv_tally.py`](./arxiv_tally.py)). **Data-backed
-  ranking: A first, F (narrow GW scorecard) in parallel, C′ steering.**
-- [ ] **A:** pull the Cookson et al. 2026 cut-list → reproduce as ADQL against Gaia DR3
-- [ ] **F:** start the (inflaton + reheating EoS) → GW feature → detector-band scorecard
-- [ ] **C:** schema for the H₀ measurement DB + first arXiv ingestion pass
-- [ ] re-run `arxiv_tally.py` quarterly to track trajectory shifts
+---
+<p align="center"><sub>Part of the <a href="../">Psychograph</a> hub · agent onboarding in <a href="./CLAUDE.md">CLAUDE.md</a></sub></p>

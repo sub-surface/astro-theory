@@ -1,7 +1,7 @@
 # Toolbox — research force-multipliers & quality-of-life
 
 The third pillar of the hub. [`data-atlas.md`](./data-atlas.md) = *what data exists*;
-[`access/`](./access/) = *how to pull it*; **this file = everything around the query** that
+[`celestrium/`](../celestrium/) = *how to pull it*; **this file = everything around the query** that
 makes the work faster and more correct. Ordered by leverage *for our edge* (cross-catalogue
 audits, selection-function re-analysis, living meta-analyses), not by fame.
 
@@ -15,10 +15,10 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
   (ui.adsabs.harvard.edu/user/settings/token); use via `astroquery.nasa_ads` (`na.ADS.TOKEN`)
   or `pip install ads`. Gives **citation/reference graphs, full-text search, bibcodes, and
   saved "libraries"** — i.e. *programmatic* versions of what we do by hand for projects C/C′.
-  Supersedes hand-scraping; `arxiv_tally.py` becomes one input among many.
+  Supersedes hand-scraping; `scripts/arxiv_tally.py` becomes one input among many.
 - **INSPIRE-HEP** (inspirehep.net, open API) — the hep-th/gr-qc index. The right tool for the
   **F reheating→GW** thread (Copeland-circle papers live here, not always in ADS-astro).
-- **arXiv API** — already wired (`fetch_papers.sh`, `arxiv_tally.py`); keep for trajectories.
+- **arXiv API** — already wired (`scripts/fetch_papers.sh`, `scripts/arxiv_tally.py`); keep for trajectories.
 - **Semantic Scholar / Connected Papers / Litmaps** — citation-graph *discovery* ("what cites
   this anomaly paper, what does it cite") to seed a census without missing a branch.
 - **★ A repo-local `refs.bib`** — one BibTeX file as the spine of every dossier/census, fed by
@@ -33,14 +33,14 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 - **NED** (`astroquery.ipac.ned`) — extragalactic objects: redshifts, cross-IDs, photometry.
   Essential for QSO/galaxy work (the dipole populations).
 - **Sesame** — lightweight name→coordinate resolver (under the hood of the above).
-- → see new `access/resolvers.py`.
+- → see new `celestrium/resolvers.py`.
 
 ## 3. Cross-matching at scale — directly serves move (a)
 
 - **★ CDS X-Match** (`astroquery.xmatch`) — server-side cross-match of *our* table against any
   VizieR/SIMBAD catalogue, millions of rows, by sky position. This **is** the cross-catalogue
   consistency audit primitive (CatWISE ↔ Quaia ↔ Euclid under a common match radius).
-  → see new `access/xmatch.py`.
+  → see new `celestrium/xmatch.py`.
 - **STILTS / TOPCAT** — the table workhorse. **STILTS** is scriptable/CLI: crossmatch, HEALPix
   density maps, sky plots, format conversion — many `g_*.py` operations done faster and
   battle-tested. Worth having even though we script in Python.
@@ -65,15 +65,15 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 
 ## 6. Reproducibility & QoL — compounds every session
 
-- **✅ Query cache + provenance manifest** — *built*: [`access/cache.py`](./access/cache.py).
+- **✅ Query cache + provenance manifest** — *built*: [`celestrium/cache.py`](../celestrium/cache.py).
   `cached_query(archive, adql, fetch)` hashes each query, caches the result as ECSV under
   `data/cache/`, and appends `{query, archive, UTC date, nrows}` to `data/manifest.jsonl`.
   Stops us re-pulling and makes every figure traceable to its query.
-- **✅ Multi-wavelength image cutouts** — *built*: [`access/cutouts.py`](./access/cutouts.py).
+- **✅ Multi-wavelength image cutouts** — *built*: [`celestrium/cutouts.py`](../celestrium/cutouts.py).
   `panel(ra, dec)` renders a position across UV→optical→near-IR→mid-IR→radio (SkyView) and
   `color(ra, dec)` a CDS-HiPS colour image — a quick "what's actually here?" from coordinates.
 - **Environment pinning** — one `requirements.txt` / lockfile for the whole repo (we have
-  `access/requirements.txt`; promote to a repo-level env when the analysis deps settle).
+  `celestrium/requirements.txt`; promote to a repo-level env when the analysis deps settle).
 - **Server-side notebooks** — ESA Datalabs, NOIRLab Astro Data Lab, SciServer, Rubin RSP: run
   *next to* the data for anything image-heavy instead of downloading.
 - **Units & frames discipline** — `astropy.units`/`coordinates` everywhere; never pass bare
@@ -81,12 +81,12 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 
 ## 7. Quick wins — status
 
-1. ✅ **`access/resolvers.py` + `access/xmatch.py`** — object-lookup + cross-match audit core.
-2. ✅ **`access/cache.py` + `access/cutouts.py`** — query cache/provenance + survey-aware imaging.
-3. ✅ **`access/ads.py` + `refs.bib`** — ADS/SciX search + BibTeX export plumbing wired; the
+1. ✅ **`celestrium/resolvers.py` + `celestrium/xmatch.py`** — object-lookup + cross-match audit core.
+2. ✅ **`celestrium/cache.py` + `celestrium/cutouts.py`** — query cache/provenance + survey-aware imaging.
+3. ✅ **`celestrium/ads.py` + `refs.bib`** — ADS/SciX search + BibTeX export plumbing wired; the
    bibliography is seeded. **Action left: paste a free token** into `~/.ads/dev_key` (or
    `$env:ADS_DEV_KEY`) to make it live — get it at the SciX token link in §1.
-4. ✅ **`access/hub.py`** — typer+rich CLI front-end (resolve·image·where·cite·query·match·log·
+4. ✅ **`celestrium/hub.py`** — typer+rich CLI front-end (resolve·image·where·cite·query·match·log·
    dossier·field·papers·sample·atlas-targets·poster·runbook·atlas·toolbox, all with `--json`);
    roadmap in [`roadmap.md`](./roadmap.md), imaging logic in [`imaging-guide.md`](./imaging-guide.md).
 5. ◻ **`pip install dustmaps mocpy`** — the reference tools the dipole work needs next

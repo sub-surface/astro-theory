@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 from astropy.table import Table
 
-from access import ads, hub
+from celestrium import ads, hub
 
 
 def test_add_to_refs_appends_only_new_bibtex_entries(monkeypatch, tmp_path):

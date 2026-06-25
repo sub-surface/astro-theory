@@ -1,6 +1,6 @@
 # Data Atlas — public astronomical data, ranked for desk work
 
-The standing map for this repo. Premise (from [`README.md`](./README.md)): our binding
+The standing map for this repo. Premise (from [`README.md`](../README.md)): our binding
 constraint isn't photons, it's ideas + analysis. So we catalogue **what's publicly
 queryable from a laptop**, rate it on **data quality** and — separately — on **leverage for
 *us*** (a desk team whose edge is selection-function systematics, cross-catalogue audits,
@@ -141,7 +141,7 @@ dipole — same Copernican-principle question, different systematics. Agreement 
 
 ## 6. Immediate next steps
 
-1. **Stand up the access layer** — a tiny `access/` cookbook: one minimal working
+1. **Stand up the access layer** — a tiny `celestrium/` cookbook: one minimal working
    astroquery/TAP snippet per archive (Gaia, Euclid, IRSA/WISE, MAST, DESI Data Lab,
    HEASARC) so any future probe starts from a known-good query. Mirror the ESA-Datalabs
    tutorial patterns.

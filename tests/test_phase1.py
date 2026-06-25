@@ -4,7 +4,7 @@ import json
 from astropy.table import Table
 from typer.testing import CliRunner
 
-from access import hub, packets, registry
+from celestrium import hub, packets, registry
 
 
 # --------------------------------------------------------------------------- #
@@ -67,7 +67,7 @@ def test_match_recipe_against_catalog(monkeypatch):
     monkeypatch.setattr(hub.cache, "cached_query",
                         lambda archive, query, fetch, refresh=False: fetch())
 
-    import access.xmatch as xm
+    import celestrium.xmatch as xm
     seen = {}
 
     def fake_match(local, cat2, ra, dec, radius_arcsec):

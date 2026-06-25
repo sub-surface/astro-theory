@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Fetch arXiv papers as clean markdown into research/.
+# Fetch arXiv papers as clean markdown into data/literature/ (git-ignored).
 # Tries native arXiv HTML (newer papers) then ar5iv (older), converts with
 # Pandoc, strips raw-HTML wrappers for readability. Idempotent: skips existing.
 set -u
 PANDOC="/c/Users/Leon/AppData/Local/Pandoc/pandoc.exe"
-cd "$(dirname "$0")" && mkdir -p research
+cd "$(dirname "$0")/.." && mkdir -p data/literature
 
 # id|slug  (order ~ reading order)
 PAPERS=(
@@ -27,7 +27,7 @@ fetch_html(){ # $1=id -> stdout html ; try arxiv native then ar5iv
 }
 
 for entry in "${PAPERS[@]}"; do
-  id="${entry%%|*}"; slug="${entry##*|}"; out="research/${slug}.md"
+  id="${entry%%|*}"; slug="${entry##*|}"; out="data/literature/${slug}.md"
   if [ -s "$out" ]; then echo "skip  $slug (exists)"; continue; fi
   src=$(fetch_html "$id") || { echo "FAIL  $id (no html)"; continue; }
   printf '<!-- arXiv:%s  source:%s  https://arxiv.org/abs/%s -->\n\n' "$id" "$src" "$id" > "$out"

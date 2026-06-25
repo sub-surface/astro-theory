@@ -7,7 +7,7 @@ using the arXiv API's opensearch:totalResults (max_results=0, no payload).
 Output: a tidy CSV (data/topic_trajectories.csv) = the 'trajectory' axis of the
 effort map. Pair with the Astrophysics-Wrapped 2025 tables (effort levels).
 
-Run: python arxiv_tally.py
+Run: python scripts/arxiv_tally.py
 """
 import time
 import re
@@ -67,8 +67,8 @@ def total_results(query: str, retries: int = 4) -> int:
 
 
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    out = os.path.join(here, "data", "topic_trajectories.csv")
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out = os.path.join(repo, "data", "topic_trajectories.csv")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     rows = []
     for topic, phrase in TOPICS.items():

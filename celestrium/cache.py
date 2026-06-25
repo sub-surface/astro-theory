@@ -5,7 +5,7 @@ Wrap any archive fetch (gaia.query, irsa.query, ...) so its result is cached
 locally and every pull is logged. The cache key is sha1(archive + query), so an
 identical query returns instantly from disk; a changed query re-fetches. Every
 fetch appends a line to data/manifest.jsonl, making each downstream figure
-traceable to the exact query + date that produced it. See ../toolbox.md S6.
+traceable to the exact query + date that produced it. See ../docs/toolbox.md S6.
 
 Storage: ECSV (pure-astropy, lossless, keeps units/metadata; no pyarrow needed).
 Both cache/ and manifest live under data/ (git-ignored) — local, not committed.

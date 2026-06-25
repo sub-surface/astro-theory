@@ -1,16 +1,16 @@
-# Hub roadmap — the astro-hub tool, where it's been and where it's going
+# Celestrium roadmap — architecture & the Textual-TUI leap
 
-`access/` is the repo's data-access layer; **astro-hub** is the operable front-end over it.
+Celestrium is a three-wing astrophysics instrument; `celestrium/` is its engine and the CLI/TUI are its surfaces.
 This is the single planning doc for that tool (it replaces the old `tui-scope.md`): the design
 rationale, what's built, and the Textual-TUI leap still ahead.
 
 ## Architecture (post Phase 0 refactor)
 
-One brain, two surfaces. All real logic lives in `access/`; the CLI and the future TUI only
+One brain, two surfaces. All real logic lives in `celestrium/`; the CLI and the future TUI only
 *present*.
 
 ```
-access/
+celestrium/
   registry.py   data: ARCHIVES · SAMPLE_RECIPES · ATLAS_TARGETS · RUNBOOKS
   packets.py    builders: PaperSet · ObjectPacket · FieldPacket · RunbookResult
                 (each .to_dict() for JSON/TUI, .to_markdown() for reports)
@@ -20,7 +20,7 @@ access/
   tui/          Textual app (Phase 2/3) — a thin presenter over the SAME registry + packets
 ```
 
-**Rule:** `hub.py` and `tui/` may import `access/*` but never each other. A behaviour worth
+**Rule:** `hub.py` and `tui/` may import `celestrium/*` but never each other. A behaviour worth
 having lives in `registry.py`/`packets.py`, and both surfaces get it for free.
 
 ## Why build our own — the gap in prior art
@@ -44,7 +44,7 @@ human or by Claude (`--json`), and (4) knows about *this repo* (atlas, toolbox, 
 active build). Not competing with Aladin/TOPCAT — orchestrating on top of the same VO services.
 
 ## Design principles
-1. **Thin surfaces** — all real logic in `access/`; CLI/TUI compose + present. Scriptable *and* importable.
+1. **Thin surfaces** — all real logic in `celestrium/`; CLI/TUI compose + present. Scriptable *and* importable.
 2. **Provenance by default** — every data pull routes through `cache.cached_query`, so the manifest is always complete.
 3. **Human- and agent-operable** — plain subcommands + `--json`; no interactive-only paths an agent can't drive.
 4. **Repo-aware** — the tool knows the atlas/toolbox/refs.bib and the active build; a front door to *our* research.
@@ -75,7 +75,7 @@ A `textual` app (installed) — async so blocking astroquery/requests calls run 
 UI never freezes. Layout:
 
 ```
-┌ Header: astro-hub · active: euclid-dr1-prep · ADS:✓ · online ─────────┐
+┌ Header: Celestrium · active: euclid-dr1-prep · ADS:✓ · online ─────────┐
 ├ Sidebar ─┬ Main ──────────────────────┬ Preview ───────────────────┤
 │ Resolve  │ target / ADQL entry         │ object facts (SIMBAD+NED)  │
 │ Query    │ ┌ results DataTable ──────┐ │ or paper abstract          │
@@ -100,7 +100,7 @@ UI never freezes. Layout:
   kitty graphics). The preview pane shows survey + FOV + the saved thumbnail *path* with an
   **[Open]** action (`os.startfile`). No sixel/kitty dependency, reliable on win32.
 - **Interactive crossmatch**: select result rows → "match against \<catalog\>" → new results →
-  **save as candidate list** (a new `access/candidates.py`). The desk loop, made interactive.
+  **save as candidate list** (a new `celestrium/candidates.py`). The desk loop, made interactive.
 - **Actionable history**: reload / re-run-refresh / reveal cache file (the Phase 1 `log` actions,
   point-and-click).
 - **Runbook runner**: pick a runbook → live per-step progress → index report.

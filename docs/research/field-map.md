@@ -5,7 +5,7 @@ The operational backbone of the [leverage thesis](./directions.md). Two axes:
 - **Effort level** — how crowded a topic is *now* — from "Astrophysics Wrapped 2025"
   (arXiv:2602.12303), a statistical profile of all **18,660** astro-ph papers of 2025.
 - **Trajectory** — whether a topic is accelerating or flat — from our own arXiv-API tally
-  (`arxiv_tally.py` → `data/topic_trajectories.csv`), counts per phrase 2022→2025.
+  (`scripts/arxiv_tally.py` → `data/topic_trajectories.csv`), counts per phrase 2022→2025.
 
 Read the gaps: high-effort + accelerating = crowded, avoid. Live-but-flat/neglected +
 desk-tractable = our quadrant.
@@ -53,7 +53,7 @@ events account for 80% of each subfield's event papers — attention piles onto 
 
 ## Trajectory — our arXiv tally (2022→2025)
 
-`arxiv_tally.py` → `data/topic_trajectories.csv`. Counts of papers per phrase per year in
+`scripts/arxiv_tally.py` → `data/topic_trajectories.csv`. Counts of papers per phrase per year in
 `astro-ph.{CO,GA,HE}`+`gr-qc`. `2025/mean` = 2025 vs. the 2022–24 mean (>1 accelerating,
 <1 cooling). **Absolute volume matters as much as the ratio** — a small base is the tell of
 an uncrowded niche.
@@ -110,7 +110,7 @@ smarter re-analysis of the now-frozen Gaia/WISE archive.
 
 **Operating decision:** build **A** first (real near-term result), develop **F** (narrow GW
 scorecard) in parallel as the high-ceiling theory bet, and keep **C′** as the standing steering
-layer — re-run `arxiv_tally.py` quarterly to watch the trajectories move.
+layer — re-run `scripts/arxiv_tally.py` quarterly to watch the trajectories move.
 
 ### Caveats / next refinements
 - The S8/σ8 phrase was too narrow (one query also failed to parse → `n/a`); widen the query

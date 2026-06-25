@@ -9,7 +9,7 @@ colour image via CDS HiPS. A quick "what's actually here?" before any analysis.
     python access/cutouts.py 213.6905918 -12.5801013
 
 Backends: astroquery.skyview (FITS per survey), astroquery.hips2fits (colour).
-See ../toolbox.md S4. Outputs land in data/cutouts/ (git-ignored).
+See ../docs/toolbox.md S4. Outputs land in data/cutouts/ (git-ignored).
 """
 import sys
 from pathlib import Path
@@ -26,7 +26,7 @@ OUT = Path(__file__).resolve().parent.parent / "data" / "cutouts"
 
 # Deep optical colour HiPS by declination footprint, best first. The whole point:
 # don't hand back low-res all-sky DSS2 when a deep survey covers this patch. See
-# ../imaging-guide.md for the full decision logic (object type, resolution, λ).
+# ../docs/imaging-guide.md for the full decision logic (object type, resolution, λ).
 COLOR_FOOTPRINTS = [
     # (dec_min, dec_max, HiPS id, label)
     (-68, +84, "CDS/P/DESI-Legacy-Surveys/DR10/color", "Legacy Surveys DR10 (deep)"),

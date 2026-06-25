@@ -3,7 +3,7 @@
 
 Automates the EsaSky -> ADS "what is this object / what's been written about it"
 lookup. SIMBAD for identity/type/bibliography, NED for extragalactic redshifts
-and cross-IDs. See ../toolbox.md S2.
+and cross-IDs. See ../docs/toolbox.md S2.
 Docs: https://astroquery.readthedocs.io/en/latest/simbad/simbad.html
       https://astroquery.readthedocs.io/en/latest/ipac/ned/ned.html
 """

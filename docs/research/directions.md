@@ -1,6 +1,6 @@
 # Research directions — leverage map & expanded candidates
 
-Companion to [`README.md`](./README.md). The README holds the four "sexy" candidate
+Companion to [`README.md`](../../README.md). The README holds the four "sexy" candidate
 projects (A–D). This file adds the **higher-leverage / less-glamorous** areas and, more
 importantly, sets out a **field-cartography** approach so our choices are guided by *where
 effort is and isn't being spent*, not just by what's exciting.

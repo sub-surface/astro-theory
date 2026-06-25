@@ -2,7 +2,7 @@
 """ESA Euclid archive — TAP/ADQL via astroquery.esa.euclid.
 
 Q1 (deep fields) and Q2 (Galactic Bulge Survey) are public; DR1 (~1900 deg2 wide)
-lands 21 Oct 2026 — that's the one we're prepping for (see ../euclid-dr1-prep.md).
+lands 21 Oct 2026 — that's the one we're prepping for (see ../docs/research/euclid-dr1-prep.md).
 For images/cutouts, run on ESA Datalabs instead of downloading locally.
 Docs: https://astroquery.readthedocs.io/en/latest/esa/euclid/euclid.html
 Tutorials: https://github.com/ESA-Datalabs/Euclid-Q1

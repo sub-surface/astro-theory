@@ -3,7 +3,7 @@
 
 Talks to the ADS REST API directly (no extra package): search papers, export
 canonical BibTeX, and append new entries to the repo-level refs.bib (deduped by
-bibcode). This is our literature-census edge made scriptable. See ../toolbox.md S1.
+bibcode). This is our literature-census edge made scriptable. See ../docs/toolbox.md S1.
 
 Token (free): https://ui.adsabs.harvard.edu/user/settings/token
 Provide it by EITHER:

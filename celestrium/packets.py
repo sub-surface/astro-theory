@@ -5,7 +5,7 @@ Every builder here returns a dataclass that carries the *data* plus `.to_dict()`
 (for JSON / the TUI) and `.to_markdown()` (for reports). The CLI (`hub.py`) and the
 future Textual TUI (`tui/`) both call these — neither re-implements the logic.
 
-Design rule (see roadmap.md #1): real work lives in `access/`; surfaces present.
+Design rule (see docs/roadmap.md #1): real work lives in `celestrium/`; surfaces present.
 These builders are deliberately thin over `cutouts`/`resolvers`/`ads`/`cache` and do
 no file IO themselves (so a TUI can render without writing), except `run_runbook`,
 which takes explicit output dirs + a write callback so its caller owns the disk.

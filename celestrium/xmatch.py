@@ -4,7 +4,7 @@
 The cross-catalogue-audit primitive: take a local table of positions and match
 it to a big catalogue by sky separation, server-side. This is how we ask "do
 CatWISE / Quaia / Euclid agree on the same sources under a common match radius."
-See ../toolbox.md S3.
+See ../docs/toolbox.md S3.
 Docs: https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html
 """
 from astroquery.xmatch import XMatch

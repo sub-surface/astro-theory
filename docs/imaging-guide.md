@@ -2,7 +2,7 @@
 
 How to turn `RA Dec` into a *good* image (and the right literature), instead of
 defaulting to a low-res all-sky survey. Part of this is encoded in
-[`access/cutouts.py`](./access/cutouts.py) (`identify_field`, `best_color_hips`,
+[`celestrium/cutouts.py`](../celestrium/cutouts.py) (`identify_field`, `best_color_hips`,
 `smart`); the judgment calls live here. Both Claude and Leon follow this when a
 coordinate shows up — e.g. `213.6905918 -12.5801013`.
 
@@ -16,7 +16,7 @@ RA, Dec ─▶ 1. resolve  ─▶ 2. classify ─▶ 3. choose survey ─▶ 4. 
 
 ### 1. Resolve — *is anything catalogued here?*
 Cone-search SIMBAD (and NED for extragalactic) within ~1–2′:
-`access/cutouts.py:identify_field` returns `(main_id, object_type, separation″)`.
+`celestrium/cutouts.py:identify_field` returns `(main_id, object_type, separation″)`.
 - **A hit** → you know what you're looking at; caption + scale the image to it.
 - **No hit** → a "blank"/uncharted field (like 213.69 −12.58). Still imageable, but
   expect a sparse star field; the interesting move may be *why* nothing's catalogued.
@@ -73,7 +73,7 @@ nearby/large galaxy or cluster 15–30′. `smart()` picks 8′ for extended `ot
 ### 5. Literature — *what's already known here*
 - **SIMBAD bibliography** (`resolvers.bibliography`) — papers referencing the object.
 - **NED** — extragalactic redshift, photometry, cross-IDs.
-- **ADS/SciX** (`access/ads.py`) — full search: by object name, or by coordinates
+- **ADS/SciX** (`celestrium/ads.py`) — full search: by object name, or by coordinates
   (`object:"..."`), or topic; export to `refs.bib`. This is where a quick look turns
   into a literature trail.
 
