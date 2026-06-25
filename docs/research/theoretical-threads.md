@@ -45,44 +45,62 @@ mass function, vs. which observational window) is a structured-table artifact we
 
 ---
 
-## T2 · Learned PDE surrogates for the "resort to numerics" bottleneck (incl. Neural Cellular Automata)
+## T2 · Learnability under a compute bound — *epiplexity as the diagnostic* (surrogates downstream)
 **Question.** The recurring frustration in T1 (and across inflation/reheating) is being forced
-into expensive numerics. Can data-driven PDE methods — in particular **Neural Cellular Automata**
-(*Discovering Partial Differential Equations With Neural Cellular Automata*, Artificial Life,
-2026, [doi:10.1162/ARTL.a.454](https://doi.org/10.1162/ARTL.a.454)) — either *accelerate* those
-simulations or *discover effective* equations for the coarse dynamics?
+into expensive numerics. Before asking *how* to learn a surrogate, ask the prior question:
+**for a computationally bounded observer, how much of this is learnable structure vs. irreducible
+noise — at our budget?** That is exactly what **epiplexity** measures.
 
-**What NCA actually are.** A small neural net applies a *local* update rule repeatedly over a
-grid; its learned convolution kernels are structurally finite-difference stencils, so a trained
-NCA *is* a discretized PDE and the kernels can be read back as differential operators. It's a
-learnable, differentiable cousin of sparse-regression discovery (SINDy / PDE-FIND), reportedly
-strong on pattern formation and on learning long-range dynamics from sparsely sampled data.
+**Epiplexity (Finzi, Qiu, Jiang, Izmailov, Kolter, Wilson, 2026, [arXiv:2601.03220](https://arxiv.org/abs/2601.03220)).**
+Relative to a compute budget T, it splits a source's information into **epiplexity** S_T (learnable
+structure) and **time-bounded entropy** H_T (what *looks* like noise to a T-bounded observer).
+Formally S_T(X)=|P⋆| for the program minimizing a time-bounded two-part code
+P⋆=argmin_{P∈𝒫_T}{|P|+𝔼[log 1/P(X)]}; H_T(X)=𝔼[log 1/P⋆(X)]. Estimated by **prequential coding**
+(area under the training loss curve above the final loss — cheap, heuristic) or **requential
+coding** (cumulative teacher→student KL — rigorous, 2–10× compute). Tellingly, the paper's
+testbed includes **elementary cellular automata**: Rule 30 (chaotic) → high H_T, *low* S_T =
+computationally irreducible; Rule 54 → *high* S_T = learnable emergent structure. "The same object
+may appear random or structured depending on the computational resources of the observer."
 
-**Honest read on the promise (see the writeup below for the long version).**
-- ✅ **Strongest fit — lattice surrogates, not the ζ-tail directly.** NCA are *local grid update
-  rules* = a near-perfect structural match to **lattice field theory time-stepping**. The sharpest
-  "resort to numerics" pain with that shape is **preheating / oscillon** lattice simulations
-  (project **F**, the Copeland thread). An NCA/neural-operator surrogate trained on lattice
-  snapshots could make parameter scans cheap. That's the concrete entry point.
-- ⚠️ **Weaker fit — the ζ-tail itself.** There the governing equations (stochastic-inflation
-  Fokker–Planck; the saddle-point profile ODE/PDE) are largely *known* — so "discovery" isn't the
-  bottleneck; *rare-event sampling* is. ML-for-rare-events (normalising flows for importance
-  sampling) is a better-matched tool than NCA, and Creminelli's saddle-point is the analytic
-  answer. NCA discovering an equation you already know analytically is not the win.
-- ⚠️ **Interpretability gap.** NCA yields a *discretized operator*, not necessarily a parsimonious
-  *symbolic* PDE; extracting clean physics from the learned rule is non-trivial (SINDy is more
-  interpretable by construction).
-- ⚠️ **Compute/skill mismatch with our edge.** Training surrogates needs GPU compute + ML
-  expertise — outside a desk team's current strengths.
+**Why this is the stronger tool (and reframes the NCA idea).** Epiplexity is a *diagnostic*
+(is there a learnable nail, and can our budget reach it?); a surrogate like NCA is a *generative*
+hammer. They compose — **measure first, build second** — and epiplexity directly adjudicates the
+T1/T2 questions:
+- The **ζ-tail** is *epiplectically simple*: Creminelli's saddle-point P(ζ)~exp(−c·ζ^{3/2}/√λ) IS
+  the short program (high S_T, low H_T). So epiplexity predicts "don't throw a surrogate at it —
+  a cheap closed form exists"; the win is analytic, exactly as Creminelli found. (Caveat: epiplexity
+  says a short program *exists*; it doesn't hand you the physics — it's descriptive, not generative.)
+- **Preheating / oscillon lattices** (project **F**) are the open case: parametric resonance →
+  turbulent fields → is the evolution Rule-54-like (surrogate-worthy) or Rule-30-like (irreducible,
+  surrogate will memorise noise and fail to extrapolate)? **Measure the epiplexity of the lattice
+  data before sinking compute into any NCA/neural-operator surrogate.** This is the rigorous version
+  of "which bottlenecks are ML-tractable."
+- A deep reframing of "resort to numerics": simulation *creates* epiplexity a bounded observer
+  couldn't access from the initial data + equations alone (the paper's first paradox). "Resort to
+  numerics" = the structure is real but locked behind compute; the live question is whether a
+  *cheaper* program — analytic (Creminelli) or learned — can unlock it at our budget.
 
-**The desk-tractable sub-question** (this is the part *we* could actually do): a **literature
-meta-analysis** — "which numerical bottlenecks in the inflation/PBH/reheating program have the
-right structure for ML surrogates (local, grid-based, smooth) vs. which don't (rare-event,
-global, stiff)?" That is a census in the spirit of project C/C′, on-brand for our wing, and it
-would tell us whether T2 ever deserves to graduate.
+**The desk-tractable build (this is what *we* could actually do — and it fits Leon's ML background):**
+an **"epiplexity triage of cosmological numerics."** Generate 2–3 cheap datasets (a 1D
+stochastic-inflation ζ-trajectory ensemble; a 1D/2D preheating toy lattice; a δN map), estimate
+epiplexity via prequential coding at a fixed FLOP budget, and rank them simple↔irreducible — using
+the ζ-tail (known to be epiplectically simple) as a *validation* case the estimator should confirm.
+Output: a principled map of where ML surrogates can help in the inflation/PBH/reheating program.
+Small-GPT-scale, on-brand for our wing, and hard for a pure-physics *or* pure-ML group to produce.
 
-**Status:** `watch`. Cross-links: T1 (the motivating bottleneck); project **F** (lattice
-surrogates); project **C′** (the meta-analysis framing).
+**Honest caveats.** Epiplexity is (1) **budget-relative** — conclusions can flip with T, so the
+FLOP budget must be fixed and reported; (2) **representation-dependent** — measured on a *encoding*
+of the field (real-space vs. Fourier modes vs. multipoles), and the right physics variables can
+expose structure a naïve tokenisation hides (this is where physics judgment enters, and it rhymes
+with the EFT/squeezed-limit choice of variables); (3) **estimator-young** — prequential is
+heuristic, requential is compute-hungry; (4) NCA-as-surrogate keeps its own caveats (discretised
+not symbolic operator; chaotic fields won't extrapolate) — but now we'd only reach for it *after*
+epiplexity says the structure is there.
+
+**Status:** `exploring` (upgraded from `watch` — epiplexity gives the thread a concrete, testable
+first move). Cross-links: T1 (the ζ-tail as the epiplectically-simple validation case); project
+**F** (preheating lattices = the open epiplexity question); project **C′** (the triage as a
+methods census).
 
 ---
 
