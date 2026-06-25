@@ -6,7 +6,7 @@ sky across the spectrum: UV -> optical -> near-IR -> mid-IR -> radio, each from 
 different public survey, all co-registered by SkyView. Plus an optional true-ish
 colour image via CDS HiPS. A quick "what's actually here?" before any analysis.
 
-    python access/cutouts.py 213.6905918 -12.5801013
+    python celestrium/cutouts.py 213.6905918 -12.5801013
 
 Backends: astroquery.skyview (FITS per survey), astroquery.hips2fits (colour).
 See ../docs/toolbox.md S4. Outputs land in data/cutouts/ (git-ignored).
