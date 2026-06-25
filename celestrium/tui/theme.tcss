@@ -88,3 +88,25 @@ ListView {
 ListItem {
     padding: 0 1;
 }
+
+/* Save-candidate modal (Phase 3) */
+SaveCandidateScreen {
+    align: center middle;
+}
+
+#save-box {
+    width: 60;
+    height: auto;
+    background: #11151f;
+    border: round #3b7dd8;
+    padding: 1 2;
+}
+
+#save-actions {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+#save-actions Button {
+    margin: 0 1 0 0;
+}

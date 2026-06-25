@@ -46,9 +46,12 @@ only present.
 - `cache.py` — `cached_query` + `data/manifest.jsonl` provenance + `load_cached`/`find_record` (by hash).
 - `cutouts.py` · `resolvers.py` · `ads.py` · `xmatch.py` · `<archive>.py` — thin primitives.
 - `hub.py` — Typer CLI, a thin presenter; commands grouped by wing in `--help`. Global `--json`.
-- `tui/` — Textual cockpit (`python -m celestrium.tui`). **Phase 2 skeleton built**: read-only +
-  async, modes Resolve/Literature/Query/History. Phase 3 (interactive crossmatch, image preview,
-  runbook runner) in `docs/roadmap.md`.
+- `tui/` — Textual cockpit (`python -m celestrium.tui`). **Phase 2 + 3 built**: async, modes
+  Resolve/Literature/Query/**Crossmatch**/**Candidates**/History. The desk loop is interactive —
+  the current result table is retained, Crossmatch matches it to a VizieR catalogue, Ctrl+S saves
+  rows as a candidate list (`celestrium/candidates.py`), Resolve renders a colour preview (Ctrl+O
+  opens it), History is actionable (Enter opens / F5 re-runs). Remaining: TUI runbook runner
+  (`docs/roadmap.md`).
 
 **Rule:** `hub.py` and `tui/` import `celestrium/*`, never each other. New behaviour goes in
 `registry.py`/`packets.py` so both surfaces get it. The CLI tests monkeypatch names ON the
@@ -57,7 +60,7 @@ only present.
 keep that (don't bind functions by value at import). Tests must stay hermetic (no network).
 
 ```bash
-python -m pytest tests/ -q          # 23 tests, hermetic
+python -m pytest tests/ -q          # 29 tests, hermetic
 python -m celestrium --help         # wing-grouped commands
 python -m celestrium runbook list
 python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # X-match audit primitive

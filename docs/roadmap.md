@@ -49,7 +49,7 @@ active build). Not competing with Aladin/TOPCAT — orchestrating on top of the 
 3. **Human- and agent-operable** — plain subcommands + `--json`; no interactive-only paths an agent can't drive.
 4. **Repo-aware** — the tool knows the atlas/toolbox/refs.bib and the active build; a front door to *our* research.
 
-## Done — v0, v1, Phase 0, Phase 1, Phase 2 (skeleton)
+## Done — v0, v1, Phase 0, Phase 1, Phase 2, Phase 3 (interactive)
 
 **CLI surface (v0+v1).** `resolve` · `image` · `where` · `cite` · `papers` · `query` · `sample`
 · `dossier` · `field` · `atlas-targets` · `poster` · `runbook` · `atlas` · `toolbox` · `tui`,
@@ -77,6 +77,23 @@ the provenance manifest), each blocking call in a `@work(thread=True)` worker so
 live. Header shows the active line + ADS-token status; a `RichLog` ticker carries provenance and
 errors; dark-cosmology theme in `theme.tcss`. Headless mount test in `tests/test_tui.py`.
 
+**Phase 3 — the interactive leap (built).** The TUI stopped being a viewer and
+became the desk instrument. New service module `celestrium/candidates.py` (save/load/
+index/latest/drop with an `index.jsonl` provenance log, mirroring `cache.py`) is the
+*output* side of the loop, shared by both surfaces:
+- **CLI**: `match … --save NAME` persists matched rows as a candidate list; a new
+  `candidates` command browses lists / shows one / `--drop`s one (`--json` everywhere).
+- **TUI**: the current result table is retained (`last_table`), so a **Crossmatch** mode
+  matches it against any VizieR catalogue and **Ctrl+S** saves the rows as a named
+  candidate list (modal prompt). A **Candidates** browser loads a saved list back into
+  the grid (then Crossmatch/save again — the loop closes). **Resolve** now renders a
+  colour thumbnail and shows survey + FOV + path with **Ctrl+O** to open externally
+  (`os.startfile`, the decided no-sixel design). **History** is actionable: **Enter**
+  opens a cached pull's rows, **F5** re-runs the query fresh.
+
+Tests: `candidates` round-trip + dedupe + drop (hermetic); TUI save/load smoke
+(network-free). `python -m pytest tests/ -q` → 29 tests.
+
 ## Phase 2 — design reference (the cockpit)
 
 A `textual` app (installed) — async so blocking astroquery/requests calls run in workers and the
@@ -102,7 +119,7 @@ UI never freezes. Layout:
 - **Async workers** wrap every `packets.*`/`cache.*` call (`@work(thread=True)`).
 - **Status indicators**: ADS-token present?, online/offline, cache hit/miss per pull.
 
-## Phase 3 — Power + the "interesting look"
+## Phase 3 — Power + the "interesting look" (built; see Done above)
 
 - **Image preview = external + path** (decided: Windows Terminal has only partial sixel and no
   kitty graphics). The preview pane shows survey + FOV + the saved thumbnail *path* with an
@@ -117,6 +134,9 @@ UI never freezes. Layout:
 **Deps:** `textual` (installed). No image lib needed — previews render externally.
 
 ## Next decision
-Build Phase 2 read-only first and live with it before adding Phase 3 interactivity. The crossmatch
-loop (Phase 3) is where the TUI stops being a viewer and becomes the desk instrument — but it should
-ride on a TUI skeleton that already feels right.
+Phases 2 + 3 are built: the crossmatch → candidate-list loop is live in both surfaces. The
+remaining Phase 3 item from the original plan is the **runbook runner** (pick a runbook → live
+per-step progress in the TUI); `packets.run_runbook` already drives the CLI, so this is a
+presenter-only addition. Beyond that, the open question is *substance over surface*: point the
+instrument at the active line — the Euclid DR1 σ_D forecast (`docs/research/euclid-dr1-prep.md`) —
+and let real use, not more features, drive what the cockpit needs next.
