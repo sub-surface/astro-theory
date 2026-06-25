@@ -97,10 +97,65 @@ heuristic, requential is compute-hungry; (4) NCA-as-surrogate keeps its own cave
 not symbolic operator; chaotic fields won't extrapolate) — but now we'd only reach for it *after*
 epiplexity says the structure is there.
 
+**Empirical update — the GNCA run (Gemini, 2026-06-25; `../../../GNCA/`).** An overnight autonomous
+run built **GNCA+** — a log-space, probability-conserving graph "cellular automaton" (a learned
+Fokker–Planck stepper) — and benchmarked it on 10 inflation regimes for the PBH mass fraction β.
+The result is a **clean, valuable negative** and a near-perfect confirmation of the epiplexity
+thesis: the model reproduces β only where the tail is *mild* (quantum-diffusion ratio 0.86,
+plateau-Starobinsky 0.49) and is wrong by **7–8 orders of magnitude in every deep-tail regime**
+(axion-resonance ×1.9e7, extreme-multifield ×2.1e8, ghost-condensate ×1.3e7) — i.e. it fails
+*exactly* in the PBH-relevant rare-event regime. Three takeaways to fold in:
+- **Believe the table, not the prose.** Gemini's own notes call it a "revolutionary breakthrough …
+  accurate to 10⁻⁴⁵", flatly contradicted by its own benchmark. Autonomous-LLM grandiosity — always
+  re-derive the verdict from the numbers. (And the headline GRAPE/symmetry architecture in the scope
+  doc is an unimplemented `pass` stub; the real artifact is the much simpler Log-CFR stepper.)
+- **The negative *is* the epiplexity result, obtained the expensive way.** The 10-regime table sorts
+  regimes into learnable (mild tail) vs. not (deep tail) — which is what an epiplexity estimate would
+  have told us *before* training. Strong motivation to measure first.
+- **One genuinely reusable nugget:** the **Log-CFR** — doing the probability-conservation update
+  entirely in log-space to dodge float underflow down to ~1e-300. Worth keeping for any tail work.
+- **The reframe that would actually help:** don't regress deep-tail PDF *values* (sample-starved —
+  you can't observe a 1e-15 event); learn the **drift/diffusion operator in the data-rich bulk** and
+  let the conservative stepper *extrapolate* into the tail, **validated against the saddle-point
+  analytic tail (T1)** — and get tail samples via importance sampling / normalising flows (→ T4),
+  not brute Langevin.
+
 **Status:** `exploring` (upgraded from `watch` — epiplexity gives the thread a concrete, testable
-first move). Cross-links: T1 (the ζ-tail as the epiplectically-simple validation case); project
-**F** (preheating lattices = the open epiplexity question); project **C′** (the triage as a
-methods census).
+first move; the GNCA negative sharpens it). Cross-links: T1 (the ζ-tail as the epiplectically-simple
+validation case); project **F** (preheating lattices = the open epiplexity question); project **C′**
+(the triage as a methods census); sibling experiment `GNCA/`.
+
+---
+
+## T3 · Simulation-based inference (SBI) for the Euclid dipole — *ML that serves the active line*
+**Question.** The cosmic-dipole measurement on Euclid DR1 has an **intractable likelihood**: a
+partial, non-uniform footprint × a selection function × clustering noise. That is the textbook
+setting for **simulation-based inference** (neural posterior / ratio estimation, e.g. the `sbi`
+package): forward-model mock catalogues on the DR1 footprint, train a neural estimator to infer the
+dipole amplitude D *and its degeneracy with selection systematics*, with calibrated uncertainties.
+
+**Why it's the strongest ML thread we have.** It plugs straight into the **active build**
+([`euclid-dr1-prep.md`](./euclid-dr1-prep.md), tasks 3–4: partial-sky estimator + mock/null suite):
+SBI *is* a principled partial-sky estimator with built-in significance calibration, and it reuses the
+M1–M5 machinery as the forward model. Small-GPU-tractable, plays to Leon's ML background, and — unlike
+T1/T2 — it earns its keep on the line we're actually committed to. **Priority candidate.**
+**Status:** `exploring`. Cross-links: project **G** (the dipole); `euclid-dr1-prep.md`.
+
+## T4 · Normalising flows — selection functions *and* rare-event importance sampling (dual-use)
+**Question.** Two of our hardest problems are both density-estimation problems a normalising flow fits
+natively: (a) **learn a survey's selection function** as a flow over the catalogue density, to cleanly
+separate a *kinematic* dipole from a *selection* gradient (serves G/Euclid); (b) use a flow as an
+**importance-sampling proposal** to actually draw deep-tail ζ events (the exact fix for the GNCA
+sample-starvation in T2). One tool, two of our bottlenecks. **Status:** `watch`. Cross-links: T2
+(rare-event sampling), T3 (selection modelling), project **G**.
+
+## T5 · Symbolic regression as the interpretable complement to NCA (PySR)
+**Question.** Where epiplexity says "learnable structure exists," can we *write it down*? Symbolic
+regression (PySR) finds parsimonious closed forms from simulation data — e.g. rediscover the ζ^(3/2)
+tail exponent, or an effective β(model-params) scaling law. Cheaper and far more interpretable than an
+NCA/black-box surrogate, and on-brand for a wing that prizes defensible, legible results. The natural
+**third step** after epiplexity (is there structure?) and before any black-box surrogate.
+**Status:** `watch`. Cross-links: T1, T2 (the interpretable alternative to NCA).
 
 ---
 
@@ -108,3 +163,4 @@ methods census).
 - Consistency relations / squeezed limits as model-independent discriminators (the other half of
   the Creminelli toolkit) — does any live anomaly touch them?
 - EFT-of-inflation operator basis → which operators are observationally reachable by 2027 data.
+- Diffusion/generative models for fast survey mocks on the DR1 footprint (feeds T3's null suite).
