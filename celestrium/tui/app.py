@@ -195,7 +195,7 @@ class CelestriumApp(App):
         try:
             ps = packets.build_paper_set(query_text, rows=15)
             rows = [(str(d.get("bibcode", "")), str(d.get("year", "")),
-                     str(d.get("title", ["?"])[0])[:50]) for d in ps.docs]
+                     packets.title_of(d)[:50]) for d in ps.docs]
             self.call_from_thread(self._fill_table, ["bibcode", "year", "title"], rows)
             self.call_from_thread(self._set_detail, f"{len(ps.docs)} papers for:\n{query_text}")
         except Exception as e:

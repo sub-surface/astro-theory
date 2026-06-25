@@ -76,9 +76,11 @@ lets a human and an AI agent drive the exact same tool. Full design + the Textua
 The active build is **G-Euclid DR1 prep** — a cosmic-dipole (isotropy) test ready to run on
 Euclid DR1 the day it lands (~1900 deg², 21 Oct 2026), the first deep optical/NIR sample with
 a selection function independent of WISE/Gaia. The research backlog (candidate projects A–H,
-the leverage thesis, and the field-effort map) lives in [`docs/research/`](./docs/research/):
-[candidates](./docs/research/candidates.md) · [directions](./docs/research/directions.md) ·
-[field-map](./docs/research/field-map.md) · [euclid-dr1-prep](./docs/research/euclid-dr1-prep.md).
+the leverage thesis, the field-effort map, and the theory-side idea ledger) lives in
+[`docs/research/`](./docs/research/): [candidates](./docs/research/candidates.md) ·
+[directions](./docs/research/directions.md) · [field-map](./docs/research/field-map.md) ·
+[theoretical-threads](./docs/research/theoretical-threads.md) ·
+[euclid-dr1-prep](./docs/research/euclid-dr1-prep.md).
 
 Our edge is the neglected, desk-tractable middle: cross-catalogue consistency audits,
 selection-function re-analysis of live anomalies, and living meta-analyses — not new photons.

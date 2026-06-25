@@ -184,7 +184,7 @@ def cite(query: List[str] = typer.Argument(..., help="ADS query"),
         raise typer.Exit(1)
     t = RichTable("bibcode", "year", "title", title=f"ADS: {query_text}")
     for d in docs:
-        t.add_row(d["bibcode"], str(d.get("year", "")), d.get("title", ["?"])[0][:60])
+        t.add_row(d["bibcode"], str(d.get("year", "")), packets.title_of(d)[:60])
     console.print(t)
     if add and docs:
         try:
@@ -217,7 +217,7 @@ def papers(query: List[str] = typer.Argument(..., help="ADS query"),
         t = RichTable("bibcode", "year", "title", title=f"ADS papers: {query_text}")
         for d in docs:
             t.add_row(str(d.get("bibcode", "")), str(d.get("year", "")),
-                      str(d.get("title", ["?"])[0])[:70])
+                      str((d.get("title") or ["?"])[0])[:70])
         console.print(t)
     _emit(ps.to_dict(), render)
     if add and docs:

@@ -26,7 +26,7 @@ literature census.
 ```
 celestrium/   the instrument (Python package — the app's namespace)
 docs/         data-atlas.md · toolbox.md · imaging-guide.md · roadmap.md
-  research/   directions.md · field-map.md · candidates.md · euclid-dr1-prep.md  (theory wing)
+  research/   directions · field-map · candidates · theoretical-threads · euclid-dr1-prep  (theory wing)
 scripts/      arxiv_tally.py · fetch_papers.sh   (field-cartography utilities)
 tests/        hermetic CLI + service-layer tests
 Archive/      shelved completed lines (e.g. 2026-06-G-dipole)

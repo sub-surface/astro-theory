@@ -36,10 +36,15 @@ def paper_lines(docs) -> List[str]:
     if not docs:
         return ["- No ADS records returned."]
     return [
-        f"- {d.get('bibcode', '?')} ({d.get('year', '?')}): "
-        f"{d.get('title', ['?'])[0]}"
+        f"- {d.get('bibcode', '?')} ({d.get('year', '?')}): {title_of(d)}"
         for d in docs
     ]
+
+
+def title_of(doc) -> str:
+    """First title of an ADS doc, robust to a missing/null/empty `title` field."""
+    titles = doc.get("title") or ["(untitled)"]
+    return str(titles[0]) if titles else "(untitled)"
 
 
 def resolve_target(name: str) -> dict:
