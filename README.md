@@ -29,8 +29,10 @@ The "small local dataset" is usually the *output* of the cuts, not a big downloa
 >    leverage for a desk team, + the 2026–2027 release calendar + an opportunity map.
 > 2. 🔌 [`access/`](./access/) — *how to pull it*: one known-good, smoke-tested query snippet
 >    per archive (TAP/ADQL), plus `cache.py` (query cache + provenance manifest), `xmatch.py`
->    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), and
->    `cutouts.py` (multi-wavelength image panel from coordinates).
+>    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), `cutouts.py`
+>    (survey-aware multi-λ imaging; see [`imaging-guide.md`](./imaging-guide.md)), `ads.py`
+>    (literature → [`refs.bib`](./refs.bib)), and a **CLI front-end**: `python -m access.hub`
+>    (`resolve · image · where · cite`) — roadmap in [`tui-scope.md`](./tui-scope.md).
 > 3. 🧰 [`toolbox.md`](./toolbox.md) — *everything around the query*: ADS/SciX, CDS X-Match,
 >    MOCpy/healpy, dustmaps, reproducibility/QoL — leverage-ranked.
 > 4. 🎯 [`directions.md`](./directions.md) + [`euclid-dr1-prep.md`](./euclid-dr1-prep.md) —

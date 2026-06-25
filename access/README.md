@@ -29,7 +29,13 @@ client class and how you get an astropy `Table` back:
 | SIMBAD + NED | `resolvers.py` | `Simbad.query_object` / `Ned.query_object` | ✓¹ | object ID, type, **per-object bibliography** |
 | CDS X-Match | `xmatch.py` | `XMatch.query(cat1, cat2, max_distance)` | ✓ | scale cross-match — the audit primitive |
 | *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
-| *(imaging)* | `cutouts.py` | `panel(ra, dec)` / `color(ra, dec)` | ✓ | multi-wavelength image panel from coords |
+| *(imaging)* | `cutouts.py` | `smart(ra,dec)` / `panel` / `color` | ✓ | survey-aware multi-λ + colour cutout from coords |
+| ADS / SciX | `ads.py` | `ads.search(q)` / `ads.add_to_refs(...)` | ✓² | literature search + BibTeX → `../refs.bib` |
+| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite |
+
+² ADS plumbing verified (token discovery + REST path); live results need a free token
+(see `ads.py` header). Imaging is survey-aware — see [`../imaging-guide.md`](../imaging-guide.md);
+the CLI/TUI roadmap is in [`../tui-scope.md`](../tui-scope.md).
 
 ¹ SIMBAD paths live-tested; NED depends on a frequently-slow server (snippet degrades
 gracefully on timeout). See [`../toolbox.md`](../toolbox.md) for the wider tooling map.

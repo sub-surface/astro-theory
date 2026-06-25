@@ -20,8 +20,20 @@ from astropy.coordinates import SkyCoord, Longitude, Latitude, Angle
 from astropy.visualization import simple_norm
 from astroquery.skyview import SkyView
 from astroquery.hips2fits import hips2fits
+from astroquery.simbad import Simbad
 
 OUT = Path(__file__).resolve().parent.parent / "data" / "cutouts"
+
+# Deep optical colour HiPS by declination footprint, best first. The whole point:
+# don't hand back low-res all-sky DSS2 when a deep survey covers this patch. See
+# ../imaging-guide.md for the full decision logic (object type, resolution, λ).
+COLOR_FOOTPRINTS = [
+    # (dec_min, dec_max, HiPS id, label)
+    (-68, +84, "CDS/P/DESI-Legacy-Surveys/DR10/color", "Legacy Surveys DR10 (deep)"),
+    (-30, +90, "CDS/P/PanSTARRS/DR1/color-z-zg-g", "Pan-STARRS DR1"),
+    (-90, +5,  "CDS/P/DES-DR2/ColorIRG", "DES DR2"),
+    (-90, +90, "CDS/P/DSS2/color", "DSS2 colour (all-sky fallback)"),
+]
 
 # Survey per wavelength regime. SkyView identifiers must be exact.
 BANDS = {
@@ -70,8 +82,38 @@ def panel(ra, dec, fov_arcmin=5.0, out=None):
     return Path(out)
 
 
-def color(ra, dec, fov_arcmin=5.0, hips="CDS/P/DSS2/color", pix=512, out=None):
-    """Save a colour image from a CDS HiPS survey (e.g. DSS2/PanSTARRS colour)."""
+def best_color_hips(dec):
+    """Pick the deepest colour HiPS that covers this declination (id, label)."""
+    for dmin, dmax, hips, label in COLOR_FOOTPRINTS:
+        if dmin <= dec <= dmax:
+            return hips, label
+    return COLOR_FOOTPRINTS[-1][2], COLOR_FOOTPRINTS[-1][3]
+
+
+def identify_field(ra, dec, radius_arcmin=2.0):
+    """Nearest SIMBAD object to a position: (main_id, otype, sep_arcsec) or None.
+    Lets us caption/scale an image by what's actually there before rendering."""
+    try:
+        s = Simbad()
+        s.add_votable_fields("otype")
+        res = s.query_region(SkyCoord(ra, dec, unit=u.deg),
+                             radius=radius_arcmin * u.arcmin)
+        if res is None or len(res) == 0:
+            return None
+        here = SkyCoord(ra, dec, unit=u.deg)
+        objs = SkyCoord(res["ra"], res["dec"], unit=u.deg)
+        i = here.separation(objs).arcsec.argmin()
+        return (str(res["main_id"][i]), str(res["otype"][i]),
+                float(here.separation(objs[i]).arcsec))
+    except Exception:
+        return None
+
+
+def color(ra, dec, fov_arcmin=5.0, hips=None, pix=512, out=None):
+    """Save a colour image from a CDS HiPS survey.
+    hips=None auto-selects the deepest survey covering this declination."""
+    if hips is None:
+        hips, _ = best_color_hips(dec)
     OUT.mkdir(parents=True, exist_ok=True)
     out = out or OUT / f"color_{ra:.4f}_{dec:+.4f}.jpg"
     img = hips2fits.query(hips=hips, width=pix, height=pix,
@@ -82,12 +124,28 @@ def color(ra, dec, fov_arcmin=5.0, hips="CDS/P/DSS2/color", pix=512, out=None):
     return Path(out)
 
 
+def smart(ra, dec, fov_arcmin=None):
+    """Resolve the field, choose the best survey + FOV, render colour + panel.
+    Prints a short summary of what's there and why a survey was picked."""
+    obj = identify_field(ra, dec)
+    if obj:
+        name, otype, sep = obj
+        print(f"field: {name}  ({otype})  {sep:.1f}\" from centre")
+        # extended types want a wider FOV; point-like want a tight one
+        if fov_arcmin is None:
+            extended = any(k in otype for k in ("G", "Cl", "Neb", "SNR"))
+            fov_arcmin = 8.0 if extended else 3.0
+    else:
+        print("field: no catalogued SIMBAD object within 2' (blank/uncharted)")
+        fov_arcmin = fov_arcmin or 5.0
+    hips, label = best_color_hips(dec)
+    print(f"colour survey: {label}   (FOV {fov_arcmin}')")
+    print("color ->", color(ra, dec, fov_arcmin=fov_arcmin, hips=hips))
+    print("panel ->", panel(ra, dec, fov_arcmin=fov_arcmin))
+
+
 if __name__ == "__main__":
     ra, dec = (float(sys.argv[1]), float(sys.argv[2])) if len(sys.argv) > 2 \
         else (213.6905918, -12.5801013)
     print(f"position: RA={ra} Dec={dec}")
-    print("panel ->", panel(ra, dec))
-    try:
-        print("color ->", color(ra, dec))
-    except Exception as e:
-        print(f"color skipped ({type(e).__name__})")
+    smart(ra, dec)

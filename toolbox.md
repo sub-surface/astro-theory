@@ -82,7 +82,11 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 ## 7. Quick wins — status
 
 1. ✅ **`access/resolvers.py` + `access/xmatch.py`** — object-lookup + cross-match audit core.
-2. ✅ **`access/cache.py` + `access/cutouts.py`** — query cache/provenance + multi-λ imaging.
-3. ◻ **ADS/SciX token** → drop in `~/.ads/dev_key`; start a repo `refs.bib`. (Unlocks §1.)
-4. ◻ **`pip install dustmaps mocpy`** — the reference tools the dipole work needs next
+2. ✅ **`access/cache.py` + `access/cutouts.py`** — query cache/provenance + survey-aware imaging.
+3. ✅ **`access/ads.py` + `refs.bib`** — ADS/SciX search + BibTeX export plumbing wired; the
+   bibliography is seeded. **Action left: paste a free token** into `~/.ads/dev_key` (or
+   `$env:ADS_DEV_KEY`) to make it live — get it at the SciX token link in §1.
+4. ✅ **`access/hub.py`** — typer+rich CLI front-end (resolve·image·where·cite); roadmap in
+   [`tui-scope.md`](./tui-scope.md), imaging logic in [`imaging-guide.md`](./imaging-guide.md).
+5. ◻ **`pip install dustmaps mocpy`** — the reference tools the dipole work needs next
    (extinction corrections + Euclid DR1 partial-sky footprint algebra).

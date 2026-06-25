@@ -2,5 +2,9 @@
 astroquery>=0.4.10   # Gaia, Euclid, IRSA, MAST, HEASARC, VizieR clients
 astropy>=6.0
 pyvo>=1.5            # generic IVOA TAP (RACS/CASDA, LoTSS, any VO service)
+matplotlib>=3.7     # cutouts.py image rendering
+requests>=2.28      # ads.py REST calls to ADS/SciX
+typer>=0.12         # hub.py CLI
+rich>=13.0          # hub.py pretty output
 # NOIRLab Astro Data Lab (DESI / Legacy Surveys) — separate package:
 #   pip install astro-datalab
