@@ -197,3 +197,14 @@ survey/telescope, and product type; show a short coverage recommendation for the
 resolved object; and call the existing `color_auto` path for colour cutouts. Spectra,
 exoplanet archive pulls, and richer product fetches should be represented in the
 planner model but left as follow-on actions until their service helpers are designed.
+
+## Fun polish backlog
+
+These are intentionally non-core, low-risk cockpit treats to add between heavier
+research-tooling passes:
+
+- Starfield / hyperspace transition on mode switch.
+- Sparkline of cache-hit history in the status bar.
+- ASCII sky-position mini-map in the detail panel.
+- "Render highlighted candidate as poster" action.
+- Konami-code easter egg that turns the orrery into a spinning Cobra Mk III.

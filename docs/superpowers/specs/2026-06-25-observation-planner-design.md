@@ -111,6 +111,72 @@ spectrum available for this target" a normal result rather than an exception.
 Hermetic tests must use fake spectral tables; live smoke tests can validate the
 chosen adapter on a known target with available spectra.
 
+### Data Source Expansion
+
+The planner needs a source-capability registry that is broader than
+`registry.ARCHIVES`. `registry.ARCHIVES` answers "where can I run ADQL rows?";
+the planner also needs to answer "which source is useful for this target and
+modality?"
+
+Add a structured source catalogue, either in the planner module or a small
+service sibling, with entries shaped like:
+
+- `key`
+- `label`
+- `modalities`: image, spectrum, lightcurve, catalogue, bibliography,
+  exoplanet, high-energy, observation-metadata
+- `object_classes`: star, exoplanet host, galaxy/AGN, nebula, cluster,
+  blank field, unknown
+- `access`: astroquery, TAP, VO, URL, optional dependency
+- `coverage_hint`
+- `fetch_cost`: cheap metadata, row query, artifact fetch, heavy/bulk
+- `status`: executable now, metadata-only, planned
+- `service_module`: optional module name that can execute the source
+
+First-wave sources:
+
+- **NED** (`astroquery.ipac.ned`): extragalactic resolver/context source,
+  spectra and spectrum URL lists for objects such as `3C 273`, photometry,
+  positions, redshifts, references, and object notes. Good first spectra
+  adapter for galaxies and AGN.
+- **SDSS** (`astroquery.sdss`): optical spectroscopy where the target is in
+  footprint. Use `query_region(..., spectro=True)` for candidate matches and
+  `get_spectra(matches=...)` for artifact fetches.
+- **MAST** (`astroquery.mast`): observation metadata and later data products
+  for HST, JWST, TESS, Kepler, GALEX, and hosted catalogues. In Phase 4 it is
+  mainly a planner/source-discovery capability; pixel and spectrum downloads
+  should remain deliberate follow-ons.
+- **NASA Exoplanet Archive TAP**: exoplanet and host-star context through ADQL
+  over tables such as `ps` and `pscomppars`, including schema discovery and
+  spatial constraints. First use should be compact host/planet summaries, not
+  a full exoplanet workflow.
+- **HEASARC** (`astroquery.heasarc`): high-energy observation metadata and data
+  product links for Chandra, XMM, NuSTAR, Swift, Fermi, NICER, and related
+  catalogues. Already queryable in the repo, but Phase 4 should expose it as a
+  modality-aware recommendation for AGN, clusters, compact objects, and
+  high-energy sources.
+- **VizieR** (`astroquery.vizier` and `vizier-tap`): broad catalogue lookup and
+  catalogue-specific context, not only crossmatch. Useful as a fallback when an
+  object has a known published catalogue but no dedicated helper.
+
+Second-wave sources:
+
+- **DESI / SDSS-V spectral catalogues** for redshift truth, QSO/galaxy spectra,
+  and validation of photometric selections.
+- **TESS/Kepler light curves**, probably through MAST first and later through
+  `lightkurve` if the dependency is worth the added surface area.
+- **NED photometry and redshift tables** as structured extragalactic context,
+  not only resolver enrichment.
+- **SPHEREx** once public catalogue access stabilizes, because all-sky
+  low-resolution spectra are directly relevant to the isotropy/dipole line.
+- **Planck/ACT/SPT and GWOSC** as metadata/planner-only capabilities at first;
+  they are valuable but should not distract the Phase 4 Resolve implementation.
+
+The first implementation should not wire every source into executable fetches.
+It should make the planner honest: "recommended and executable now",
+"recommended as metadata only", or "planned". This prevents the UI from
+promising a product that the service layer cannot fetch.
+
 ### TUI Changes
 
 The existing `ImageSettingsScreen` should evolve into a planner-style Resolve
@@ -180,6 +246,16 @@ Suggested dataclasses:
   - `coverage_note`
   - `cost`
   - `available`
+- `ProductSourceCapability`
+  - `key`
+  - `label`
+  - `modalities`
+  - `object_classes`
+  - `access`
+  - `coverage_hint`
+  - `fetch_cost`
+  - `status`
+  - `service_module`
 - `ObservationPlan`
   - `target`
   - `product`
@@ -251,6 +327,8 @@ Planner tests:
 - Ambiguous/fuzzy results remain visible as alternatives.
 - Object classes change modality ranking, for example AGN favors radio/mid-IR
   and spectra; galaxy favors optical/near-IR; blank field favors panel.
+- Source capability status is explicit: executable, metadata-only, or planned.
+- Recommended sources change by object class and modality without network calls.
 
 Image planner tests:
 
@@ -282,10 +360,13 @@ Manual validation:
 In scope for first implementation:
 
 - Planner service and models.
+- Source-capability registry with first-wave source metadata.
 - Resolve panel sophistication.
 - Fuzzy/ambiguous input handling at a practical first-pass level.
 - Image planning with current cutout backend.
 - One spectra artifact path with hermetic tests.
+- One spectra live adapter selected from NED or SDSS, guarded by graceful
+  no-availability behavior.
 - Coverage suggestions before fetch.
 
 Out of scope for first implementation:
@@ -296,17 +377,20 @@ Out of scope for first implementation:
 - Bulk archive mining.
 - Full NASA Exoplanet Archive workflow.
 - HST/JWST pixel download workflows.
+- Executable adapters for every recommended source.
 - Replacing the existing CLI command set.
 
 ## Implementation Order
 
 1. Add pure planner models and tests.
-2. Expose image capability metadata and coverage recommendation helpers.
-3. Add spectra rendering service with fake-table tests.
-4. Wire the TUI Resolve panel to planner state without changing fetch behavior.
-5. Add deliberate fetch actions for colour cutout and the first spectra artifact.
-6. Run full hermetic test suite.
-7. Manually smoke-test the TUI in a terminal.
+2. Add source-capability metadata and object-class recommendation tests.
+3. Expose image capability metadata and coverage recommendation helpers.
+4. Add spectra rendering service with fake-table tests.
+5. Add one guarded spectra live adapter, preferably NED or SDSS.
+6. Wire the TUI Resolve panel to planner state without changing fetch behavior.
+7. Add deliberate fetch actions for colour cutout and the first spectra artifact.
+8. Run full hermetic test suite.
+9. Manually smoke-test the TUI in a terminal.
 
 This order validates the shared planning spine before increasing UI complexity,
 while still proving that non-image products fit the architecture.
