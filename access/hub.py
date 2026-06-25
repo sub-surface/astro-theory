@@ -19,6 +19,7 @@ to grow toward a full TUI — see ../tui-scope.md.
     python -m access.hub sample list
     python -m access.hub atlas-targets
     python -m access.hub poster M87 --resolution 1080p --style label
+    python -m access.hub runbook euclid-q1
 """
 import importlib
 import re
@@ -36,7 +37,7 @@ from . import cache, cutouts, resolvers
 app = typer.Typer(add_completion=False, no_args_is_help=True,
                   help=("Desk-astronomy CLI: resolve | image | where | cite | "
                         "log | query | dossier | field | papers | sample | "
-                        "atlas-targets | poster."))
+                        "atlas-targets | poster | runbook."))
 console = Console()
 REPO = Path(__file__).resolve().parent.parent
 REPORTS_DIR = REPO / "data" / "reports"
@@ -182,6 +183,38 @@ def _contact_sheet(paths, out: Path, title: str):
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return out
+
+
+def _run_papers_packet(query_text: str, rows: int):
+    from . import ads
+    docs = ads.search(query_text, rows=rows)
+    body = "\n".join([
+        f"# ADS paper set: {query_text}",
+        "",
+        *(_paper_lines(docs)),
+    ])
+    return _write_report("papers", query_text, body), docs
+
+
+def _run_field_packet(ra: float, dec: float, fov: float, images: bool):
+    obj = cutouts.identify_field(ra, dec)
+    hips, survey = cutouts.best_color_hips(dec)
+    color_path = panel_path = None
+    if images:
+        color_path = cutouts.color(ra, dec, fov_arcmin=fov, hips=hips)
+        panel_path = cutouts.panel(ra, dec, fov_arcmin=fov)
+    nearest = (f"{obj[0]} ({obj[1]}), {obj[2]:.1f} arcsec away"
+               if obj else "No SIMBAD object within 2 arcmin")
+    body = "\n".join([
+        f"# Field: RA={ra:.5f}, Dec={dec:+.5f}",
+        "",
+        f"- Nearest object: {nearest}",
+        f"- Colour survey: {survey}",
+        f"- FOV: {fov} arcmin",
+        f"- Colour image: {color_path or 'not rendered'}",
+        f"- Multi-wavelength panel: {panel_path or 'not rendered'}",
+    ])
+    return _write_report("field", f"{ra:.5f}_{dec:+.5f}", body)
 
 
 @app.command()
@@ -472,6 +505,100 @@ def poster(target: str,
         console.print(f"[red]{e}[/]")
         raise typer.Exit(1)
     console.print(f"poster -> [green]{path}[/]")
+
+
+@app.command()
+def runbook(name: str,
+            limit: int = typer.Option(4, help="rows/images per runbook section"),
+            images: bool = typer.Option(True, help="render field and atlas images"),
+            posters: bool = typer.Option(True, help="render poster anchors"),
+            samples: bool = typer.Option(True, help="run row-capped sample pulls")):
+    """Run a curated repeatable workflow and write an index report."""
+    if name == "list":
+        t = RichTable("runbook", "description", title="runbooks")
+        t.add_row("euclid-q1", "Euclid Q1 desk-work packet: papers, field, samples, visuals")
+        console.print(t)
+        return
+    if name != "euclid-q1":
+        console.print("[red]unknown runbook; run: python -m access.hub runbook list[/]")
+        raise typer.Exit(1)
+
+    created = []
+    notes = []
+
+    for phrase in ("Euclid Quick Data Release", "Euclid Q1 AGN"):
+        query_text = f'abs:"{phrase}" year:2025-2026'
+        try:
+            path, docs = _run_papers_packet(query_text, rows=limit)
+            created.append(("papers", path))
+            notes.append(f"- Papers `{phrase}`: {len(docs)} ADS rows -> `{path}`")
+        except Exception as e:
+            notes.append(f"- Papers `{phrase}`: unavailable ({type(e).__name__}: {e})")
+
+    try:
+        path = _run_field_packet(53.1250, -28.1000, fov=10.0, images=images)
+        created.append(("field", path))
+        notes.append(f"- CDFS / Euclid deep-field visual anchor -> `{path}`")
+    except Exception as e:
+        notes.append(f"- CDFS / Euclid deep-field visual anchor: unavailable ({type(e).__name__}: {e})")
+
+    if samples:
+        for recipe in ("gaia-bright-nearby",):
+            rec = SAMPLE_RECIPES[recipe]
+            try:
+                source = _query_archive(rec.archive)
+                tab = cache.cached_query(f"sample:{recipe}", rec.adql,
+                                         lambda: source.query(rec.adql))
+                notes.append(f"- Sample `{recipe}`: {len(tab)} rows cached.")
+            except Exception as e:
+                notes.append(f"- Sample `{recipe}`: unavailable ({type(e).__name__}: {e})")
+    else:
+        notes.append("- Samples skipped.")
+
+    if images:
+        try:
+            ATLAS_DIR.mkdir(parents=True, exist_ok=True)
+            paths = []
+            for target in ATLAS_TARGETS[:limit]:
+                out = ATLAS_DIR / f"{_slug(target['name'])}.jpg"
+                paths.append(cutouts.color(target["ra"], target["dec"],
+                                           fov_arcmin=target["fov"], pix=768, out=out))
+            sheet = _contact_sheet(paths, ATLAS_DIR / "atlas-targets.png", "atlas targets")
+            created.append(("atlas", sheet))
+            notes.append(f"- Atlas contact sheet -> `{sheet}`")
+        except Exception as e:
+            notes.append(f"- Atlas contact sheet: unavailable ({type(e).__name__}: {e})")
+    else:
+        notes.append("- Atlas images skipped.")
+
+    if posters:
+        for target in ("M87", "3C 273"):
+            try:
+                obj = _resolve_target(target)
+                out = POSTERS_DIR / f"{_slug(obj['name'])}-1080p-label.jpg"
+                POSTERS_DIR.mkdir(parents=True, exist_ok=True)
+                path = cutouts.poster(obj["ra"], obj["dec"], width=1920, height=1080,
+                                      fov_arcmin=8.0 if target == "M87" else 4.0,
+                                      out=out, label=obj["name"], style="label")
+                created.append(("poster", path))
+                notes.append(f"- Poster `{target}` -> `{path}`")
+            except Exception as e:
+                notes.append(f"- Poster `{target}`: unavailable ({type(e).__name__}: {e})")
+    else:
+        notes.append("- Posters skipped.")
+
+    body = "\n".join([
+        "# Runbook: Euclid Q1",
+        "",
+        "Purpose: connect Euclid Q1 literature, one deep-field visual anchor, small cached samples, and visual targets into a repeatable desk-work packet.",
+        "",
+        "## Outputs",
+        *notes,
+    ])
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    index = REPORTS_DIR / "runbook-euclid-q1.md"
+    index.write_text(body + "\n", encoding="utf-8")
+    console.print(f"runbook -> [green]{index}[/]")
 
 
 if __name__ == "__main__":

@@ -54,6 +54,8 @@ search → refs.bib).
 - `sample <recipe>` — row-capped science pulls through the cache.
 - `atlas-targets` — curated visual contact sheet of astronomy targets.
 - `poster <target>` — wallpaper-style HiPS render at 1080p, 2k, or 4k.
+- `runbook euclid-q1` — repeatable packet that links Euclid Q1 papers, a deep-field
+  visual anchor, cached samples, atlas images, and posters from one index report.
 
 Still to add:
 - `match <table> <catalog>` — CDS X-Match wrapper (the audit primitive).

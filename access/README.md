@@ -31,7 +31,7 @@ client class and how you get an astropy `Table` back:
 | *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
 | *(imaging)* | `cutouts.py` | `smart(ra,dec)` / `panel` / `color` | ✓ | survey-aware multi-λ + colour cutout from coords |
 | ADS / SciX | `ads.py` | `ads.search(q)` / `ads.add_to_refs(...)` | ✓² | literature search + BibTeX → `../refs.bib` |
-| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite·log·query·dossier·field·papers·sample·atlas-targets·poster |
+| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite·log·query·dossier·field·papers·sample·atlas-targets·poster·runbook |
 
 ² ADS plumbing verified (token discovery + REST path); live results need a free token
 (see `ads.py` header). Imaging is survey-aware — see [`../imaging-guide.md`](../imaging-guide.md);
@@ -71,11 +71,14 @@ python -m access.hub papers year:2025-2026 --phrase "Euclid Quick Data Release" 
 python -m access.hub sample list
 python -m access.hub atlas-targets --limit 4
 python -m access.hub poster M87 --resolution 1080p --style label
+python -m access.hub runbook euclid-q1
 ```
 
 Reports are written under `data/reports/`, atlas contact sheets under `data/atlas/`,
 and wallpapers under `data/posters/`. Those directories are intentionally local and
 git-ignored. `sample` recipes are row-capped and run through `cache.cached_query`.
+`runbook euclid-q1` writes an index report linking the generated literature, field,
+sample, atlas, and poster artifacts.
 
 ## Conventions baked into every snippet
 

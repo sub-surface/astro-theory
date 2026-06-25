@@ -254,3 +254,37 @@ def test_poster_calls_cutout_poster(monkeypatch, tmp_path):
     assert calls[0][1]["width"] == 1920
     assert calls[0][1]["height"] == 1080
     assert calls[0][1]["label"] == "M  87"
+
+
+def test_runbook_euclid_q1_writes_index(monkeypatch, tmp_path):
+    runner = CliRunner()
+    monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
+    monkeypatch.setattr(hub, "POSTERS_DIR", tmp_path)
+    monkeypatch.setattr(hub, "ATLAS_DIR", tmp_path)
+    monkeypatch.setattr(
+        ads,
+        "search",
+        lambda query, rows: [{"bibcode": "abc", "year": 2026, "title": [query]}],
+    )
+    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: None)
+    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
+    monkeypatch.setattr(hub.cutouts, "color", lambda *args, **kwargs: tmp_path / "field.jpg")
+    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
+    monkeypatch.setattr(
+        hub.resolvers,
+        "identify",
+        lambda name: Table({"main_id": [name], "otype": ["G"], "ra": [187.7], "dec": [12.4]}),
+    )
+    monkeypatch.setattr(hub.cutouts, "poster", lambda *args, **kwargs: kwargs["out"])
+    monkeypatch.setattr(hub, "_contact_sheet", lambda paths, out, title: out.write_text(title, encoding="utf-8") or out)
+
+    result = runner.invoke(hub.app, ["runbook", "euclid-q1", "--no-samples", "--limit", "2"])
+
+    assert result.exit_code == 0
+    index = tmp_path / "runbook-euclid-q1.md"
+    assert index.exists()
+    text = index.read_text(encoding="utf-8")
+    assert "Euclid Q1" in text
+    assert "papers-abs-euclid-quick-data-release-year-2025-2026.md" in text
+    assert "field-53-12500-28-10000.md" in text
+    assert "m87-1080p-label.jpg" in text

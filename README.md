@@ -32,7 +32,7 @@ The "small local dataset" is usually the *output* of the cuts, not a big downloa
 >    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), `cutouts.py`
 >    (survey-aware multi-λ imaging; see [`imaging-guide.md`](./imaging-guide.md)), `ads.py`
 >    (literature → [`refs.bib`](./refs.bib)), and a **CLI front-end**: `python -m access.hub`
->    (`resolve · image · where · cite · query · log · dossier · field · papers · sample · atlas-targets · poster`)
+>    (`resolve · image · where · cite · query · log · dossier · field · papers · sample · atlas-targets · poster · runbook`)
 >    — roadmap in [`tui-scope.md`](./tui-scope.md).
 > 3. 🧰 [`toolbox.md`](./toolbox.md) — *everything around the query*: ADS/SciX, CDS X-Match,
 >    MOCpy/healpy, dustmaps, reproducibility/QoL — leverage-ranked.
