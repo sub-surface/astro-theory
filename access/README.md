@@ -31,7 +31,7 @@ client class and how you get an astropy `Table` back:
 | *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
 | *(imaging)* | `cutouts.py` | `smart(ra,dec)` / `panel` / `color` | ✓ | survey-aware multi-λ + colour cutout from coords |
 | ADS / SciX | `ads.py` | `ads.search(q)` / `ads.add_to_refs(...)` | ✓² | literature search + BibTeX → `../refs.bib` |
-| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite |
+| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite·log·query·dossier·field·papers·sample·atlas-targets·poster |
 
 ² ADS plumbing verified (token discovery + REST path); live results need a free token
 (see `ads.py` header). Imaging is survey-aware — see [`../imaging-guide.md`](../imaging-guide.md);
@@ -59,6 +59,23 @@ cutouts.panel(213.6905918, -12.5801013)  # multi-wavelength PNG of a position
 hit; every fetch is appended to `data/manifest.jsonl` so each figure traces to its query.
 `cutouts.panel(ra, dec)` / `cutouts.color(ra, dec)` render a position across the spectrum
 (SkyView UV→radio + CDS HiPS colour). Both write to `data/` (git-ignored).
+
+## Hub packets
+
+The CLI now has six higher-level packet commands over the same thin access layer:
+
+```bash
+python -m access.hub dossier M87
+python -m access.hub field 213.6906 -12.5801 --fov 6
+python -m access.hub papers year:2025-2026 --phrase "Euclid Quick Data Release" --report
+python -m access.hub sample list
+python -m access.hub atlas-targets --limit 4
+python -m access.hub poster M87 --resolution 1080p --style label
+```
+
+Reports are written under `data/reports/`, atlas contact sheets under `data/atlas/`,
+and wallpapers under `data/posters/`. Those directories are intentionally local and
+git-ignored. `sample` recipes are row-capped and run through `cache.cached_query`.
 
 ## Conventions baked into every snippet
 

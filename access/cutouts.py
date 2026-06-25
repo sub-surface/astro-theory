@@ -124,6 +124,45 @@ def color(ra, dec, fov_arcmin=5.0, hips=None, pix=512, out=None):
     return Path(out)
 
 
+def poster(ra, dec, fov_arcmin=8.0, hips=None, width=1920, height=1080,
+           out=None, label=None, style="clean"):
+    """Save a 16:9 wallpaper-style colour image from a CDS HiPS survey.
+
+    style='clean' writes only the image; 'label' adds a small caption; 'science'
+    adds a caption plus a subtle centre marker. Returns the saved path.
+    """
+    if hips is None:
+        hips, _ = best_color_hips(dec)
+    OUT.mkdir(parents=True, exist_ok=True)
+    out = out or OUT / f"poster_{ra:.4f}_{dec:+.4f}_{width}x{height}.jpg"
+    img = hips2fits.query(hips=hips, width=width, height=height,
+                          ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
+                          fov=Angle(fov_arcmin * u.arcmin),
+                          projection="TAN", format="jpg")
+    dpi = 100
+    fig = plt.figure(figsize=(width / dpi, height / dpi), dpi=dpi)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.imshow(img, origin="lower")
+    ax.set_axis_off()
+    if label and style in {"label", "science"}:
+        ax.text(0.025, 0.045, label, transform=ax.transAxes,
+                color="white", fontsize=max(14, width // 95),
+                ha="left", va="bottom",
+                bbox={"facecolor": "black", "alpha": 0.35,
+                      "edgecolor": "none", "pad": 6})
+    if style == "science":
+        ax.plot([0.49, 0.51], [0.5, 0.5], transform=ax.transAxes,
+                color="white", alpha=0.45, lw=1)
+        ax.plot([0.5, 0.5], [0.49, 0.51], transform=ax.transAxes,
+                color="white", alpha=0.45, lw=1)
+        ax.text(0.975, 0.045, f"RA={ra:.5f} Dec={dec:+.5f}",
+                transform=ax.transAxes, color="white", alpha=0.75,
+                fontsize=max(10, width // 150), ha="right", va="bottom")
+    fig.savefig(out, dpi=dpi, bbox_inches="tight", pad_inches=0)
+    plt.close(fig)
+    return Path(out)
+
+
 def smart(ra, dec, fov_arcmin=None):
     """Resolve the field, choose the best survey + FOV, render colour + panel.
     Prints a short summary of what's there and why a survey was picked."""

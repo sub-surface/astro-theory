@@ -41,11 +41,22 @@ on top of the same VO services they use.
 (smart multi-λ + colour cutout), `where` (footprint + nearest object), `cite` (ADS
 search → refs.bib).
 
-**v1 — CLI breadth.** Add:
-- `query <archive> "<ADQL>"` — run against any `access/` archive, **auto-cached** via
-  `cache.cached_query`, result as a rich table.
-- `match <table> <catalog>` — CDS X-Match wrapper (the audit primitive).
+**v1 — CLI breadth.** Implemented:
+- `query <archive> "<ADQL>"` — run against supported ADQL archives (`gaia`, `irsa`,
+  `euclid`, `heasarc`), **auto-cached** via `cache.cached_query`, result as a rich table.
 - `log` — browse `data/manifest.jsonl` (what we've pulled, when) as a table.
+- `papers <ADS query>` — literature packet with exact-phrase helper, optional BibTeX append,
+  and Markdown report output.
+- `dossier <target>` — object packet: SIMBAD resolve, survey-aware image/panel, ADS trail,
+  Markdown report.
+- `field <ra> <dec>` — blank-field or coordinate packet: nearest object, best survey,
+  image/panel, Markdown report.
+- `sample <recipe>` — row-capped science pulls through the cache.
+- `atlas-targets` — curated visual contact sheet of astronomy targets.
+- `poster <target>` — wallpaper-style HiPS render at 1080p, 2k, or 4k.
+
+Still to add:
+- `match <table> <catalog>` — CDS X-Match wrapper (the audit primitive).
 - `atlas` / `toolbox` — pretty-print the hub maps for quick reference.
 
 **v2 — Textual TUI.** A `textual` app (needs `pip install textual`) with panes:
@@ -64,6 +75,6 @@ still thin over `access/`.
    so it's a front door to *our* research, not a generic client.
 
 ## Next decision
-v1 `query`/`match`/`log` is the high-value, low-risk next step (pure composition of
-tools we've already verified). The Textual TUI is the fun leap once the CLI surface
-has settled — defer until v1 commands feel right in daily use.
+Finish v1 with `match` plus `atlas` / `toolbox` quick-reference commands. The Textual
+TUI is the fun leap once the CLI surface has settled — defer until v1 commands feel
+right in daily use.
