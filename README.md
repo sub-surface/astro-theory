@@ -21,6 +21,12 @@ theory / arXiv paper
 
 The "small local dataset" is usually the *output* of the cuts, not a big download.
 
+> 🗺️ **Start here for "what data can we touch?":** [`data-atlas.md`](./data-atlas.md) —
+> the standing map of every publicly queryable archive (ESA, MAST, IRSA, HEASARC, NOIRLab,
+> radio, CMB), ranked by data quality *and* by leverage for a desk team, plus the 2026–2027
+> release calendar and an opportunity map keyed to our strengths. This repo is a **hub for
+> astronomical/cosmological desk work at many scales**; the atlas steers what we pick up.
+
 ## Roles
 
 - **Leon** — physical judgment: what's worth predicting, which cuts are defensible.
