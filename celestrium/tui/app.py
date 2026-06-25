@@ -29,7 +29,7 @@ from textual.screen import ModalScreen
 from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
                              ListItem, ListView, RichLog, Select, Static)
 
-from .. import cache, candidates, cutouts, packets, registry, xmatch
+from .. import cache, candidates, cutouts, packets, registry, spectra, xmatch
 from .wireframe import Wireframe
 
 MODES = [
@@ -560,6 +560,22 @@ class CelestriumApp(App):
     def _render_preview_image(self, name, row, ra, dec, detail) -> None:
         """Phase-3 image preview with the new settings + no-coverage fallback."""
         cfg = self.image_cfg
+        product = cfg.get("product", "colour_image")
+        if product == "spectrum":
+            self.call_from_thread(self._dbg, f"spectrum {name}: source=NED")
+            result = spectra.fetch_ned_spectrum(name)
+            if result is None:
+                self.call_from_thread(
+                    self._set_detail,
+                    f"{detail}\n\n[yellow]No NED spectrum found for {name}.[/]\n"
+                    "Try image or metadata products from the planner.")
+                return
+            self.last_image = result.path
+            self.call_from_thread(
+                self._set_detail,
+                f"{detail}\n\n[b]spectrum[/] {result.source}\n{result.summary}\n"
+                f"[dim]{result.path}[/]\n[b green]Ctrl+O[/] open")
+            return
         fov = cfg["fov"] if isinstance(cfg["fov"], (int, float)) \
             else packets.default_fov(str(row.get("otype", "")), 8.0, 3.0)
         survey = None if cfg["survey"] == "auto" else cfg["survey"]

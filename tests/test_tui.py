@@ -145,3 +145,30 @@ def test_planner_settings_can_select_spectrum_network_free():
             assert app.image_cfg["product"] == "spectrum"
 
     asyncio.run(scenario())
+
+
+def test_render_preview_uses_spectrum_backend_for_spectrum_product(tmp_path, monkeypatch):
+    from celestrium import spectra
+
+    class Result:
+        path = tmp_path / "spec.png"
+        summary = "fake spectrum"
+        source = "NED"
+
+    seen = {}
+
+    def fake_fetch(name):
+        seen["name"] = name
+        Result.path.write_text("fake", encoding="utf-8")
+        return Result()
+
+    monkeypatch.setattr(spectra, "fetch_ned_spectrum", fake_fetch)
+    app = CelestriumApp(active_line="test-line")
+    app.call_from_thread = lambda fn, *args, **kwargs: fn(*args, **kwargs)
+    app._set_detail = lambda text: None
+    app.image_cfg = {"fov": "auto", "pix": 512, "survey": "auto",
+                     "product": "spectrum", "wavelength": "auto"}
+    row = {"otype": "QSO"}
+    app._render_preview_image("3C 273", row, 187.2, 2.0, "detail")
+    assert seen["name"] == "3C 273"
+    assert app.last_image == Result.path
