@@ -60,7 +60,7 @@ only present.
 keep that (don't bind functions by value at import). Tests must stay hermetic (no network).
 
 ```bash
-python -m pytest tests/ -q          # 29 tests, hermetic
+python -m pytest tests/ -q          # 39 tests, hermetic
 python -m celestrium --help         # wing-grouped commands
 python -m celestrium runbook list
 python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # X-match audit primitive

@@ -1,13 +1,19 @@
-/* Celestrium cockpit — a dark cosmology palette. Polish lives here, not in logic. */
+/* Celestrium cockpit styling.
+ *
+ * Colours come from Textual theme *variables* ($surface, $panel, $primary, …),
+ * NOT hard-coded hex — so Ctrl+T actually recolours the whole cockpit and the
+ * default ansi-dark theme looks right in any terminal palette. Layout + structure
+ * live here; the palette is whatever theme is active.
+ */
 
 Screen {
-    background: #0b0e14;
-    color: #c8d3e0;
+    background: $background;
+    color: $foreground;
 }
 
 Header {
-    background: #11151f;
-    color: #8fd0ff;
+    background: $panel;
+    color: $primary;
     text-style: bold;
 }
 
@@ -17,8 +23,8 @@ Header {
 
 #sidebar {
     width: 30;
-    background: #0e121b;
-    border-right: vkey #1c2433;
+    background: $panel;
+    border-right: vkey $primary 40%;
     padding: 1 1;
 }
 
@@ -29,19 +35,26 @@ Header {
 
 #preview {
     width: 1fr;
-    background: #0e121b;
-    border-left: vkey #1c2433;
+    background: $panel;
+    border-left: vkey $primary 40%;
     padding: 1 1;
 }
 
+#detail-scroll {
+    height: 1fr;
+    background: $surface;
+    border: round $primary 30%;
+    padding: 0 1;
+}
+
 .heading {
-    color: #6f8bb3;
+    color: $accent;
     text-style: bold;
     margin: 1 0 0 0;
 }
 
 .dim {
-    color: #4a5870;
+    color: $text-muted;
 }
 
 #controls {
@@ -56,27 +69,37 @@ Header {
 
 #entry {
     width: 1fr;
-    border: tall #233047;
+    border: tall $primary 50%;
 }
 
 #entry:focus {
-    border: tall #3b7dd8;
+    border: tall $accent;
 }
 
 #results {
     height: 1fr;
-    border: round #1c2433;
+    border: round $primary 30%;
 }
 
 #detail {
-    color: #c8d3e0;
+    color: $foreground;
+    height: auto;
+}
+
+/* The ELITE-style rotating-wireframe panel. */
+#orrery {
+    height: 14;
+    border: round $accent 40%;
+    color: $primary;
+    background: $surface;
+    content-align: center middle;
 }
 
 #status {
     height: 7;
-    background: #090c12;
-    border-top: hkey #1c2433;
-    color: #8b9bb4;
+    background: $surface;
+    border-top: hkey $primary 40%;
+    color: $text-muted;
     padding: 0 1;
 }
 
@@ -89,24 +112,33 @@ ListItem {
     padding: 0 1;
 }
 
-/* Save-candidate modal (Phase 3) */
-SaveCandidateScreen {
+ListItem.--highlight {
+    background: $primary 30%;
+}
+
+/* Modal dialogs (save list / image settings / about). */
+ModalScreen {
     align: center middle;
 }
 
-#save-box {
-    width: 60;
+#modal-box {
+    width: 64;
     height: auto;
-    background: #11151f;
-    border: round #3b7dd8;
+    background: $panel;
+    border: round $accent;
     padding: 1 2;
 }
 
-#save-actions {
+.modal-actions {
     height: auto;
     margin: 1 0 0 0;
 }
 
-#save-actions Button {
+.modal-actions Button {
     margin: 0 1 0 0;
+}
+
+#about-body {
+    height: auto;
+    padding: 0 0 1 0;
 }

@@ -92,7 +92,32 @@ index/latest/drop with an `index.jsonl` provenance log, mirroring `cache.py`) is
   opens a cached pull's rows, **F5** re-runs the query fresh.
 
 Tests: `candidates` round-trip + dedupe + drop (hermetic); TUI save/load smoke
-(network-free). `python -m pytest tests/ -q` → 29 tests.
+(network-free).
+
+**Phase 3.5 — cockpit comforts (built).** A care-and-attention pass on the TUI:
+- **Themes that actually recolour** — `theme.tcss` now uses Textual theme *variables*
+  (`$surface`/`$panel`/`$primary`/`$accent`/…), not hard-coded hex, so the palette
+  follows the active theme. Default is **ansi-dark**; **Ctrl+T** rings through a curated
+  set (tokyo-night, nord, gruvbox, dracula, …).
+- **ELITE-style orrery** — a new `tui/wireframe.py`: a dependency-free software 3D
+  engine (the five Platonic solids, rotation matrices, perspective) drawing rotating
+  vector wireframes onto a **Braille canvas** (2×4 dots/cell). Mounted under the detail
+  pane; **F2** cycles solids, **F3** pauses the spin. Frame-counter driven, so it's
+  deterministic and unit-tested without an event loop.
+- **Contextual detail panel** — highlighting a row in the grid expands it in place:
+  full author list + abstract for a paper, untruncated values for a data row, full
+  provenance for a candidate list / manifest entry.
+- **Image settings + the Andromeda fix** — `cutouts.color_auto` walks the covering
+  surveys and skips blank/no-coverage tiles (M31 from Legacy → falls back to Pan-STARRS),
+  so large galaxies stop rendering blank white. **Ctrl+G** opens a modal for FOV / pixels
+  / survey override.
+- **Debug + refresh** — **Ctrl+D** toggles a debug ticker (query/image/xmatch tracing);
+  **Ctrl+R** re-runs the last data action bypassing the cache.
+- **Polish + eggs** — **F1** About card; a few magic words in Resolve mode (`elite`,
+  `thargoid`, `42`, `xyzzy`, `tea`, `cake`). The stray astroquery "Could not import
+  regions" line on exit is gone (its import is now lazy + muted).
+
+`python -m pytest tests/ -q` → 39 tests, all hermetic.
 
 ## Phase 2 — design reference (the cockpit)
 
