@@ -198,6 +198,68 @@ resolved object; and call the existing `color_auto` path for colour cutouts. Spe
 exoplanet archive pulls, and richer product fetches should be represented in the
 planner model but left as follow-on actions until their service helpers are designed.
 
+## Phase 4.1 directions - Resolve planner UX + performance
+
+The first Phase 4 implementation added the planning spine (`planner.py`), source
+capability metadata, image coverage notes, spectra rendering, a guarded NED spectra
+adapter, and basic TUI controls. The cockpit still needs a UI organisation pass:
+the current `Ctrl+G` modal is still recognisably the old image-settings modal with
+new product fields, and Resolve still behaves more like a direct action than a
+deliberate planner.
+
+Lingering Phase 4 / roadmap items:
+
+- **Fuzzy and ambiguous resolution.** `parse_request()` can understand simple
+  intents and coordinates, but Resolve still relies on exact SIMBAD identify. The
+  next pass should add layered matching: exact object, coordinate parse, alias or
+  relaxed search, nearby-object search, ambiguity list, and blank-field planning.
+- **True planner surface.** Replace the image-settings modal with a Resolve planner
+  surface that shows identity, confidence, ambiguity, ranked product actions,
+  source status, coverage notes, and current artifact/provenance.
+- **Deliberate fetch flow.** Resolve should plan first and fetch only when the user
+  chooses an action. This avoids unnecessary image/spectrum calls and makes product
+  availability clearer.
+- **More executable products.** Multi-wavelength panels, metadata/exoplanet context,
+  catalogue context, and CLI hooks (`where` coverage notes, richer `image`, future
+  `spectrum TARGET`) are still follow-on work.
+- **Runbook runner.** The original Phase 3 roadmap item remains open: choose a
+  runbook in the TUI, show live step progress, and open the resulting index report.
+
+Potential directions:
+
+1. **Incremental Resolve reorganisation (recommended).** Keep the existing cockpit
+   layout and rework Resolve in place: an intent/target bar, an identity card,
+   a ranked planner-actions panel, and an artifact/provenance detail area. This is
+   the lowest-risk path because it preserves working modes, tests, keybindings, and
+   the external-open image/spectrum pattern while making the planner actually usable.
+
+2. **Full cockpit layout rewrite.** Redesign the TUI around a denser workbench:
+   left navigation, central target/action workspace, right artifact/provenance panel,
+   and bottom status/history strip. This could produce the cleanest long-term UI,
+   but it has higher regression risk because `tui/app.py` is already broad and many
+   modes share the same `DataTable`, detail panel, and status ticker.
+
+3. **Separate Planner mode.** Add a new Planner mode rather than changing Resolve.
+   This isolates the new workflow and reduces disruption to the current Resolve
+   path, but it weakens the "Resolve is the front door" idea and risks splitting
+   object identity, literature, imaging, spectra, and metadata across too many modes.
+
+Performance improvements to pair with any direction:
+
+- **Stop auto-fetching artifacts on Resolve.** Resolve should populate identity and
+  recommended actions first; image/spectrum fetches should be explicit actions.
+- **Guard stale workers.** Tag each Resolve/planner action with a request id so old
+  workers cannot overwrite newer detail/artifact state.
+- **Cache lightweight planner state.** Keep the last resolved target, recommended
+  plans, and artifact summaries in memory so switching modes or reopening settings
+  does not recompute everything.
+- **Lazy status checks.** Avoid repeated ADS-token and optional-service checks during
+  frequent UI redraws; refresh them on mount or explicit debug/status actions.
+- **Keep artifact rendering external.** Continue writing image/spectrum artifacts to
+  `data/` and opening them externally rather than adding heavy terminal graphics.
+- **Keep tests hermetic.** Planner ranking, UI state, and product routing should be
+  tested with fake backends; live archive checks remain manual smoke tests only.
+
 ## Fun polish backlog
 
 These are intentionally non-core, low-risk cockpit treats to add between heavier
