@@ -73,7 +73,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="Extragalactic objects with literature metadata.",
         fetch_cost="low",
         status="metadata",
-        service_module="celestrium.sources.ned",
+        service_module=None,
     ),
     ProductSourceCapability(
         key="sdss",
@@ -84,7 +84,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="Optical footprint where SDSS imaging or spectra exist.",
         fetch_cost="low",
         status="planned",
-        service_module="celestrium.sources.sdss",
+        service_module=None,
     ),
     ProductSourceCapability(
         key="mast",
@@ -95,7 +95,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="HST, GALEX, TESS, and other MAST-hosted missions.",
         fetch_cost="medium",
         status="planned",
-        service_module="celestrium.sources.mast",
+        service_module="celestrium.mast",
     ),
     ProductSourceCapability(
         key="exoplanet-archive",
@@ -106,7 +106,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="Confirmed and candidate exoplanet systems.",
         fetch_cost="low",
         status="planned",
-        service_module="celestrium.sources.exoplanet_archive",
+        service_module=None,
     ),
     ProductSourceCapability(
         key="heasarc",
@@ -117,7 +117,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="X-ray and gamma-ray mission catalogues and observations.",
         fetch_cost="medium",
         status="planned",
-        service_module="celestrium.sources.heasarc",
+        service_module="celestrium.heasarc",
     ),
     ProductSourceCapability(
         key="vizier",
@@ -128,7 +128,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         coverage_hint="Broad catalogue coverage across object classes.",
         fetch_cost="low",
         status="metadata",
-        service_module="celestrium.sources.vizier",
+        service_module="celestrium.vizier",
     ),
 )
 
@@ -185,7 +185,7 @@ def recommend_plans(
 ) -> list[ObservationPlan]:
     plans = []
     for capability in SOURCE_CAPABILITIES:
-        if target.object_class not in capability.object_classes:
+        if not _matches_target_or_unknown_fallback(target, capability, modality):
             continue
         if modality is not None and modality not in capability.modalities:
             continue
@@ -209,6 +209,18 @@ def recommend_plans(
             )
         )
     return plans
+
+
+def _matches_target_or_unknown_fallback(
+    target: ResolvedTarget,
+    capability: ProductSourceCapability,
+    modality: str | None,
+) -> bool:
+    if target.object_class in capability.object_classes:
+        return True
+    if target.object_class != "unknown" or modality is None:
+        return False
+    return capability.status in {"metadata", "planned"} and modality in capability.modalities
 
 
 def _parse_coordinates(target_text: str) -> tuple[float, float] | None:
