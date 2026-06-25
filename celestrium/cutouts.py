@@ -90,6 +90,72 @@ def best_color_hips(dec):
     return COLOR_FOOTPRINTS[-1][2], COLOR_FOOTPRINTS[-1][3]
 
 
+# Friendly survey keys -> HiPS id + label, for the TUI image-settings override.
+COLOR_SURVEYS = {
+    "legacy": ("CDS/P/DESI-Legacy-Surveys/DR10/color", "Legacy Surveys DR10 (deep)"),
+    "panstarrs": ("CDS/P/PanSTARRS/DR1/color-z-zg-g", "Pan-STARRS DR1"),
+    "des": ("CDS/P/DES-DR2/ColorIRG", "DES DR2"),
+    "dss2": ("CDS/P/DSS2/color", "DSS2 colour (all-sky)"),
+}
+
+
+def color_hips_candidates(dec):
+    """Ordered (hips, label) to try at this dec — deepest first, DSS2 last resort.
+
+    Why a *list* and not one survey: a HiPS can cover a declination band yet have
+    no data at a given position (e.g. Legacy Surveys near the Galactic plane / M31),
+    returning a blank tile. `color_auto` walks this list until a frame has signal."""
+    cands = [(h, l) for dmin, dmax, h, l in COLOR_FOOTPRINTS if dmin <= dec <= dmax]
+    fallback = (COLOR_FOOTPRINTS[-1][2], COLOR_FOOTPRINTS[-1][3])
+    if fallback not in cands:
+        cands.append(fallback)
+    return cands or [fallback]
+
+
+def _is_blank(img, tol: float = 3.0) -> bool:
+    """True if an image array is ~uniform (no coverage / blown-out blank tile)."""
+    try:
+        import numpy as np
+        arr = np.asarray(img, dtype="float32")
+        return bool(arr.std() < tol)
+    except Exception:
+        return False
+
+
+def color_auto(ra, dec, fov_arcmin=8.0, pix=512, survey=None, out=None):
+    """Colour cutout that survives no-coverage: try surveys until one has signal.
+
+    survey  None  -> deepest-covering surveys for this dec, in order (auto);
+            a key in COLOR_SURVEYS ('legacy'/'panstarrs'/'des'/'dss2') -> force it,
+            then fall back to auto if that one is blank.
+    Returns (Path, label). Fixes e.g. Andromeda rendering blank white from Legacy.
+    """
+    if survey and survey in COLOR_SURVEYS:
+        first = COLOR_SURVEYS[survey]
+        rest = [c for c in color_hips_candidates(dec) if c[0] != first[0]]
+        candidates = [first, *rest]
+    else:
+        candidates = color_hips_candidates(dec)
+    OUT.mkdir(parents=True, exist_ok=True)
+    out = out or OUT / f"color_{ra:.4f}_{dec:+.4f}.jpg"
+    last_label = candidates[-1][1]
+    for hips, label in candidates:
+        try:
+            img = hips2fits.query(hips=hips, width=pix, height=pix,
+                                  ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
+                                  fov=Angle(fov_arcmin * u.arcmin),
+                                  projection="TAN", format="jpg")
+        except Exception:
+            continue
+        if not _is_blank(img):
+            plt.imsave(out, img)
+            return Path(out), label
+        last_label = label
+    # Everything was blank — save the last attempt so the user sees *something*.
+    plt.imsave(out, img)
+    return Path(out), f"{last_label} (blank — no coverage?)"
+
+
 def identify_field(ra, dec, radius_arcmin=2.0):
     """Nearest SIMBAD object to a position: (main_id, otype, sep_arcsec) or None.
     Lets us caption/scale an image by what's actually there before rendering."""

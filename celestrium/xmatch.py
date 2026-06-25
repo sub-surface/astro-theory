@@ -7,17 +7,30 @@ CatWISE / Quaia / Euclid agree on the same sources under a common match radius."
 See ../docs/toolbox.md S3.
 Docs: https://astroquery.readthedocs.io/en/latest/xmatch/xmatch.html
 """
-from astroquery.xmatch import XMatch
 from astropy.table import Table
 from astropy import units as u
+
+
+def _load_xmatch():
+    """Import astroquery's XMatch lazily, muting its optional-dep notice.
+
+    `astroquery.xmatch.core` does a bare `print('Could not import regions, ...')`
+    at import time when the optional `regions` package is absent (we don't use the
+    region features). Importing it here — under a redirected stdout — keeps the TUI
+    start-up clean instead of buffering that line until Textual exits."""
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):
+        from astroquery.xmatch import XMatch
+    return XMatch
 
 
 def match(local: Table, cat2="vizier:VIII/65/nvss",
           ra="ra", dec="dec", radius_arcsec=5.0):
     """Match a local table (with RA/Dec deg columns) to a VizieR catalogue."""
-    return XMatch.query(cat1=local, cat2=cat2,
-                        max_distance=radius_arcsec * u.arcsec,
-                        colRA1=ra, colDec1=dec)
+    return _load_xmatch().query(cat1=local, cat2=cat2,
+                                max_distance=radius_arcsec * u.arcsec,
+                                colRA1=ra, colDec1=dec)
 
 
 if __name__ == "__main__":
