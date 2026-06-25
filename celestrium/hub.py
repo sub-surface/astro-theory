@@ -13,7 +13,8 @@ packets.py = builders), so this CLI and the Textual TUI (tui/) share one brain.
     python -m celestrium where 213.6906 -12.5801
     python -m celestrium cite 'abs:"cosmic dipole" year:2024-2026' --add
     python -m celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
-    python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss --radius 5
+    python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss --radius 5 --save agn
+    python -m celestrium candidates          # browse saved lists; NAME to show one
     python -m celestrium log                 # provenance; --open/--rerun a hash
     python -m celestrium dossier M87 --ned
     python -m celestrium field 213.6906 -12.5801
@@ -35,7 +36,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
 
-from . import cache, cutouts, packets, registry, resolvers
+from . import cache, candidates, cutouts, packets, registry, resolvers
 # Re-exported so the test suite (and any importer) can patch these on `hub`.
 from .registry import QUERY_ARCHIVES, SAMPLE_RECIPES, SampleRecipe, ATLAS_TARGETS  # noqa: F401
 
@@ -286,12 +287,14 @@ def match(source: str, catalog: str,
           ra: str = typer.Option("ra", help="RA column in the local table"),
           dec: str = typer.Option("dec", help="Dec column in the local table"),
           refresh: bool = typer.Option(False, help="bypass cached result"),
+          save: Optional[str] = typer.Option(None, "--save", help="store matches as a named candidate list"),
           show: int = typer.Option(12, help="rows to display")):
     """Cross-match a cached pull (by hash) or a sample recipe against a VizieR catalogue.
 
     The audit primitive: 'do two catalogues agree on the same sources?' SOURCE is
     either a manifest hash (see `log`) or a recipe name (see `sample list`).
-    CATALOG is a CDS id, e.g. vizier:VIII/65/nvss.
+    CATALOG is a CDS id, e.g. vizier:VIII/65/nvss. With --save NAME the matched
+    rows are persisted as a candidate list (see `candidates`).
     """
     from . import xmatch
     rec = SAMPLE_RECIPES.get(source)
@@ -315,6 +318,50 @@ def match(source: str, catalog: str,
         console.print(f"[red]{e}[/]")
         raise typer.Exit(1)
     _print_astropy_table(out, f"xmatch {source} x {catalog}: {len(out)} rows", limit=show)
+    if save:
+        path = candidates.save(save, out, origin=f"xmatch {source} x {catalog}",
+                               note=f"radius {radius}\"")
+        console.print(f"candidate list [cyan]{save}[/] ({len(out)} rows) -> [green]{path}[/]")
+
+
+@app.command(name="candidates", rich_help_panel=VALIDATION)
+def candidates_cmd(
+        name: Optional[str] = typer.Argument(None, help="list name to show; omit to list all"),
+        drop: Optional[str] = typer.Option(None, "--drop", help="delete a candidate list"),
+        show: int = typer.Option(12, help="rows to display")):
+    """Browse curated candidate lists (the output side of the crossmatch loop).
+
+    No NAME lists every saved list with provenance; a NAME prints that list's rows.
+    """
+    if drop:
+        rec = candidates.find_record(drop)
+        removed = candidates.drop(drop)
+        msg = (f"[green]dropped {drop!r}[/]" if removed
+               else f"[yellow]no table file for {drop!r}[/]")
+        if rec:
+            msg += f" [dim](was {rec['nrows']} rows, {rec.get('origin', '')})[/]"
+        console.print(msg)
+        return
+    if name:
+        try:
+            tab = candidates.load(name)
+        except Exception as e:
+            console.print(f"[red]{e}[/]")
+            raise typer.Exit(1)
+        rec = candidates.find_record(name) or {}
+        _emit({"name": name, "nrows": len(tab), **rec},
+              lambda: _print_astropy_table(tab, f"candidates {name}: {len(tab)} rows", limit=show))
+        return
+    records = candidates.latest()
+    if not records:
+        console.print("[dim]no candidate lists yet — try `match <recipe> <catalog> --save NAME`[/]")
+        return
+    _emit({"lists": records},
+          lambda: console.print(_rich_table_from_rows(
+              "candidate lists",
+              ["name", "nrows", "origin", "utc"],
+              [{"name": r["name"], "nrows": r["nrows"], "origin": r.get("origin", ""),
+                "utc": r.get("utc", "")} for r in records])))
 
 
 @app.command(rich_help_panel=VALIDATION)
