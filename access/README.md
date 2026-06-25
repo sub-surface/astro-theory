@@ -26,6 +26,11 @@ client class and how you get an astropy `Table` back:
 | VizieR | `vizier.py` | `Vizier(...).query_constraints(...)` | ✓ | any *published* catalogue (NVSS, …) |
 | NOIRLab Data Lab | `datalab_desi.py` | `queryClient.query(sql=...)` | · | needs `astro-datalab`; server-side |
 | Generic IVOA TAP | `vo_generic.py` | `pyvo.dal.TAPService(url).search(adql)` | ✓ | RACS/CASDA, LoTSS, anything VO |
+| SIMBAD + NED | `resolvers.py` | `Simbad.query_object` / `Ned.query_object` | ✓¹ | object ID, type, **per-object bibliography** |
+| CDS X-Match | `xmatch.py` | `XMatch.query(cat1, cat2, max_distance)` | ✓ | scale cross-match — the audit primitive |
+
+¹ SIMBAD paths live-tested; NED depends on a frequently-slow server (snippet degrades
+gracefully on timeout). See [`../toolbox.md`](../toolbox.md) for the wider tooling map.
 
 ## Install
 
