@@ -60,3 +60,37 @@ def render_spectrum_table(tab, *, target: str, source: str,
     plt.close(fig)
     return SpectrumResult("spectrum", out, source, (xcol, ycol), provenance or {},
                           f"{target}: {source} spectrum")
+
+
+def _ned_client():
+    from astroquery.ipac.ned import Ned
+    return Ned
+
+
+def _table_from_hdul(hdul):
+    for hdu in hdul:
+        data = getattr(hdu, "data", None)
+        if data is not None and hasattr(data, "names"):
+            from astropy.table import Table
+            return Table(data)
+    return None
+
+
+def fetch_ned_spectrum(target: str, out: Optional[Path] = None) -> Optional[SpectrumResult]:
+    """Fetch and render the first NED spectrum for a target, or None if unavailable."""
+    try:
+        spectra = _ned_client().get_spectra(target)
+    except Exception:
+        return None
+    for hdul in spectra or []:
+        tab = _table_from_hdul(hdul)
+        if tab is None:
+            continue
+        try:
+            return render_spectrum_table(
+                tab, target=target, source="NED", out=out,
+                provenance={"adapter": "NED", "target": target},
+            )
+        except ValueError:
+            continue
+    return None
