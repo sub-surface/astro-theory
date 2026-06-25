@@ -29,7 +29,7 @@ from textual.screen import ModalScreen
 from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
                              ListItem, ListView, RichLog, Select, Static)
 
-from .. import cache, candidates, cutouts, packets, registry, spectra, xmatch
+from .. import cache, candidates, cutouts, packets, planner, registry, spectra, xmatch
 from .wireframe import Wireframe
 
 MODES = [
@@ -538,8 +538,10 @@ class CelestriumApp(App):
                 return
             row = info[0]
             ra, dec = float(row["ra"]), float(row["dec"])
-            detail = (f"[b cyan]{row['main_id']}[/]\n[yellow]{row.get('otype', '?')}[/]\n"
-                      f"RA {ra:.5f}  Dec {dec:+.5f}")
+            detail = self._planner_detail(
+                str(row["main_id"]), str(row.get("otype", "?")), ra, dec,
+                f"[b cyan]{row['main_id']}[/]\n[yellow]{row.get('otype', '?')}[/]\n"
+                f"RA {ra:.5f}  Dec {dec:+.5f}")
             self.call_from_thread(self._set_detail, detail)
             try:
                 bib = packets.resolvers.bibliography(str(row["main_id"]), limit=12)
@@ -556,6 +558,21 @@ class CelestriumApp(App):
 
     def _render_bib_detail(self, payload: dict) -> str:
         return (f"[b]{payload.get('title', '')}[/]\n\n[cyan]bibcode[/] {payload.get('bibcode', '')}")
+
+    def _planner_detail(self, name: str, otype: str, ra: float, dec: float,
+                        base: str) -> str:
+        object_class = planner.classify_otype(otype)
+        target = planner.ResolvedTarget(
+            display_name=name, aliases=(), ra=ra, dec=dec, otype=otype,
+            object_class=object_class, confidence=1.0, match_kind="exact",
+        )
+        plans = planner.recommend_plans(target)[:5]
+        lines = [base, "", "[b]recommended products[/]"]
+        for plan in plans:
+            lines.append(f"- {plan.product.label} [{plan.product.status}]")
+        lines.append("")
+        lines.append(planner.image_coverage_note(dec, self.image_cfg.get("survey", "auto")))
+        return "\n".join(lines)
 
     def _render_preview_image(self, name, row, ra, dec, detail) -> None:
         """Phase-3 image preview with the new settings + no-coverage fallback."""

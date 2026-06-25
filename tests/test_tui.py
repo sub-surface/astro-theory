@@ -172,3 +172,11 @@ def test_render_preview_uses_spectrum_backend_for_spectrum_product(tmp_path, mon
     app._render_preview_image("3C 273", row, 187.2, 2.0, "detail")
     assert seen["name"] == "3C 273"
     assert app.last_image == Result.path
+
+
+def test_resolve_detail_includes_planner_recommendations():
+    app = CelestriumApp(active_line="test-line")
+    detail = app._planner_detail("3C 273", "QSO", 187.2779, 2.0524, "base")
+    assert "recommended" in detail.lower()
+    assert "NED" in detail or "SDSS" in detail
+    assert "HEASARC" in detail
