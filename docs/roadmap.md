@@ -165,3 +165,35 @@ per-step progress in the TUI); `packets.run_runbook` already drives the CLI, so 
 presenter-only addition. Beyond that, the open question is *substance over surface*: point the
 instrument at the active line — the Euclid DR1 σ_D forecast (`docs/research/euclid-dr1-prep.md`) —
 and let real use, not more features, drive what the cockpit needs next.
+
+## Proposed Phase 4 - observation planner panel
+
+The next TUI imaging step should be a small **observation planner** rather than a
+larger settings modal. The current `Ctrl+G` modal is useful for quick FOV/pixel/survey
+overrides; Phase 4 should make it more scientific without making Resolve fragile:
+
+- **Plan before pulling pixels.** Resolve the object, show footprint-aware coverage
+  suggestions, then let the user choose the product to fetch. The planner should say,
+  for example, that Legacy covers a declination but may be blank at M31, Pan-STARRS
+  is a good optical fallback, WISE is useful for dust/AGN, radio is useful for jets,
+  and HST/JWST should be treated as archival observation searches rather than casual
+  cutouts.
+- **Use structured capabilities.** Encode telescope / survey / wavelength / product
+  options in `celestrium/cutouts.py` or a sibling service module, not directly in
+  `tui/app.py`. The TUI presents recommendations; the CLI can reuse the same planner
+  later.
+- **Broaden from images to evidence products.** Keep colour cutouts as the default
+  quick-look, but define the same planning interface for multi-wavelength panels,
+  spectra/observation metadata, exoplanet-host context, and object-specific archive
+  pulls. First pass should return suggestions and metadata; only fetch data after a
+  deliberate user action.
+- **Stay hermetic.** Planner ranking, object-type defaults, and coverage text should
+  be pure and unit-tested. Network calls remain behind existing fetch functions or
+  explicit archive helpers.
+
+Scope boundary for the first implementation: replace `ImageSettingsScreen` with a
+planner-style panel for Resolve only. It should select FOV, pixels, wavelength family,
+survey/telescope, and product type; show a short coverage recommendation for the
+resolved object; and call the existing `color_auto` path for colour cutouts. Spectra,
+exoplanet archive pulls, and richer product fetches should be represented in the
+planner model but left as follow-on actions until their service helpers are designed.
