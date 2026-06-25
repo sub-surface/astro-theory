@@ -60,3 +60,37 @@ def test_color_survey_metadata_matches_candidates():
     assert keys[0] == "legacy"
     assert "dss2" in keys
     assert all("coverage" in m for m in meta)
+
+
+def test_color_survey_metadata_preserves_candidate_labels(monkeypatch):
+    dec = 41.27
+    monkeypatch.setattr(
+        cutouts,
+        "COLOR_FOOTPRINTS",
+        [
+            (
+                -90,
+                90,
+                "CDS/P/DSS2/color",
+                "DSS2 colour from candidate table",
+            )
+        ],
+    )
+    assert [m["label"] for m in cutouts.color_survey_metadata(dec)] == [
+        label for _, label in cutouts.color_hips_candidates(dec)
+    ]
+
+
+def test_color_survey_metadata_defaults_for_unknown_candidate(monkeypatch):
+    monkeypatch.setattr(
+        cutouts,
+        "COLOR_FOOTPRINTS",
+        [(-90, 90, "CDS/P/Future/Color", "Future colour survey")],
+    )
+
+    meta = cutouts.color_survey_metadata(0.0)
+
+    assert meta[0]["key"] == "CDS/P/Future/Color"
+    assert meta[0]["label"] == "Future colour survey"
+    assert meta[0]["wavelength"]
+    assert meta[0]["coverage"]

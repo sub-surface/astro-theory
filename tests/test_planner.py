@@ -93,3 +93,12 @@ def test_coverage_note_mentions_forced_survey_and_fallback():
     note = planner.image_coverage_note(dec=41.27, survey="panstarrs")
     assert "Pan-STARRS" in note
     assert "fallback" in note.lower()
+
+
+def test_coverage_note_unknown_survey_uses_auto_candidates():
+    note = planner.image_coverage_note(dec=41.27, survey="not-a-survey")
+    lowered = note.lower()
+    assert "unknown" in lowered or "unavailable" in lowered
+    assert "auto candidates" in lowered
+    assert "fallback" in lowered
+    assert "selected colour survey: not-a-survey" not in lowered

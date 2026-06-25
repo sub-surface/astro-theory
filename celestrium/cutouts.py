@@ -35,28 +35,20 @@ COLOR_FOOTPRINTS = [
     (-90, +90, "CDS/P/DSS2/color", "DSS2 colour (all-sky fallback)"),
 ]
 
-COLOR_SURVEY_META = {
+COLOR_SURVEY_SUPPLEMENT = {
     "legacy": {
-        "label": "Legacy Surveys DR10 (deep)",
-        "hips": "CDS/P/DESI-Legacy-Surveys/DR10/color",
         "wavelength": "optical colour",
         "coverage": "Deep northern optical footprint, approximately Dec -68 to +84.",
     },
     "panstarrs": {
-        "label": "Pan-STARRS DR1",
-        "hips": "CDS/P/PanSTARRS/DR1/color-z-zg-g",
         "wavelength": "optical colour",
         "coverage": "Northern optical footprint, approximately Dec -30 to +90.",
     },
     "des": {
-        "label": "DES DR2",
-        "hips": "CDS/P/DES-DR2/ColorIRG",
         "wavelength": "optical/near-IR colour",
         "coverage": "Southern Dark Energy Survey footprint, approximately Dec -90 to +5.",
     },
     "dss2": {
-        "label": "DSS2 colour (all-sky fallback)",
-        "hips": "CDS/P/DSS2/color",
         "wavelength": "optical colour",
         "coverage": "All-sky fallback with lower resolution than the deep surveys.",
     },
@@ -141,11 +133,18 @@ def color_hips_candidates(dec):
 
 def color_survey_metadata(dec):
     """Ordered colour-survey metadata matching `color_hips_candidates(dec)`."""
-    by_hips = {meta["hips"]: (key, meta) for key, meta in COLOR_SURVEY_META.items()}
+    key_by_hips = {hips: key for key, (hips, _) in COLOR_SURVEYS.items()}
     out = []
-    for hips, _ in color_hips_candidates(dec):
-        key, meta = by_hips[hips]
-        out.append({"key": key, **meta})
+    for hips, label in color_hips_candidates(dec):
+        key = key_by_hips.get(hips, hips)
+        supplement = COLOR_SURVEY_SUPPLEMENT.get(
+            key,
+            {
+                "wavelength": "optical colour",
+                "coverage": "Coverage metadata unavailable; use blank-frame fallback.",
+            },
+        )
+        out.append({"key": key, "label": label, "hips": hips, **supplement})
     return out
 
 

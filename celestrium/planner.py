@@ -219,8 +219,14 @@ def image_coverage_note(dec: float, survey: str = "auto") -> str:
     auto_labels = [meta["label"] for meta in auto_meta]
 
     if survey != "auto":
-        selected = cutouts.COLOR_SURVEY_META.get(survey)
-        label = selected["label"] if selected else survey
+        selected = cutouts.COLOR_SURVEYS.get(survey)
+        if selected is None:
+            return (
+                f"Requested colour survey '{survey}' is unknown or unavailable. "
+                f"Image fetch will use auto candidates with fallback: "
+                f"{', '.join(auto_labels)}."
+            )
+        label = selected[1]
         return (
             f"Selected colour survey: {label}. If that frame is blank or outside "
             f"coverage, image fetch falls back through auto candidates: "
