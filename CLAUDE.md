@@ -46,7 +46,9 @@ only present.
 - `cache.py` — `cached_query` + `data/manifest.jsonl` provenance + `load_cached`/`find_record` (by hash).
 - `cutouts.py` · `resolvers.py` · `ads.py` · `xmatch.py` · `<archive>.py` — thin primitives.
 - `hub.py` — Typer CLI, a thin presenter; commands grouped by wing in `--help`. Global `--json`.
-- `tui/` — Textual cockpit, **not built yet** (Phase 2/3). Plan in `docs/roadmap.md`.
+- `tui/` — Textual cockpit (`python -m celestrium.tui`). **Phase 2 skeleton built**: read-only +
+  async, modes Resolve/Literature/Query/History. Phase 3 (interactive crossmatch, image preview,
+  runbook runner) in `docs/roadmap.md`.
 
 **Rule:** `hub.py` and `tui/` import `celestrium/*`, never each other. New behaviour goes in
 `registry.py`/`packets.py` so both surfaces get it. The CLI tests monkeypatch names ON the

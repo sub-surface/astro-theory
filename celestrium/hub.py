@@ -491,5 +491,16 @@ def toolbox():
     _print_map("docs/toolbox.md")
 
 
+@app.command(rich_help_panel=WORKFLOWS)
+def tui():
+    """Launch the Celestrium cockpit (Textual TUI) — needs `pip install textual`."""
+    try:
+        from .tui.app import main
+    except ImportError:
+        console.print("[red]Textual not installed. Run: pip install textual[/]")
+        raise typer.Exit(1)
+    main()
+
+
 if __name__ == "__main__":
     app()

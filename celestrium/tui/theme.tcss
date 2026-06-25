@@ -1,0 +1,90 @@
+/* Celestrium cockpit — a dark cosmology palette. Polish lives here, not in logic. */
+
+Screen {
+    background: #0b0e14;
+    color: #c8d3e0;
+}
+
+Header {
+    background: #11151f;
+    color: #8fd0ff;
+    text-style: bold;
+}
+
+#body {
+    height: 1fr;
+}
+
+#sidebar {
+    width: 30;
+    background: #0e121b;
+    border-right: vkey #1c2433;
+    padding: 1 1;
+}
+
+#main {
+    width: 2fr;
+    padding: 0 1;
+}
+
+#preview {
+    width: 1fr;
+    background: #0e121b;
+    border-left: vkey #1c2433;
+    padding: 1 1;
+}
+
+.heading {
+    color: #6f8bb3;
+    text-style: bold;
+    margin: 1 0 0 0;
+}
+
+.dim {
+    color: #4a5870;
+}
+
+#controls {
+    height: auto;
+    padding: 1 0;
+}
+
+#archive {
+    width: 18;
+    margin: 0 1 0 0;
+}
+
+#entry {
+    width: 1fr;
+    border: tall #233047;
+}
+
+#entry:focus {
+    border: tall #3b7dd8;
+}
+
+#results {
+    height: 1fr;
+    border: round #1c2433;
+}
+
+#detail {
+    color: #c8d3e0;
+}
+
+#status {
+    height: 7;
+    background: #090c12;
+    border-top: hkey #1c2433;
+    color: #8b9bb4;
+    padding: 0 1;
+}
+
+ListView {
+    background: transparent;
+    border: none;
+}
+
+ListItem {
+    padding: 0 1;
+}

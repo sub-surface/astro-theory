@@ -49,10 +49,11 @@ active build). Not competing with Aladin/TOPCAT — orchestrating on top of the 
 3. **Human- and agent-operable** — plain subcommands + `--json`; no interactive-only paths an agent can't drive.
 4. **Repo-aware** — the tool knows the atlas/toolbox/refs.bib and the active build; a front door to *our* research.
 
-## Done — v0, v1, Phase 0, Phase 1
+## Done — v0, v1, Phase 0, Phase 1, Phase 2 (skeleton)
 
 **CLI surface (v0+v1).** `resolve` · `image` · `where` · `cite` · `papers` · `query` · `sample`
-· `dossier` · `field` · `atlas-targets` · `poster` · `runbook`.
+· `dossier` · `field` · `atlas-targets` · `poster` · `runbook` · `atlas` · `toolbox` · `tui`,
+grouped by the three wings in `--help`.
 
 **Phase 0 — service-layer refactor.** Extracted `registry.py` (archives/recipes/targets/runbooks
 as data) and `packets.py` (dataclass builders with `to_dict`/`to_markdown`); `hub.py` is now a thin
@@ -69,7 +70,14 @@ presenter; added a global `--json` flag. The archive registry is complete: `gaia
 
 Tests: `python -m pytest tests/ -q` (service layer + CLI, all hermetic via monkeypatch).
 
-## Phase 2 — Textual TUI skeleton (the cockpit)
+**Phase 2 — Textual TUI skeleton (built).** `celestrium/tui/` — a `textual` cockpit launched by
+`python -m celestrium.tui` (or `celestrium tui`). Read-only and async: four modes (Resolve →
+SIMBAD identity + bibliography, Literature → ADS paper set, Query → cached ADQL rows, History →
+the provenance manifest), each blocking call in a `@work(thread=True)` worker so the UI stays
+live. Header shows the active line + ADS-token status; a `RichLog` ticker carries provenance and
+errors; dark-cosmology theme in `theme.tcss`. Headless mount test in `tests/test_tui.py`.
+
+## Phase 2 — design reference (the cockpit)
 
 A `textual` app (installed) — async so blocking astroquery/requests calls run in workers and the
 UI never freezes. Layout:

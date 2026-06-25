@@ -54,7 +54,7 @@ with a provenance manifest, so every figure traces back to the exact query that 
 ```
 celestrium/   the instrument (Python package)
   registry.py · packets.py   service layer: data + builders (one brain)
-  hub.py                      the CLI (a thin presenter); tui/ = Textual cockpit (next)
+  hub.py · tui/               the CLI + the Textual cockpit (python -m celestrium.tui)
   cache · cutouts · xmatch · resolvers · ads · <archive>.py   thin primitives
 docs/         data-atlas · toolbox · imaging-guide · roadmap · research/
 scripts/      arxiv_tally · fetch_papers   (field-cartography utilities)
