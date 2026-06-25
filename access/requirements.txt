@@ -1,0 +1,6 @@
+# access/ cookbook dependencies
+astroquery>=0.4.10   # Gaia, Euclid, IRSA, MAST, HEASARC, VizieR clients
+astropy>=6.0
+pyvo>=1.5            # generic IVOA TAP (RACS/CASDA, LoTSS, any VO service)
+# NOIRLab Astro Data Lab (DESI / Legacy Surveys) — separate package:
+#   pip install astro-datalab
