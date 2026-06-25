@@ -31,9 +31,11 @@ The "small local dataset" is usually the *output* of the cuts, not a big downloa
 >    per archive (TAP/ADQL), plus `cache.py` (query cache + provenance manifest), `xmatch.py`
 >    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), `cutouts.py`
 >    (survey-aware multi-λ imaging; see [`imaging-guide.md`](./imaging-guide.md)), `ads.py`
->    (literature → [`refs.bib`](./refs.bib)), and a **CLI front-end**: `python -m access.hub`
->    (`resolve · image · where · cite · query · log · dossier · field · papers · sample · atlas-targets · poster · runbook`)
->    — roadmap in [`tui-scope.md`](./tui-scope.md).
+>    (literature → [`refs.bib`](./refs.bib)). On top sits a shared service layer —
+>    `registry.py` (archives/recipes/targets/runbooks as data) + `packets.py` (builders) — and a
+>    thin **CLI front-end**: `python -m access.hub`
+>    (`resolve · image · where · cite · query · match · log · dossier · field · papers · sample · atlas-targets · poster · runbook · atlas · toolbox`, all with `--json`)
+>    — architecture + Textual-TUI roadmap in [`roadmap.md`](./roadmap.md).
 > 3. 🧰 [`toolbox.md`](./toolbox.md) — *everything around the query*: ADS/SciX, CDS X-Match,
 >    MOCpy/healpy, dustmaps, reproducibility/QoL — leverage-ranked.
 > 4. 🎯 [`directions.md`](./directions.md) + [`euclid-dr1-prep.md`](./euclid-dr1-prep.md) —

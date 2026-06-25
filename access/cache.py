@@ -67,6 +67,25 @@ def manifest() -> list:
         return [json.loads(line) for line in f if line.strip()]
 
 
+def find_record(hash_prefix: str):
+    """Return the most-recent manifest record whose hash starts with hash_prefix.
+
+    Lets the hub re-open / re-run a past pull by its short hash (see `hub log`)."""
+    hits = [r for r in manifest() if str(r.get("hash", "")).startswith(hash_prefix)]
+    return hits[-1] if hits else None
+
+
+def load_cached(hash_prefix: str) -> Table:
+    """Load a previously cached table by (a prefix of) its manifest hash."""
+    rec = find_record(hash_prefix)
+    if rec is None:
+        raise KeyError(f"no cached query with hash {hash_prefix!r}")
+    path = _REPO / rec["cache_file"]
+    if not path.exists():
+        raise FileNotFoundError(f"cache file missing: {rec['cache_file']}")
+    return Table.read(path)
+
+
 if __name__ == "__main__":
     # Self-contained demo (no network): a fake fetch run twice.
     calls = {"n": 0}

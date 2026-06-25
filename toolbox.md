@@ -86,7 +86,8 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 3. ✅ **`access/ads.py` + `refs.bib`** — ADS/SciX search + BibTeX export plumbing wired; the
    bibliography is seeded. **Action left: paste a free token** into `~/.ads/dev_key` (or
    `$env:ADS_DEV_KEY`) to make it live — get it at the SciX token link in §1.
-4. ✅ **`access/hub.py`** — typer+rich CLI front-end (resolve·image·where·cite); roadmap in
-   [`tui-scope.md`](./tui-scope.md), imaging logic in [`imaging-guide.md`](./imaging-guide.md).
+4. ✅ **`access/hub.py`** — typer+rich CLI front-end (resolve·image·where·cite·query·match·log·
+   dossier·field·papers·sample·atlas-targets·poster·runbook·atlas·toolbox, all with `--json`);
+   roadmap in [`roadmap.md`](./roadmap.md), imaging logic in [`imaging-guide.md`](./imaging-guide.md).
 5. ◻ **`pip install dustmaps mocpy`** — the reference tools the dipole work needs next
    (extinction corrections + Euclid DR1 partial-sky footprint algebra).

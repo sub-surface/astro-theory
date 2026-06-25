@@ -31,11 +31,13 @@ client class and how you get an astropy `Table` back:
 | *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
 | *(imaging)* | `cutouts.py` | `smart(ra,dec)` / `panel` / `color` | ✓ | survey-aware multi-λ + colour cutout from coords |
 | ADS / SciX | `ads.py` | `ads.search(q)` / `ads.add_to_refs(...)` | ✓² | literature search + BibTeX → `../refs.bib` |
-| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | typer+rich front-end: resolve·image·where·cite·log·query·dossier·field·papers·sample·atlas-targets·poster·runbook |
+| *(data)* | `registry.py` | archives · recipes · targets · runbooks | ✓ | the hub's data tables (CLI + future TUI read these) |
+| *(builders)* | `packets.py` | `build_object_packet` / `build_field_packet` / … | ✓ | service layer: dataclasses with `.to_dict()` (JSON/TUI) + `.to_markdown()` (reports) |
+| *(CLI)* | `hub.py` | `python -m access.hub --help` | ✓ | thin typer+rich front-end over registry+packets; `--json` everywhere |
 
 ² ADS plumbing verified (token discovery + REST path); live results need a free token
 (see `ads.py` header). Imaging is survey-aware — see [`../imaging-guide.md`](../imaging-guide.md);
-the CLI/TUI roadmap is in [`../tui-scope.md`](../tui-scope.md).
+the CLI/TUI roadmap is in [`../roadmap.md`](../roadmap.md).
 
 ¹ SIMBAD paths live-tested; NED depends on a frequently-slow server (snippet degrades
 gracefully on timeout). See [`../toolbox.md`](../toolbox.md) for the wider tooling map.
@@ -60,25 +62,31 @@ hit; every fetch is appended to `data/manifest.jsonl` so each figure traces to i
 `cutouts.panel(ra, dec)` / `cutouts.color(ra, dec)` render a position across the spectrum
 (SkyView UV→radio + CDS HiPS colour). Both write to `data/` (git-ignored).
 
-## Hub packets
+## Hub: thin CLI over a shared service layer
 
-The CLI now has six higher-level packet commands over the same thin access layer:
+The CLI is a presenter. Its data tables live in `registry.py` (archives, sample recipes,
+atlas targets, runbooks) and its logic in `packets.py` (builders returning dataclasses with
+`.to_dict()` for JSON/the TUI and `.to_markdown()` for reports). Add `--json` before any
+subcommand for machine-readable output.
 
 ```bash
-python -m access.hub dossier M87
+python -m access.hub query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
+python -m access.hub match gaia-bright-nearby vizier:VIII/65/nvss --radius 5  # audit primitive
+python -m access.hub log                       # provenance; --open <hash> / --rerun <hash>
+python -m access.hub dossier M87 --ned         # +NED redshift for extragalactic objects
 python -m access.hub field 213.6906 -12.5801 --fov 6
 python -m access.hub papers year:2025-2026 --phrase "Euclid Quick Data Release" --report
 python -m access.hub sample list
 python -m access.hub atlas-targets --limit 4
 python -m access.hub poster M87 --resolution 1080p --style label
-python -m access.hub runbook euclid-q1
+python -m access.hub runbook euclid-q1         # data-driven; `runbook list` to see them
+python -m access.hub atlas | toolbox           # pretty-print the hub maps
 ```
 
-Reports are written under `data/reports/`, atlas contact sheets under `data/atlas/`,
-and wallpapers under `data/posters/`. Those directories are intentionally local and
-git-ignored. `sample` recipes are row-capped and run through `cache.cached_query`.
-`runbook euclid-q1` writes an index report linking the generated literature, field,
-sample, atlas, and poster artifacts.
+Reports are written under `data/reports/`, atlas contact sheets under `data/atlas/`, and
+wallpapers under `data/posters/` — all local and git-ignored. `sample`/`match` pulls are
+row-capped and routed through `cache.cached_query`, so the manifest stays complete. The full
+roadmap (incl. the Textual TUI) is in [`../roadmap.md`](../roadmap.md).
 
 ## Conventions baked into every snippet
 
