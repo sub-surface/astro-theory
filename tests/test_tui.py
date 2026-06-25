@@ -128,3 +128,20 @@ def test_phase3_candidate_save_and_load(tmp_path, monkeypatch):
             await pilot.pause()
 
     asyncio.run(scenario())
+
+
+def test_planner_settings_can_select_spectrum_network_free():
+    from celestrium.tui.app import ImageSettingsScreen
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.action_image_settings()
+            await pilot.pause()
+            assert isinstance(app.screen, ImageSettingsScreen)
+            app.screen.query_one("#img-product").value = "spectrum"
+            app.screen.query_one("#img-ok").press()
+            await pilot.pause()
+            assert app.image_cfg["product"] == "spectrum"
+
+    asyncio.run(scenario())

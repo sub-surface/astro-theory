@@ -113,6 +113,8 @@ class ImageSettingsScreen(ModalScreen):
 
     BINDINGS = [("escape", "dismiss", "Cancel")]
     SURVEYS = ["auto", "legacy", "panstarrs", "des", "dss2"]
+    PRODUCTS = ["colour_image", "multi_panel", "spectrum", "metadata", "exoplanet"]
+    WAVELENGTHS = ["auto", "UV", "optical", "near-IR", "mid-IR", "radio", "X-ray"]
 
     def __init__(self, settings: dict):
         super().__init__()
@@ -121,6 +123,14 @@ class ImageSettingsScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         with Vertical(id="modal-box"):
             yield Label("◇ IMAGE SETTINGS", classes="heading")
+            yield Label("Product", classes="dim")
+            yield Select([(p, p) for p in self.PRODUCTS],
+                         value=self._s.get("product", "colour_image"),
+                         id="img-product", allow_blank=False)
+            yield Label("Wavelength", classes="dim")
+            yield Select([(w, w) for w in self.WAVELENGTHS],
+                         value=self._s.get("wavelength", "auto"),
+                         id="img-wavelength", allow_blank=False)
             yield Label("Field of view (arcmin, or 'auto')", classes="dim")
             yield Input(value=str(self._s.get("fov", "auto")), id="img-fov")
             yield Label("Pixels (per side)", classes="dim")
@@ -148,7 +158,9 @@ class ImageSettingsScreen(ModalScreen):
             except ValueError:
                 fov = "auto"
         self.dismiss({"fov": fov, "pix": pix,
-                      "survey": self.query_one("#img-survey", Select).value})
+                      "survey": self.query_one("#img-survey", Select).value,
+                      "product": self.query_one("#img-product", Select).value,
+                      "wavelength": self.query_one("#img-wavelength", Select).value})
 
     def action_dismiss(self) -> None:
         self.dismiss(None)
@@ -210,7 +222,10 @@ class CelestriumApp(App):
         self.last_table = None          # astropy Table from the last query/crossmatch
         self.last_image = None          # Path of the last rendered colour preview
         self.debug_mode = False
-        self.image_cfg = {"fov": "auto", "pix": 512, "survey": "auto"}
+        self.image_cfg = {
+            "fov": "auto", "pix": 512, "survey": "auto",
+            "product": "colour_image", "wavelength": "auto",
+        }
         self._last_action = None        # (fn_name, *args) for refresh / re-run
         self._row_payloads = []         # parallel to displayed rows (contextual detail)
         self._row_render = None         # callable(payload) -> detail markup
