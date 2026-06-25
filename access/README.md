@@ -28,6 +28,8 @@ client class and how you get an astropy `Table` back:
 | Generic IVOA TAP | `vo_generic.py` | `pyvo.dal.TAPService(url).search(adql)` | ✓ | RACS/CASDA, LoTSS, anything VO |
 | SIMBAD + NED | `resolvers.py` | `Simbad.query_object` / `Ned.query_object` | ✓¹ | object ID, type, **per-object bibliography** |
 | CDS X-Match | `xmatch.py` | `XMatch.query(cat1, cat2, max_distance)` | ✓ | scale cross-match — the audit primitive |
+| *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
+| *(imaging)* | `cutouts.py` | `panel(ra, dec)` / `color(ra, dec)` | ✓ | multi-wavelength image panel from coords |
 
 ¹ SIMBAD paths live-tested; NED depends on a frequently-slow server (snippet degrades
 gracefully on timeout). See [`../toolbox.md`](../toolbox.md) for the wider tooling map.
@@ -37,6 +39,20 @@ gracefully on timeout). See [`../toolbox.md`](../toolbox.md) for the wider tooli
 ```bash
 pip install -r access/requirements.txt
 ```
+
+## Composing: cache any pull, then look
+
+```python
+from access import gaia, cache, cutouts
+adql = "SELECT TOP 100 source_id, ra, dec FROM gaiadr3.gaia_source WHERE ..."
+tab = cache.cached_query("gaia", adql, lambda: gaia.query(adql))  # cached + logged
+cutouts.panel(213.6905918, -12.5801013)  # multi-wavelength PNG of a position
+```
+
+`cache.cached_query` wraps *any* of the query helpers: identical query → instant disk
+hit; every fetch is appended to `data/manifest.jsonl` so each figure traces to its query.
+`cutouts.panel(ra, dec)` / `cutouts.color(ra, dec)` render a position across the spectrum
+(SkyView UV→radio + CDS HiPS colour). Both write to `data/` (git-ignored).
 
 ## Conventions baked into every snippet
 

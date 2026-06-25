@@ -21,11 +21,20 @@ theory / arXiv paper
 
 The "small local dataset" is usually the *output* of the cuts, not a big download.
 
-> 🗺️ **Start here for "what data can we touch?":** [`data-atlas.md`](./data-atlas.md) —
-> the standing map of every publicly queryable archive (ESA, MAST, IRSA, HEASARC, NOIRLab,
-> radio, CMB), ranked by data quality *and* by leverage for a desk team, plus the 2026–2027
-> release calendar and an opportunity map keyed to our strengths. This repo is a **hub for
-> astronomical/cosmological desk work at many scales**; the atlas steers what we pick up.
+> This repo is a **hub for astronomical/cosmological desk work at many scales**. Four standing
+> pillars, in the order you use them:
+>
+> 1. 🗺️ [`data-atlas.md`](./data-atlas.md) — *what data exists*: every publicly queryable
+>    archive (ESA, MAST, IRSA, HEASARC, NOIRLab, radio, CMB), ranked by quality **and** by
+>    leverage for a desk team, + the 2026–2027 release calendar + an opportunity map.
+> 2. 🔌 [`access/`](./access/) — *how to pull it*: one known-good, smoke-tested query snippet
+>    per archive (TAP/ADQL), plus `cache.py` (query cache + provenance manifest), `xmatch.py`
+>    (cross-catalogue audit primitive), `resolvers.py` (object ID + bibliography), and
+>    `cutouts.py` (multi-wavelength image panel from coordinates).
+> 3. 🧰 [`toolbox.md`](./toolbox.md) — *everything around the query*: ADS/SciX, CDS X-Match,
+>    MOCpy/healpy, dustmaps, reproducibility/QoL — leverage-ranked.
+> 4. 🎯 [`directions.md`](./directions.md) + [`euclid-dr1-prep.md`](./euclid-dr1-prep.md) —
+>    *what to do with it*: the leverage thesis and the live build.
 
 ## Roles
 

@@ -65,9 +65,13 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 
 ## 6. Reproducibility & QoL — compounds every session
 
-- **★ Query cache + provenance manifest** — a tiny helper that hashes each ADQL query, caches
-  the result as parquet under `data/`, and appends `{query, archive, UTC date, nrows}` to a
-  `data/manifest.jsonl`. Stops us re-pulling and makes every figure traceable to its query.
+- **✅ Query cache + provenance manifest** — *built*: [`access/cache.py`](./access/cache.py).
+  `cached_query(archive, adql, fetch)` hashes each query, caches the result as ECSV under
+  `data/cache/`, and appends `{query, archive, UTC date, nrows}` to `data/manifest.jsonl`.
+  Stops us re-pulling and makes every figure traceable to its query.
+- **✅ Multi-wavelength image cutouts** — *built*: [`access/cutouts.py`](./access/cutouts.py).
+  `panel(ra, dec)` renders a position across UV→optical→near-IR→mid-IR→radio (SkyView) and
+  `color(ra, dec)` a CDS-HiPS colour image — a quick "what's actually here?" from coordinates.
 - **Environment pinning** — one `requirements.txt` / lockfile for the whole repo (we have
   `access/requirements.txt`; promote to a repo-level env when the analysis deps settle).
 - **Server-side notebooks** — ESA Datalabs, NOIRLab Astro Data Lab, SciServer, Rubin RSP: run
@@ -75,9 +79,10 @@ audits, selection-function re-analysis, living meta-analyses), not by fame.
 - **Units & frames discipline** — `astropy.units`/`coordinates` everywhere; never pass bare
   floats between galactic/ecliptic/ICRS in isotropy work (a classic silent-bug source).
 
-## 7. Quick wins to wire up first
+## 7. Quick wins — status
 
-1. **ADS/SciX token** → drop in `~/.ads/dev_key`; start a repo `refs.bib`. (Unlocks §1.)
-2. **`access/resolvers.py` + `access/xmatch.py`** — added now; the object-lookup + audit core.
-3. **`pip install dustmaps mocpy`** — the two reference tools the dipole work will need next.
-4. **Query-cache/manifest helper** — ~30 lines; pays for itself within a week of pulls.
+1. ✅ **`access/resolvers.py` + `access/xmatch.py`** — object-lookup + cross-match audit core.
+2. ✅ **`access/cache.py` + `access/cutouts.py`** — query cache/provenance + multi-λ imaging.
+3. ◻ **ADS/SciX token** → drop in `~/.ads/dev_key`; start a repo `refs.bib`. (Unlocks §1.)
+4. ◻ **`pip install dustmaps mocpy`** — the reference tools the dipole work needs next
+   (extinction corrections + Euclid DR1 partial-sky footprint algebra).
