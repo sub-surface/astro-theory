@@ -52,3 +52,11 @@ def test_color_auto_survey_override_tried_first(tmp_path, monkeypatch):
 
     cutouts.color_auto(10.68, 41.27, survey="panstarrs", out=tmp_path / "x.jpg")
     assert "PanSTARRS" in seen[0]  # the forced survey is queried first
+
+
+def test_color_survey_metadata_matches_candidates():
+    meta = cutouts.color_survey_metadata(41.27)
+    keys = [m["key"] for m in meta]
+    assert keys[0] == "legacy"
+    assert "dss2" in keys
+    assert all("coverage" in m for m in meta)

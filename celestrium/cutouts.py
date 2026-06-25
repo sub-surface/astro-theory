@@ -35,6 +35,33 @@ COLOR_FOOTPRINTS = [
     (-90, +90, "CDS/P/DSS2/color", "DSS2 colour (all-sky fallback)"),
 ]
 
+COLOR_SURVEY_META = {
+    "legacy": {
+        "label": "Legacy Surveys DR10 (deep)",
+        "hips": "CDS/P/DESI-Legacy-Surveys/DR10/color",
+        "wavelength": "optical colour",
+        "coverage": "Deep northern optical footprint, approximately Dec -68 to +84.",
+    },
+    "panstarrs": {
+        "label": "Pan-STARRS DR1",
+        "hips": "CDS/P/PanSTARRS/DR1/color-z-zg-g",
+        "wavelength": "optical colour",
+        "coverage": "Northern optical footprint, approximately Dec -30 to +90.",
+    },
+    "des": {
+        "label": "DES DR2",
+        "hips": "CDS/P/DES-DR2/ColorIRG",
+        "wavelength": "optical/near-IR colour",
+        "coverage": "Southern Dark Energy Survey footprint, approximately Dec -90 to +5.",
+    },
+    "dss2": {
+        "label": "DSS2 colour (all-sky fallback)",
+        "hips": "CDS/P/DSS2/color",
+        "wavelength": "optical colour",
+        "coverage": "All-sky fallback with lower resolution than the deep surveys.",
+    },
+}
+
 # Survey per wavelength regime. SkyView identifiers must be exact.
 BANDS = {
     "GALEX Near UV": "UV",
@@ -110,6 +137,16 @@ def color_hips_candidates(dec):
     if fallback not in cands:
         cands.append(fallback)
     return cands or [fallback]
+
+
+def color_survey_metadata(dec):
+    """Ordered colour-survey metadata matching `color_hips_candidates(dec)`."""
+    by_hips = {meta["hips"]: (key, meta) for key, meta in COLOR_SURVEY_META.items()}
+    out = []
+    for hips, _ in color_hips_candidates(dec):
+        key, meta = by_hips[hips]
+        out.append({"key": key, **meta})
+    return out
 
 
 def _is_blank(img, tol: float = 3.0) -> bool:

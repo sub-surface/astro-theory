@@ -211,6 +211,28 @@ def recommend_plans(
     return plans
 
 
+def image_coverage_note(dec: float, survey: str = "auto") -> str:
+    """Describe optical colour survey coverage and blank-tile fallback behavior."""
+    from celestrium import cutouts
+
+    auto_meta = cutouts.color_survey_metadata(dec)
+    auto_labels = [meta["label"] for meta in auto_meta]
+
+    if survey != "auto":
+        selected = cutouts.COLOR_SURVEY_META.get(survey)
+        label = selected["label"] if selected else survey
+        return (
+            f"Selected colour survey: {label}. If that frame is blank or outside "
+            f"coverage, image fetch falls back through auto candidates: "
+            f"{', '.join(auto_labels)}."
+        )
+
+    return (
+        "Auto colour coverage tries "
+        f"{', '.join(auto_labels)} in order; DSS2 is the all-sky fallback."
+    )
+
+
 def _matches_target_or_unknown_fallback(
     target: ResolvedTarget,
     capability: ProductSourceCapability,

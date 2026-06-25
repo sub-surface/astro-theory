@@ -87,3 +87,9 @@ def test_observation_plan_to_dict_includes_product_metadata():
     assert plan["product"]["key"]
     assert plan["product"]["label"]
     assert plan["product"]["status"] in {"executable", "metadata", "planned"}
+
+
+def test_coverage_note_mentions_forced_survey_and_fallback():
+    note = planner.image_coverage_note(dec=41.27, survey="panstarrs")
+    assert "Pan-STARRS" in note
+    assert "fallback" in note.lower()
