@@ -1,9 +1,5 @@
 /* Celestrium cockpit styling.
- *
- * Colours come from Textual theme *variables* ($surface, $panel, $primary, …),
- * NOT hard-coded hex — so Ctrl+T actually recolours the whole cockpit and the
- * default ansi-dark theme looks right in any terminal palette. Layout + structure
- * live here; the palette is whatever theme is active.
+ * Collapsed minimal, prompt-centric design.
  */
 
 Screen {
@@ -21,29 +17,114 @@ Header {
     height: 1fr;
 }
 
-#sidebar {
-    width: 30;
-    background: $panel;
-    border-right: vkey $primary 40%;
-    padding: 1 1;
-}
-
-#main {
-    width: 2fr;
+#canvas-container {
+    width: 1fr;
+    height: 1fr;
     padding: 0 1;
 }
 
-#preview {
+#controls {
+    height: auto;
+    padding: 1 0;
+    align: left middle;
+}
+
+#prompt-prefix {
+    text-style: bold;
+    color: $accent;
+    padding: 0 1 0 0;
+}
+
+#sys-status {
+    padding: 0 0 0 1;
+}
+
+#entry {
     width: 1fr;
+    border: none;
+    background: $surface;
+    padding: 0 1;
+}
+
+#entry:focus {
     background: $panel;
-    border-left: vkey $primary 40%;
+}
+
+#canvas {
+    height: 1fr;
+    border: none;
+    background: transparent;
+}
+
+#canvas.idle {
+    border: none;
+}
+
+#results {
+    height: 1fr;
+    border: none;
+}
+
+/* Detail scroll when showing cards */
+#detail-scroll {
+    height: 1fr;
+    padding: 1 2;
+    overflow-y: scroll;
+}
+
+#target-hud {
+    height: 1;
+    width: 1fr;
+    content-align: center top;
+    margin-bottom: 1;
+}
+
+/* Ambient strip on the right */
+#ambient-strip {
+    width: 26;
+    background: transparent;
+    border: none;
     padding: 1 1;
 }
 
-#detail-scroll {
+#orrery-mini {
+    height: 9;
+    border: none;
+    color: $primary;
+    background: transparent;
+    content-align: center middle;
+    margin-bottom: 1;
+}
+
+#trail-list {
     height: 1fr;
-    background: $surface;
-    border: round $primary 30%;
+    background: transparent;
+    border: none;
+}
+
+#trail-list ListItem {
+    padding: 0;
+}
+
+#trail-list ListItem.--highlight {
+    background: $primary 30%;
+}
+
+.trail-item {
+    padding: 0 1;
+    color: $text-muted;
+}
+
+.trail-item.active {
+    color: $accent;
+    text-style: bold;
+}
+
+#status {
+    height: 3;
+    background: transparent;
+    border: none;
+    color: $text-muted;
     padding: 0 1;
 }
 
@@ -57,72 +138,13 @@ Header {
     color: $text-muted;
 }
 
-#controls {
-    height: auto;
-    padding: 1 0;
-}
-
-#archive {
-    width: 18;
-    margin: 0 1 0 0;
-}
-
-#entry {
-    width: 1fr;
-    border: tall $primary 50%;
-}
-
-#entry:focus {
-    border: tall $accent;
-}
-
-#results {
-    height: 1fr;
-    border: round $primary 30%;
-}
-
-#detail {
-    color: $foreground;
-    height: auto;
-}
-
-/* The ELITE-style rotating-wireframe panel. */
-#orrery {
-    height: 14;
-    border: round $accent 40%;
-    color: $primary;
-    background: $surface;
-    content-align: center middle;
-}
-
-#status {
-    height: 7;
-    background: $surface;
-    border-top: hkey $primary 40%;
-    color: $text-muted;
-    padding: 0 1;
-}
-
-ListView {
-    background: transparent;
-    border: none;
-}
-
-ListItem {
-    padding: 0 1;
-}
-
-ListItem.--highlight {
-    background: $primary 30%;
-}
-
-/* Modal dialogs (save list / image settings / about). */
+/* Modal dialogs */
 ModalScreen {
     align: center middle;
 }
 
 #modal-box {
-    width: 64;
+    width: 80;
     height: auto;
     background: $panel;
     border: round $accent;

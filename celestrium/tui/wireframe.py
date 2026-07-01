@@ -148,6 +148,40 @@ class BrailleCanvas:
                 err += dx
                 y0 += sy
 
+    def circle(self, cx: int, cy: int, r: int, filled: bool = False) -> None:
+        """Draw a circle (or disk) using the midpoint algorithm."""
+        cx, cy, r = int(cx), int(cy), int(r)
+        if r <= 0:
+            self.set(cx, cy)
+            return
+
+        x = r
+        y = 0
+        err = 0
+
+        while x >= y:
+            if filled:
+                self.line(cx - x, cy + y, cx + x, cy + y)
+                self.line(cx - x, cy - y, cx + x, cy - y)
+                self.line(cx - y, cy + x, cx + y, cy + x)
+                self.line(cx - y, cy - x, cx + y, cy - x)
+            else:
+                self.set(cx + x, cy + y)
+                self.set(cx + y, cy + x)
+                self.set(cx - y, cy + x)
+                self.set(cx - x, cy + y)
+                self.set(cx - x, cy - y)
+                self.set(cx - y, cy - x)
+                self.set(cx + y, cy - x)
+                self.set(cx + x, cy - y)
+
+            if err <= 0:
+                y += 1
+                err += 2 * y + 1
+            if err > 0:
+                x -= 1
+                err -= 2 * x + 1
+
     def to_text(self) -> str:
         out = []
         for cy in range(self.rows):
@@ -196,6 +230,57 @@ def render_solid(canvas: BrailleCanvas, solid: Solid, angle: float,
 
 
 # --------------------------------------------------------------------------- #
+# Scene Abstractions
+# --------------------------------------------------------------------------- #
+class Scene:
+    """Base class for all ambient visualizations in the Braille canvas."""
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        pass
+
+
+class PlatonicScene(Scene):
+    """The default spinning Platonic solid scene."""
+    def __init__(self, solid_name: str = "icosahedron"):
+        self.solid_name = solid_name
+
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        if self.solid_name in SOLIDS:
+            render_solid(canvas, SOLIDS[self.solid_name], angle=frame * 0.12)
+
+
+class TransitScene(Scene):
+    """Ambient visualization of a transiting exoplanet."""
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        cx, cy = canvas.px // 2, canvas.py // 2
+        star_r = min(canvas.px, canvas.py) // 3
+        # Draw host star
+        canvas.circle(cx, cy, star_r, filled=False)
+
+        # Calculate planet position (simple looping phase for now)
+        phase = (frame % 200) / 200.0
+        px = int(cx - star_r * 2 + phase * star_r * 4)
+        py = int(cy + star_r * 0.15)
+
+        # Draw transiting planet
+        canvas.circle(px, py, max(1, star_r // 4), filled=True)
+
+
+class SkyScatterScene(Scene):
+    """Ambient visualization of a query scatter plot."""
+    def __init__(self, points=None):
+        self.pts = points or []
+
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        for x, y in self.pts:
+            if 0 <= x <= 1 and 0 <= y <= 1:
+                # Add slight drift
+                dx = math.sin(frame * 0.02 + x * 10) * 0.02
+                px = int((x + dx) * (canvas.px - 1))
+                py = int(y * (canvas.py - 1))
+                canvas.set(px, py)
+
+
+# --------------------------------------------------------------------------- #
 # Textual widget.
 # --------------------------------------------------------------------------- #
 try:
@@ -219,9 +304,10 @@ try:
         frame = reactive(0)
         spinning = reactive(True)
 
-        def __init__(self, solid: str = "icosahedron", fps: float = 12.0, **kw):
+        def __init__(self, scene: Scene = None, fps: float = 12.0, **kw):
             super().__init__("", **kw)
-            self._solid_name = solid if solid in SOLIDS else "icosahedron"
+            # Default to Platonic Scene to preserve legacy behaviour
+            self.scene = scene or PlatonicScene("icosahedron")
             self._fps = fps
             self._timer = None
 
@@ -233,19 +319,21 @@ try:
                 self.frame += 1
 
         def next_solid(self) -> str:
-            i = (SOLID_ORDER.index(self._solid_name) + 1) % len(SOLID_ORDER)
-            self._solid_name = SOLID_ORDER[i]
-            self.refresh()
-            return self._solid_name
+            if isinstance(self.scene, PlatonicScene):
+                i = (SOLID_ORDER.index(self.scene.solid_name) + 1) % len(SOLID_ORDER)
+                self.scene.solid_name = SOLID_ORDER[i]
+                self.refresh()
+                return self.scene.solid_name
+            return ""
 
         def set_solid(self, name: str) -> None:
             if name in SOLIDS:
-                self._solid_name = name
+                self.scene = PlatonicScene(name)
                 self.refresh()
 
         @property
         def solid_name(self) -> str:
-            return self._solid_name
+            return self.scene.solid_name if isinstance(self.scene, PlatonicScene) else ""
 
         def toggle(self) -> bool:
             self.spinning = not self.spinning
@@ -258,7 +346,8 @@ try:
             w = max(8, self.content_size.width or 24)
             h = max(4, self.content_size.height or 8)
             canvas = BrailleCanvas(w, h)
-            render_solid(canvas, SOLIDS[self._solid_name], angle=self.frame * 0.12)
+            if self.scene:
+                self.scene.render(canvas, self.frame)
             return Text(canvas.to_text(), no_wrap=True, overflow="crop")
 
 except ImportError:  # textual/rich absent — the geometry half still imports

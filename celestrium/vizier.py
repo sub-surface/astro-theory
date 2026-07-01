@@ -21,6 +21,17 @@ def query(catalog_id: str, columns=("*",), row_limit=20, **constraints):
     return res[0] if res else None
 
 
+def cone_pull(ra_deg: float, dec_deg: float, radius_arcmin: float = 1.0, catalog: str = "I/355/gaiadr3"):
+    """Query a specific catalogue around a coordinate."""
+    from astropy.coordinates import SkyCoord
+    from astropy import units as u
+
+    pos = SkyCoord(ra_deg, dec_deg, unit=u.deg)
+    v = Vizier(columns=["**"], row_limit=500)
+    tables = v.query_region(pos, radius=radius_arcmin * u.arcmin, catalog=catalog)
+    return tables[0] if tables else None
+
+
 if __name__ == "__main__":
     # NVSS bright sources — connectivity smoke test.
     tab = query("VIII/65/nvss", columns=["RAJ2000", "DEJ2000", "S1.4"],

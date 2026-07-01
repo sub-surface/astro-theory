@@ -207,7 +207,8 @@ the current `Ctrl+G` modal is still recognisably the old image-settings modal wi
 new product fields, and Resolve still behaves more like a direct action than a
 deliberate planner.
 
-Lingering Phase 4 / roadmap items:
+Lingering Phase 4 / roadmap items (**most now built — see Phase 4.2 below**;
+kept here for the design rationale):
 
 - **Fuzzy and ambiguous resolution.** `parse_request()` can understand simple
   intents and coordinates, but Resolve still relies on exact SIMBAD identify. The
@@ -259,6 +260,44 @@ Performance improvements to pair with any direction:
   `data/` and opening them externally rather than adding heavy terminal graphics.
 - **Keep tests hermetic.** Planner ranking, UI state, and product routing should be
   tested with fake backends; live archive checks remain manual smoke tests only.
+
+## Phase 4.2 — Resolve planner surface + runbook runner (built)
+
+Direction 1 (incremental Resolve reorganisation) taken. The planner is now the
+real brain behind both surfaces, and Resolve plans before it fetches.
+
+**Planner logic (`celestrium/planner.py`, all hermetic).**
+- **Layered resolution** — `resolve_target(text)` walks coordinate parse → exact
+  SIMBAD → relaxed/alias (wildcard) → nearby cone → ambiguity list → blank field,
+  returning a `ResolvedTarget` whose `match_kind`/`confidence`/`alternatives`
+  record *how* it was found. Backends (`identify`/`search`/`nearby`) are
+  injectable; `resolvers.search`/`resolvers.nearby` are the live SIMBAD ones.
+- **Executable products + ranking** — added `colour-image` and `multi-panel`
+  capabilities (object-class `*`, status `executable`) and promoted NED spectra
+  to executable; `recommend_plans` now ranks executable → metadata → planned.
+
+**TUI Resolve = a planner surface (deliberate fetch).** Resolve no longer
+auto-pulls anything. It populates an **identity card** (name, type, class,
+match-kind, confidence, ambiguity list) and a **ranked product table**; pressing
+**Enter** on a product row is the only thing that fetches (colour image,
+multi-wavelength panel, or NED spectrum). A request-id guards stale workers, and
+`last_target`/`last_plans` cache the planner state in memory.
+
+**TUI Runbook runner (the open Phase 3 item).** A new **Runbooks** mode lists
+`registry.RUNBOOKS`; **Enter** runs one through `packets.run_runbook` with live
+per-step progress (new `on_step` callback) and writes the index report —
+**Ctrl+O** opens it. `cutouts.contact_sheet` and `celestrium/paths.py` are shared
+so the TUI runner reuses the CLI's imaging + paths.
+
+**CLI hooks (both surfaces share the planner).** `plan TARGET [--modality]`
+prints identity + ranked products (`--json` emits plan dicts); `spectrum TARGET`
+renders the first NED spectrum; `where` now appends a colour-coverage note.
+
+**Still open (follow-on executors).** Metadata/exoplanet/high-energy products are
+ranked and explained but inspect-only in the cockpit — their fetch executors
+(NED metadata, Exoplanet Archive, HEASARC/VizieR cone pulls) are the next slice.
+The substance question from the prior "Next decision" still stands: point the
+instrument at the Euclid DR1 σ_D forecast and let real use drive the next feature.
 
 ## Fun polish backlog
 

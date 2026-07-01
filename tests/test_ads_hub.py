@@ -64,6 +64,76 @@ def test_cite_joins_multi_token_query(monkeypatch):
     assert "abc" in result.output
 
 
+def test_where_reports_coverage_note(monkeypatch):
+    runner = CliRunner()
+    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 3.0))
+    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
+
+    result = runner.invoke(hub.app, ["where", "187.7", "12.4"])
+
+    assert result.exit_code == 0
+    assert "Deep Survey" in result.output
+    # the planner coverage note is appended (pure, no network)
+    assert "fallback" in result.output.lower() or "coverage" in result.output.lower()
+
+
+def test_plan_resolves_and_ranks_products(monkeypatch):
+    runner = CliRunner()
+    monkeypatch.setattr(
+        hub.resolvers, "identify",
+        lambda name: Table({"main_id": ["3C 273"], "ra": [187.2779],
+                            "dec": [2.0524], "otype": ["QSO"]}))
+    monkeypatch.setattr(hub.resolvers, "search", lambda name: None)
+
+    result = runner.invoke(hub.app, ["plan", "3C273"])
+
+    assert result.exit_code == 0
+    assert "3C 273" in result.output
+    assert "exact" in result.output
+    # ranked products include an executable colour cutout and high-energy option
+    assert "Colour cutout" in result.output
+    assert "HEASARC" in result.output
+
+
+def test_plan_unresolvable_target_exits_nonzero(monkeypatch):
+    runner = CliRunner()
+    monkeypatch.setattr(hub.resolvers, "identify", lambda name: None)
+    monkeypatch.setattr(hub.resolvers, "search", lambda name: None)
+
+    result = runner.invoke(hub.app, ["plan", "zzz-nope"])
+
+    assert result.exit_code == 1
+    assert "could not resolve" in result.output
+
+
+def test_spectrum_renders_via_ned(monkeypatch, tmp_path):
+    runner = CliRunner()
+
+    class FakeResult:
+        path = tmp_path / "spec.png"
+        summary = "3C 273: NED spectrum"
+
+        def to_dict(self):
+            return {"path": str(self.path), "summary": self.summary}
+
+    monkeypatch.setattr(hub.spectra, "fetch_ned_spectrum", lambda target: FakeResult())
+
+    result = runner.invoke(hub.app, ["spectrum", "3C 273"])
+
+    assert result.exit_code == 0
+    assert "spec.png" in result.output
+
+
+def test_spectrum_missing_exits_nonzero(monkeypatch):
+    runner = CliRunner()
+    monkeypatch.setattr(hub.spectra, "fetch_ned_spectrum", lambda target: None)
+
+    result = runner.invoke(hub.app, ["spectrum", "Nope"])
+
+    assert result.exit_code == 1
+    assert "no spectrum" in result.output
+
+
 def test_image_accepts_fov_option(monkeypatch):
     runner = CliRunner()
     calls = []

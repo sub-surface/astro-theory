@@ -170,3 +170,11 @@ and is comparably uncrowded but at *higher, rising* significance. G and A are me
 twins (both are "the anomaly is real iff the selection function is clean"), so doing G first
 builds the exact curation muscle A needs. Keep **F** as the high-ceiling theory bet and **C′**
 as the standing steering layer.
+
+## Implementation proposals (Jul 2026)
+
+Three concrete `celestrium/` modules for G-Euclid pre-DR1 work are now documented in
+[`euclid-dr1-prep.md`](./euclid-dr1-prep.md#proposed-implementations-jul-2026):
+**forecast.py** (σ_D partial-sky forecast — the gate task), **mocks.py** (mock + null
+pipeline for significance calibration), and **ellis_baldwin.py** (D_kin pre-registration
+for Euclid bands). Priority order: forecast → mocks → Ellis–Baldwin.

@@ -19,6 +19,20 @@ def query_criteria(**criteria):
     return Observations.query_criteria(**criteria)
 
 
+def fetch_lightcurves(target_name: str):
+    """Fetch TESS / Kepler / K2 lightcurve metadata from MAST."""
+    try:
+        obs_table = Observations.query_criteria(
+            target_name=target_name,
+            dataproduct_type=["timeseries"],
+        )
+        if obs_table is None or len(obs_table) == 0:
+            return None
+        return obs_table
+    except Exception as e:
+        raise RuntimeError(f"MAST lightcurve fetch failed: {e}")
+
+
 if __name__ == "__main__":
     # JWST observations in a small field — connectivity smoke test.
     obs = query_criteria(

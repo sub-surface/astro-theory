@@ -250,14 +250,24 @@ class RunbookResult:
 def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: Path,
                 contact_sheet: Callable, limit: int = 4,
                 images: bool = True, posters: bool = True,
-                samples: bool = True) -> RunbookResult:
-    """Execute a registry runbook spec, writing artifacts under the given dirs."""
+                samples: bool = True,
+                on_step: Optional[Callable[[str], None]] = None) -> RunbookResult:
+    """Execute a registry runbook spec, writing artifacts under the given dirs.
+
+    `on_step`, if given, is called with each note as it is produced — the TUI
+    runbook runner uses it for live per-step progress; the CLI passes nothing.
+    """
     spec = registry.RUNBOOKS.get(name)
     if spec is None:
         raise KeyError(name)
     notes: list = []
     created: list = []
     saw_sample = False
+
+    def note(msg: str) -> None:
+        notes.append(msg)
+        if on_step:
+            on_step(msg)
 
     for step in spec.steps:
         kind = step["kind"]
@@ -267,9 +277,9 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                 ps = build_paper_set(qtext, rows=limit)
                 path = write_report(reports_dir, "papers", qtext, ps.to_markdown())
                 created.append(("papers", path))
-                notes.append(f"- Papers `{step['phrase']}`: {len(ps.docs)} ADS rows -> `{path}`")
+                note(f"- Papers `{step['phrase']}`: {len(ps.docs)} ADS rows -> `{path}`")
             except Exception as e:
-                notes.append(f"- Papers `{step['phrase']}`: unavailable ({type(e).__name__}: {e})")
+                note(f"- Papers `{step['phrase']}`: unavailable ({type(e).__name__}: {e})")
         elif kind == "field":
             try:
                 fp = build_field_packet(step["ra"], step["dec"],
@@ -277,9 +287,9 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                 path = write_report(reports_dir, "field",
                                     f'{step["ra"]:.5f}_{step["dec"]:+.5f}', fp.to_markdown())
                 created.append(("field", path))
-                notes.append(f"- {step.get('note', 'Field anchor')} -> `{path}`")
+                note(f"- {step.get('note', 'Field anchor')} -> `{path}`")
             except Exception as e:
-                notes.append(f"- {step.get('note', 'Field anchor')}: unavailable ({type(e).__name__}: {e})")
+                note(f"- {step.get('note', 'Field anchor')}: unavailable ({type(e).__name__}: {e})")
         elif kind == "sample":
             saw_sample = True
             if not samples:
@@ -290,12 +300,12 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                 source = registry.resolve_query_source(rec.archive)
                 tab = cache.cached_query(f"sample:{recipe}", rec.adql,
                                          lambda: source.query(rec.adql))
-                notes.append(f"- Sample `{recipe}`: {len(tab)} rows cached.")
+                note(f"- Sample `{recipe}`: {len(tab)} rows cached.")
             except Exception as e:
-                notes.append(f"- Sample `{recipe}`: unavailable ({type(e).__name__}: {e})")
+                note(f"- Sample `{recipe}`: unavailable ({type(e).__name__}: {e})")
         elif kind == "atlas":
             if not images:
-                notes.append("- Atlas images skipped.")
+                note("- Atlas images skipped.")
                 continue
             try:
                 atlas_dir.mkdir(parents=True, exist_ok=True)
@@ -306,12 +316,12 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                                                fov_arcmin=target["fov"], pix=768, out=out))
                 sheet = contact_sheet(paths, atlas_dir / "atlas-targets.png", "atlas targets")
                 created.append(("atlas", sheet))
-                notes.append(f"- Atlas contact sheet -> `{sheet}`")
+                note(f"- Atlas contact sheet -> `{sheet}`")
             except Exception as e:
-                notes.append(f"- Atlas contact sheet: unavailable ({type(e).__name__}: {e})")
+                note(f"- Atlas contact sheet: unavailable ({type(e).__name__}: {e})")
         elif kind == "poster":
             if not posters:
-                notes.append("- Posters skipped.")
+                note("- Posters skipped.")
                 continue
             target = step["target"]
             try:
@@ -322,10 +332,10 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                                       fov_arcmin=step.get("fov", 6.0), out=out,
                                       label=obj["name"], style="label")
                 created.append(("poster", path))
-                notes.append(f"- Poster `{target}` -> `{path}`")
+                note(f"- Poster `{target}` -> `{path}`")
             except Exception as e:
-                notes.append(f"- Poster `{target}`: unavailable ({type(e).__name__}: {e})")
+                note(f"- Poster `{target}`: unavailable ({type(e).__name__}: {e})")
 
     if saw_sample and not samples:
-        notes.append("- Samples skipped.")
+        note("- Samples skipped.")
     return RunbookResult(name, spec.description, notes, created)

@@ -30,13 +30,12 @@ import json as _json
 from pathlib import Path
 from typing import List, Optional
 
-import matplotlib.pyplot as plt
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
 
-from . import cache, candidates, cutouts, packets, registry, resolvers
+from . import cache, candidates, cutouts, packets, planner, registry, resolvers, spectra
 # Re-exported so the test suite (and any importer) can patch these on `hub`.
 from .registry import QUERY_ARCHIVES, SAMPLE_RECIPES, SampleRecipe, ATLAS_TARGETS  # noqa: F401
 
@@ -96,24 +95,9 @@ def _print_astropy_table(tab, title: str, limit: int = 12):
 
 
 def _contact_sheet(paths, out: Path, title: str):
-    if not paths:
-        raise RuntimeError("no images available for contact sheet")
-    cols = min(3, len(paths))
-    rows = (len(paths) + cols - 1) // cols
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 3 * rows))
-    axes = [axes] if len(paths) == 1 else list(getattr(axes, "flat", axes))
-    for ax, path in zip(axes, paths):
-        ax.imshow(plt.imread(path))
-        ax.set_title(Path(path).stem, fontsize=8)
-        ax.set_axis_off()
-    for ax in axes[len(paths):]:
-        ax.set_axis_off()
-    fig.suptitle(title, fontsize=11)
-    fig.tight_layout()
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    return out
+    # Thin re-export so the test suite can still patch hub._contact_sheet; the
+    # implementation lives in cutouts so the TUI runbook runner shares it.
+    return cutouts.contact_sheet(paths, out, title)
 
 
 # --------------------------------------------------------------------------- #
@@ -157,7 +141,8 @@ def where(ra: float, dec: float):
     """What's here + which deep survey covers this declination (no download)."""
     obj = cutouts.identify_field(ra, dec)
     hips, label = cutouts.best_color_hips(dec)
-    payload = {"nearest": obj, "survey": label, "hips": hips}
+    coverage = planner.image_coverage_note(dec)
+    payload = {"nearest": obj, "survey": label, "hips": hips, "coverage": coverage}
 
     def render():
         if obj:
@@ -165,7 +150,58 @@ def where(ra: float, dec: float):
         else:
             console.print("[dim]no catalogued SIMBAD object within 2'[/]")
         console.print(f"best colour survey: [green]{label}[/]  [dim]{hips}[/]")
+        console.print(f"[dim]{coverage}[/]")
     _emit(payload, render)
+
+
+@app.command(rich_help_panel=IMAGING)
+def plan(target: str,
+         modality: Optional[str] = typer.Option(
+             None, help="filter products: colour_image, multi_panel, spectrum, metadata, …")):
+    """Plan observations for a target: identity, confidence, ambiguity, ranked products.
+
+    Resolve TARGET through the layered resolver (exact → coordinate → relaxed →
+    nearby → blank field), classify it, and rank what could be fetched. This is
+    the planning step before `image`/`spectrum`/`dossier` — no data is pulled.
+    """
+    tgt = planner.resolve_target(target)
+    if tgt is None:
+        console.print(f"[red]could not resolve {target!r} (try 'RA Dec' or an alias)[/]")
+        raise typer.Exit(1)
+    plans = planner.recommend_plans(tgt, modality=modality)
+    coverage = planner.image_coverage_note(tgt.dec)
+    payload = {"target": tgt.to_dict(),
+               "plans": [p.to_dict() for p in plans],
+               "coverage": coverage}
+
+    def render():
+        console.print(
+            f"[bold cyan]{tgt.display_name}[/] [yellow]{tgt.otype or '?'}[/] "
+            f"({tgt.object_class}) · [magenta]{tgt.match_kind}[/] "
+            f"conf={tgt.confidence:.2f}  RA={tgt.ra:.5f} Dec={tgt.dec:+.5f}")
+        if tgt.alternatives:
+            alts = ", ".join(str(a.get("name", "?")) for a in tgt.alternatives[:5])
+            console.print(f"[dim]also matched: {alts}[/]")
+        t = RichTable("product", "status", "action", "coverage",
+                      title=f"observation plan: {tgt.display_name}")
+        for p in plans:
+            t.add_row(p.product.label, p.product.status, p.next_action,
+                      p.product.coverage_hint)
+        console.print(t)
+        console.print(f"[dim]{coverage}[/]")
+    _emit(payload, render)
+
+
+@app.command(rich_help_panel=IMAGING)
+def spectrum(target: str):
+    """Fetch and render the first available spectrum for a target (NED)."""
+    result = spectra.fetch_ned_spectrum(target)
+    if result is None:
+        console.print(f"[yellow]no spectrum found for {target!r} (NED)[/]")
+        raise typer.Exit(1)
+    _emit(result.to_dict(),
+          lambda: console.print(f"spectrum -> [green]{result.path}[/]  "
+                                f"[dim]{result.summary}[/]"))
 
 
 # --------------------------------------------------------------------------- #

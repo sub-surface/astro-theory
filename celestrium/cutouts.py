@@ -158,7 +158,37 @@ def _is_blank(img, tol: float = 3.0) -> bool:
         return False
 
 
-def color_auto(ra, dec, fov_arcmin=8.0, pix=512, survey=None, out=None):
+def fetch_direct_cutout(hips, ra, dec, fov_arcmin, max_pix=2048):
+    """Attempt to pull a native-resolution cutout directly from the survey's REST API."""
+    import urllib.request
+    import io
+    import matplotlib.image as mpimg
+
+    fov_arcsec = fov_arcmin * 60.0
+
+    if "DESI-Legacy-Surveys" in hips:
+        size = int(fov_arcsec / 0.262)
+        size = min(size, max_pix)
+        scale = fov_arcsec / size
+        url = f"https://www.legacysurvey.org/viewer/jpeg-cutout?ra={ra}&dec={dec}&pixscale={scale:.4f}&size={size}"
+    elif "SDSS" in hips:
+        size = int(fov_arcsec / 0.396)
+        size = min(size, max_pix)
+        scale = fov_arcsec / size
+        url = f"https://skyserver.sdss.org/dr18/SkyServerWS/ImgCutout/getjpeg?ra={ra}&dec={dec}&scale={scale:.4f}&width={size}&height={size}"
+    else:
+        return None
+
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Celestrium'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = resp.read()
+        return mpimg.imread(io.BytesIO(data), format='jpeg')
+    except Exception:
+        return None
+
+
+def color_auto(ra, dec, fov_arcmin=8.0, pix=None, survey=None, out=None):
     """Colour cutout that survives no-coverage: try surveys until one has signal.
 
     survey  None  -> deepest-covering surveys for this dec, in order (auto);
@@ -166,6 +196,10 @@ def color_auto(ra, dec, fov_arcmin=8.0, pix=512, survey=None, out=None):
             then fall back to auto if that one is blank.
     Returns (Path, label). Fixes e.g. Andromeda rendering blank white from Legacy.
     """
+    if pix is None:
+        # Dynamic pixel scaling for HiPS fallback: target ~0.5" per pixel, cap at 2048
+        pix = min(int((fov_arcmin * 60.0) / 0.5), 2048)
+
     if survey and survey in COLOR_SURVEYS:
         first = COLOR_SURVEYS[survey]
         rest = [c for c in color_hips_candidates(dec) if c[0] != first[0]]
@@ -176,20 +210,53 @@ def color_auto(ra, dec, fov_arcmin=8.0, pix=512, survey=None, out=None):
     out = out or OUT / f"color_{ra:.4f}_{dec:+.4f}.jpg"
     last_label = candidates[-1][1]
     for hips, label in candidates:
-        try:
-            img = hips2fits.query(hips=hips, width=pix, height=pix,
-                                  ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
-                                  fov=Angle(fov_arcmin * u.arcmin),
-                                  projection="TAN", format="jpg")
-        except Exception:
-            continue
+        img = fetch_direct_cutout(hips, ra, dec, fov_arcmin)
+
+        if img is None:
+            try:
+                img = hips2fits.query(hips=hips, width=pix, height=pix,
+                                      ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
+                                      fov=Angle(fov_arcmin * u.arcmin),
+                                      projection="TAN", format="jpg")
+            except Exception:
+                continue
+
         if not _is_blank(img):
             plt.imsave(out, img)
             return Path(out), label
         last_label = label
     # Everything was blank — save the last attempt so the user sees *something*.
-    plt.imsave(out, img)
+    if img is not None:
+        plt.imsave(out, img)
     return Path(out), f"{last_label} (blank — no coverage?)"
+
+
+def contact_sheet(paths, out, title):
+    """Tile rendered image files into one labelled PNG; returns the saved path.
+
+    Shared imaging primitive: both the CLI (`atlas-targets`, `runbook`) and the
+    TUI runbook runner compose contact sheets, so the logic lives here, not in a
+    surface."""
+    paths = list(paths)
+    if not paths:
+        raise RuntimeError("no images available for contact sheet")
+    cols = min(3, len(paths))
+    rows = (len(paths) + cols - 1) // cols
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 3 * rows))
+    axes = [axes] if len(paths) == 1 else list(getattr(axes, "flat", axes))
+    for ax, path in zip(axes, paths):
+        ax.imshow(plt.imread(path))
+        ax.set_title(Path(path).stem, fontsize=8)
+        ax.set_axis_off()
+    for ax in axes[len(paths):]:
+        ax.set_axis_off()
+    fig.suptitle(title, fontsize=11)
+    fig.tight_layout()
+    out = Path(out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return out
 
 
 def identify_field(ra, dec, radius_arcmin=2.0):
@@ -211,17 +278,22 @@ def identify_field(ra, dec, radius_arcmin=2.0):
         return None
 
 
-def color(ra, dec, fov_arcmin=5.0, hips=None, pix=512, out=None):
+def color(ra, dec, fov_arcmin=5.0, hips=None, pix=None, out=None):
     """Save a colour image from a CDS HiPS survey.
     hips=None auto-selects the deepest survey covering this declination."""
     if hips is None:
         hips, _ = best_color_hips(dec)
     OUT.mkdir(parents=True, exist_ok=True)
     out = out or OUT / f"color_{ra:.4f}_{dec:+.4f}.jpg"
-    img = hips2fits.query(hips=hips, width=pix, height=pix,
-                          ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
-                          fov=Angle(fov_arcmin * u.arcmin),
-                          projection="TAN", format="jpg")
+    if pix is None:
+        pix = min(int((fov_arcmin * 60.0) / 0.5), 2048)
+
+    img = fetch_direct_cutout(hips, ra, dec, fov_arcmin)
+    if img is None:
+        img = hips2fits.query(hips=hips, width=pix, height=pix,
+                              ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
+                              fov=Angle(fov_arcmin * u.arcmin),
+                              projection="TAN", format="jpg")
     plt.imsave(out, img)
     return Path(out)
 
