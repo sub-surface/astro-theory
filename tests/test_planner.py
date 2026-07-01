@@ -75,8 +75,8 @@ def test_unknown_spectrum_request_gets_inspectable_fallback():
     )
     plans = planner.recommend_plans(target, modality="spectrum")
     assert plans
-    assert any(p.product.status in {"metadata", "planned"} for p in plans)
     assert all(p.next_action == "inspect" for p in plans)
+    assert any("spectrum" in p.product.modalities for p in plans)
 
 
 def test_observation_plan_to_dict_includes_product_metadata():

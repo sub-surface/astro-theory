@@ -282,6 +282,39 @@ def test_resolve_row_selection_runs_current_product():
     asyncio.run(scenario())
 
 
+def test_inspect_only_plan_does_not_fetch():
+    from celestrium import planner
+
+    target = planner.ResolvedTarget(
+        display_name="field",
+        aliases=(),
+        ra=10.0,
+        dec=-5.0,
+        otype="",
+        object_class="unknown",
+        confidence=0.3,
+        match_kind="coordinate",
+    )
+    plans = planner.recommend_plans(target, modality="spectrum")
+    assert plans and plans[0].next_action == "inspect"
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seen = {}
+            app.last_target = target
+            app.context.target = target
+            app.last_plans = plans
+            app._run_execute_plan_worker = lambda *args: seen.setdefault("fetch", args)
+
+            app.execute_plan(0)
+            await pilot.pause()
+
+            assert seen == {}
+
+    asyncio.run(scenario())
+
+
 def test_stale_product_fetch_cannot_overwrite_new_target(tmp_path):
     from celestrium import planner
 
@@ -303,45 +336,6 @@ def test_stale_product_fetch_cannot_overwrite_new_target(tmp_path):
     app._accept_plan_image_result(path, "Old survey", "detail", 5.0, 1, old_key)
 
     assert app.last_image is None
-
-
-def test_tabular_product_fetch_uses_cache(monkeypatch):
-    from astropy.table import Table
-    from celestrium import cache, planner, vizier
-
-    target = planner.ResolvedTarget(
-        display_name="3C 273", aliases=(), ra=187.2779, dec=2.0524, otype="QSO",
-        object_class="galaxy_agn", confidence=1.0, match_kind="exact")
-    plan = next(p for p in planner.recommend_plans(target)
-                if p.product.key == "vizier")
-    seen = {}
-
-    monkeypatch.setattr(
-        vizier, "cone_pull",
-        lambda ra, dec: Table({"ra": [ra], "dec": [dec]}))
-
-    def fake_cached_query(archive, query, fetch, refresh=False):
-        seen["archive"] = archive
-        seen["query"] = query
-        seen["refresh"] = refresh
-        return fetch()
-
-    monkeypatch.setattr(cache, "cached_query", fake_cached_query)
-
-    app = CelestriumApp(active_line="test-line")
-    app._fetch_seq = 1
-    app.last_target = target
-    target_key = app._target_key(target)
-    app.call_from_thread = lambda fn, *args, **kwargs: None
-
-    app._fetch_tabular_product(
-        target, plan, 1, target_key, "card",
-        module_name="celestrium.vizier", fetch_func="cone_pull",
-        args=(target.ra, target.dec))
-
-    assert seen["archive"] == "product-vizier"
-    assert "3C 273" in seen["query"]
-    assert seen["refresh"] is False
 
 
 def test_query_table_updates_scatter_scene_from_coordinates():

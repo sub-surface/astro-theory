@@ -109,8 +109,8 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         access="api",
         coverage_hint="Optical footprint where SDSS imaging or spectra exist.",
         fetch_cost="low",
-        status="planned",
-        service_module=None,
+        status="executable",
+        service_module="celestrium.sdss",
         scope="target",
     ),
     ProductSourceCapability(
@@ -121,7 +121,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         access="api",
         coverage_hint="HST, GALEX, TESS, and other MAST-hosted missions.",
         fetch_cost="medium",
-        status="planned",
+        status="executable",
         service_module="celestrium.mast",
         scope="target",
     ),
@@ -145,7 +145,7 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
         access="mast",
         coverage_hint="Time-series photometry from transit missions.",
         fetch_cost="medium",
-        status="planned",
+        status="executable",
         service_module="celestrium.mast",
         scope="target",
     ),
@@ -449,7 +449,9 @@ def recommend_plans(
     for capability in SOURCE_CAPABILITIES:
         if capability.scope == "global" and not include_global:
             continue
-        if not _matches_target_or_unknown_fallback(target, capability, modality):
+        target_match = _matches_target(target, capability)
+        unknown_fallback = _unknown_modality_fallback(target, capability, modality)
+        if not target_match and not unknown_fallback:
             continue
         if modality is not None and modality not in capability.modalities:
             continue
@@ -467,9 +469,11 @@ def recommend_plans(
                     f"Use {capability.label} for {target.display_name} "
                     f"({target.object_class})."
                 ),
-                next_action="fetch"
-                if capability.status == "executable"
-                else "inspect",
+                next_action=(
+                    "inspect" if unknown_fallback
+                    else "fetch" if capability.status == "executable"
+                    else "inspect"
+                ),
             )
         )
     # Stable sort keeps SOURCE_CAPABILITIES order within each status band.
@@ -505,16 +509,23 @@ def image_coverage_note(dec: float, survey: str = "auto") -> str:
     )
 
 
-def _matches_target_or_unknown_fallback(
+def _matches_target(target: ResolvedTarget, capability: ProductSourceCapability) -> bool:
+    if "*" in capability.object_classes or target.object_class in capability.object_classes:
+        return True
+    return False
+
+
+def _unknown_modality_fallback(
     target: ResolvedTarget,
     capability: ProductSourceCapability,
     modality: str | None,
 ) -> bool:
-    if "*" in capability.object_classes or target.object_class in capability.object_classes:
-        return True
-    if target.object_class != "unknown" or modality is None:
-        return False
-    return capability.status in {"metadata", "planned"} and modality in capability.modalities
+    return (
+        target.object_class == "unknown"
+        and modality is not None
+        and capability.scope != "global"
+        and modality in capability.modalities
+    )
 
 
 def _parse_coordinates(target_text: str) -> tuple[float, float] | None:

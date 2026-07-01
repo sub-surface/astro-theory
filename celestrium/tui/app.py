@@ -29,8 +29,8 @@ from astropy.table import Table
 from rich.markup import escape
 from rich.text import Text
 
-from .. import (cache, candidates, cutouts, packets, paths, planner, registry,
-                 spectra, xmatch)
+from .. import (cache, candidates, cutouts, packets, paths, planner, products,
+                 registry, spectra, xmatch)
 from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
 
 MODES = [
@@ -184,34 +184,88 @@ class SaveCandidateScreen(ModalScreen):
 
 
 class ImageSettingsScreen(ModalScreen):
-    """Set colour-cutout parameters (FOV / pixels / survey) used by Resolve."""
+    """Set product-planner parameters used by Resolve product executors."""
 
     BINDINGS = [("escape", "dismiss", "Cancel")]
-    SURVEYS = ["auto", "legacy", "panstarrs", "des", "dss2"]
-    PRODUCTS = ["colour_image", "multi_panel", "spectrum", "metadata", "exoplanet"]
-    WAVELENGTHS = ["auto", "UV", "optical", "near-IR", "mid-IR", "radio", "X-ray"]
+    PRESETS = [
+        ("Quick look", "quick-look"),
+        ("Morphology", "morphology"),
+        ("Wide context", "wide-context"),
+        ("Paper figure", "paper-figure"),
+        ("Time-domain host", "time-domain-host"),
+    ]
+    SURVEYS = [
+        ("Auto best coverage", "auto"),
+        ("Legacy Surveys", "legacy"),
+        ("Pan-STARRS", "panstarrs"),
+        ("DES", "des"),
+        ("DSS2 fallback", "dss2"),
+        ("SDSS optical", "sdss"),
+        ("MAST UV/optical", "mast"),
+        ("TESS", "tess"),
+        ("Kepler/K2", "kepler"),
+    ]
+    PRODUCTS = [
+        ("Auto quick-look", "auto"),
+        ("HiPS colour image", "colour_image"),
+        ("Multi-wavelength panel", "multi_panel"),
+        ("Spectrum", "spectrum"),
+        ("SDSS spectrum/image", "sdss"),
+        ("MAST UV/optical observations", "mast"),
+        ("TESS/Kepler lightcurves", "lightcurve"),
+    ]
+    WAVELENGTHS = [
+        ("Auto", "auto"),
+        ("UV", "UV"),
+        ("Optical", "optical"),
+        ("Near-IR", "near-IR"),
+        ("Mid-IR", "mid-IR"),
+        ("Radio", "radio"),
+        ("X-ray", "X-ray"),
+        ("Time-domain", "time-domain"),
+    ]
 
-    def __init__(self, settings: dict):
+    def __init__(self, settings: dict, target: planner.ResolvedTarget | None = None):
         super().__init__()
         self._s = dict(settings)
+        self._target = target
+
+    def _coverage_note(self) -> str:
+        if self._target is None:
+            return "[dim]Resolve a target to see coverage-aware product advice.[/]"
+        survey = str(self._s.get("survey", "auto"))
+        if survey not in cutouts.COLOR_SURVEYS:
+            survey = "auto"
+        note = planner.image_coverage_note(self._target.dec, survey)
+        return (
+            f"[b]{escape(self._target.display_name)}[/]  "
+            f"{escape(self._target.object_class)}  "
+            f"RA {self._target.ra:.5f} Dec {self._target.dec:+.5f}\n"
+            f"{escape(note)}"
+        )
 
     def compose(self) -> ComposeResult:
         with Vertical(id="modal-box"):
-            yield Label("◇ IMAGE SETTINGS", classes="heading")
-            yield Label("Product", classes="dim")
-            yield Select([(p, p) for p in self.PRODUCTS],
+            yield Label("◇ PRODUCT PLANNER", classes="heading")
+            yield Static(self._coverage_note(), id="img-recommendation")
+            yield Label("Preset", classes="dim")
+            yield Select(self.PRESETS,
+                         value=self._s.get("preset", "quick-look"),
+                         id="img-preset", allow_blank=False)
+            yield Label("Product intent", classes="dim")
+            yield Select(self.PRODUCTS,
                          value=self._s.get("product", "colour_image"),
                          id="img-product", allow_blank=False)
             yield Label("Wavelength", classes="dim")
-            yield Select([(w, w) for w in self.WAVELENGTHS],
+            yield Select(self.WAVELENGTHS,
                          value=self._s.get("wavelength", "auto"),
                          id="img-wavelength", allow_blank=False)
             yield Label("Field of view (arcmin, or 'auto')", classes="dim")
             yield Input(value=str(self._s.get("fov", "auto")), id="img-fov")
             yield Label("Pixels (per side)", classes="dim")
             yield Input(value=str(self._s.get("pix", 512)), id="img-pix")
-            yield Label("Survey", classes="dim")
-            yield Select([(s, s) for s in self.SURVEYS], value=self._s.get("survey", "auto"),
+            yield Label("Preferred source / survey", classes="dim")
+            yield Select(self.SURVEYS, value=self._s.get("survey", "auto"),
                          id="img-survey", allow_blank=False)
             with Horizontal(classes="modal-actions"):
                 yield Button("Apply", variant="success", id="img-ok")
@@ -232,7 +286,8 @@ class ImageSettingsScreen(ModalScreen):
                 fov = max(0.5, float(fov_raw))
             except ValueError:
                 fov = "auto"
-        self.dismiss({"fov": fov, "pix": pix,
+        self.dismiss({"preset": self.query_one("#img-preset", Select).value,
+                      "fov": fov, "pix": pix,
                       "survey": self.query_one("#img-survey", Select).value,
                       "product": self.query_one("#img-product", Select).value,
                       "wavelength": self.query_one("#img-wavelength", Select).value})
@@ -337,7 +392,7 @@ class CelestriumApp(App):
         self._fetch_seq = 0             # fetch request id: guards stale product fetches (Issue 5)
         self.debug_mode = False
         self.image_cfg = {
-            "fov": "auto", "pix": 512, "survey": "auto",
+            "preset": "quick-look", "fov": "auto", "pix": 512, "survey": "auto",
             "product": "colour_image", "wavelength": "auto",
         }
         self._last_action = None        # (fn_name, *args) for refresh / re-run
@@ -856,8 +911,10 @@ class CelestriumApp(App):
         def _apply(cfg):
             if cfg:
                 self.image_cfg = cfg
-                self._log(f"image: FOV {cfg['fov']} · {cfg['pix']}px · {cfg['survey']}")
-        self.push_screen(ImageSettingsScreen(self.image_cfg), _apply)
+                self._log(
+                    f"product planner: {cfg['product']} · {cfg['wavelength']} · "
+                    f"FOV {cfg['fov']} · {cfg['pix']}px · {cfg['survey']}")
+        self.push_screen(ImageSettingsScreen(self.image_cfg, self.last_target), _apply)
 
     def action_open_image(self) -> None:
         target = (self.last_report if self.mode == "runbooks" and self.last_report
@@ -1271,6 +1328,37 @@ class CelestriumApp(App):
             f"{escape(plan_label)} for {escape(target_name)}.[/]"
         )
 
+    def _accept_product_result(self, result: products.ProductResult | None,
+                               plan_label: str, detail: str, seq: int,
+                               target_key: str | None = None) -> None:
+        if not self._fetch_is_current(seq, target_key):
+            return
+        target_name = self.last_target.display_name if self.last_target else ""
+        if result is None:
+            self._accept_plan_no_records(target_name, plan_label, detail, seq, target_key)
+            return
+        if result.kind == "image":
+            self._accept_plan_image_result(
+                str(result.path), result.label, detail, result.fov or 0.0,
+                seq, target_key)
+        elif result.kind == "panel":
+            self._accept_plan_panel_result(
+                str(result.path), detail, result.fov or 0.0, seq, target_key)
+        elif result.kind == "spectrum":
+            self._accept_plan_spectrum_result(
+                str(result.path), result.source or result.label, result.summary,
+                detail, seq, target_key)
+        elif result.kind == "table" and result.table is not None:
+            if len(result.table) == 0:
+                self._accept_plan_no_records(
+                    result.target_name, plan_label, detail, seq, target_key)
+            else:
+                self._accept_tabular_product_result(
+                    result.table, result.target_name, plan_label, detail,
+                    seq, target_key)
+        else:
+            self._accept_plan_no_records(target_name, plan_label, detail, seq, target_key)
+
     def _accept_runbook_result(self, index: Path, name: str, steps_count: int, created_count: int) -> None:
         """Central runbook state committer on the main thread (Issue 6)."""
         self.last_report = index
@@ -1374,6 +1462,12 @@ class CelestriumApp(App):
             self._feedback("product", f"row {index} is not a valid product", "yellow")
             return
         plan = self.last_plans[index]
+        if plan.next_action != "fetch":
+            self._feedback(
+                "product",
+                f"{plan.product.label} is inspect-only for this target", "yellow")
+            self._set_detail(self._render_plan_detail(plan))
+            return
         self._fetch_seq += 1
         seq = self._fetch_seq
         self._feedback(
@@ -1390,11 +1484,10 @@ class CelestriumApp(App):
         if not self._fetch_is_current(seq, target_key):
             return
         plan = self.last_plans[index]
-        mods = plan.product.modalities
         card = self._identity_card(target)
         self.call_from_thread(
             self._feedback, "product",
-            f"fetching {plan.product.label}; datatype={','.join(mods) or 'table'}")
+            f"fetching {plan.product.label}; datatype={','.join(plan.product.modalities) or 'table'}")
 
         # Show working feedback immediately in the details panel
         loading_msg = (
@@ -1404,36 +1497,14 @@ class CelestriumApp(App):
         )
         self.call_from_thread(self._set_detail, loading_msg)
 
-        if "colour_image" in mods:
-            self._fetch_colour_image(target.display_name, target.otype,
-                                     target.ra, target.dec, card, plan.product.label,
-                                     seq, target_key)
-        elif "multi_panel" in mods:
-            self._fetch_panel(target.display_name, target.otype,
-                              target.ra, target.dec, card, plan.product.label,
-                              seq, target_key)
-        elif "spectrum" in mods and plan.product.status == "executable":
-            self._fetch_spectrum(target.display_name, target.ra, target.dec, card,
-                                 plan.product.label, seq, target_key)
-        elif plan.product.key == "vizier":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.vizier", fetch_func="cone_pull", args=(target.ra, target.dec))
-        elif plan.product.key == "heasarc":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.heasarc", fetch_func="query_region", args=(target.ra, target.dec))
-        elif plan.product.key == "exoplanet-archive":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.exoplanet", fetch_func="query_target", args=(target.display_name,))
-        elif plan.product.key == "transit":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.exoplanet", fetch_func="predict_transits", args=(target.display_name,))
-        elif plan.product.key == "lightcurve":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.mast", fetch_func="fetch_lightcurves", args=(target.display_name,))
-        elif plan.product.key == "ephemeris":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.solarsystem", fetch_func="fetch_ephemeris", args=(target.display_name,))
-        elif plan.product.key == "neo":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.neos", fetch_func="fetch_close_approaches", args=())
-        elif plan.product.key == "satellite":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.satellites", fetch_func="fetch_visible_satellites", args=())
-        elif plan.product.key == "transient":
-            self._fetch_tabular_product(target, plan, seq, target_key, card, module_name="celestrium.transients", fetch_func="fetch_latest_transients", args=())
-        else:
+        try:
+            result = products.execute_product(
+                target,
+                plan,
+                self.image_cfg,
+                emit=lambda msg: self.call_from_thread(self._feedback, "product", msg),
+            )
+        except NotImplementedError:
             self.call_from_thread(
                 self._feedback, "product",
                 f"{plan.product.label} is inspect-only in the cockpit", "yellow")
@@ -1442,53 +1513,16 @@ class CelestriumApp(App):
                 f"{card}\n\n[yellow]{escape(plan.product.label)} is not yet fetchable from "
                 f"the cockpit.[/]\n[dim]{escape(plan.product.coverage_hint)}[/]\n"
                 f"[dim]status: {escape(plan.product.status)} · access: {escape(plan.product.access)}[/]")
-
-    def _product_cache_query(self, target, plan, fetch_func: str, args: tuple) -> str:
-        arg_text = ",".join(str(a) for a in args)
-        return (
-            f"{plan.product.key}:{fetch_func}|target={target.display_name}|"
-            f"ra={target.ra:.8f}|dec={target.dec:.8f}|args={arg_text}"
-        )
-
-    def _fetch_tabular_product(self, target, plan, seq, target_key, card,
-                               module_name: str, fetch_func: str, args: tuple) -> None:
-        try:
-            if not self._fetch_is_current(seq, target_key):
-                return
-            import importlib
-            mod = importlib.import_module(module_name)
-            func = getattr(mod, fetch_func)
-            archive = f"product-{plan.product.key}"
-            query = self._product_cache_query(target, plan, fetch_func, args)
-            self.call_from_thread(
-                self._feedback, "product",
-                f"table fetch {archive}; executor={module_name}.{fetch_func}; cache=normal")
-
-            def _fetch():
-                result = func(*args)
-                return result if result is not None else Table()
-
-            tab = cache.cached_query(archive, query, _fetch)
-            self.call_from_thread(
-                self._feedback, "product",
-                f"{plan.product.label}: table returned {len(tab)} rows")
-
-            if tab is None or len(tab) == 0:
-                self.call_from_thread(
-                    self._accept_plan_no_records, target.display_name,
-                    plan.product.label, card, seq, target_key
-                )
-                return
-
-            self.call_from_thread(
-                self._accept_tabular_product_result, tab, target.display_name,
-                plan.product.label, card, seq, target_key
-            )
+            return
         except Exception as e:
             self.call_from_thread(
                 self._accept_plan_error, plan.product.label, card,
                 type(e).__name__, str(e), seq, target_key
             )
+            return
+
+        self.call_from_thread(
+            self._accept_product_result, result, plan.product.label, card, seq, target_key)
 
     def _fetch_colour_image(self, name, otype, ra, dec, detail,
                             label_text: str = "colour_image", seq: int = 0,

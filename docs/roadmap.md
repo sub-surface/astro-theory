@@ -299,6 +299,32 @@ ranked and explained but inspect-only in the cockpit — their fetch executors
 The substance question from the prior "Next decision" still stands: point the
 instrument at the Euclid DR1 σ_D forecast and let real use drive the next feature.
 
+## Phase 4.3 — Product executor registry + SDSS/MAST first pass (built)
+
+The future-risk from Phase 4.2 was `tui/app.py` becoming the product router. That
+has been split out: `celestrium/products.py` is now the service-layer executor
+registry for chosen planner products. The TUI queues a plan, streams progress,
+and renders the typed result (`image`, `panel`, `spectrum`, `table`, or empty);
+archive-specific decisions live behind registered product keys.
+
+New executable target products:
+- **SDSS spectra and optical imaging** (`celestrium/sdss.py`) — tries an SDSS
+  spectrum first, then an optical field image, then photometry metadata.
+- **MAST UV/optical observations** (`celestrium/mast.py`) — filtered observation
+  metadata for GALEX/HST/HLA/SWIFT-UVOT-style products.
+- **MAST TESS/Kepler/K2 lightcurves** — time-series observation metadata, kept
+  metadata-first until a deliberate second-stage product download/render action
+  is added.
+
+The old image-settings modal is now a **Product Planner** panel: preset, product
+intent, wavelength family, preferred source/survey, FOV, pixels, and target-aware
+coverage guidance. It remains a settings panel rather than a downloader; product
+rows in Resolve remain the deliberate fetch boundary.
+
+Still open: second-stage MAST product downloads, rendered lightcurve plots,
+figure sidecars/captions, and source-specific image-production polish such as
+scale bars and north/east markers.
+
 ## Fun polish backlog
 
 These are intentionally non-core, low-risk cockpit treats to add between heavier
