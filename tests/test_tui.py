@@ -258,6 +258,30 @@ def test_enter_in_prompt_runs_current_text_without_panel_focus():
     asyncio.run(scenario())
 
 
+def test_resolve_row_selection_runs_current_product():
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seen = {}
+            app.mode = "resolve"
+            app.last_plans = [object()]
+            app._fill_table(["action", "product"], [("[b green]Run[/]", "demo")])
+            app._current_row_index = lambda: 0
+            app.execute_plan = lambda index: seen.setdefault("index", index)
+
+            table = app.query_one("#results")
+
+            class Event:
+                data_table = table
+
+            app.on_data_table_row_selected(Event())
+            await pilot.pause()
+
+            assert seen == {"index": 0}
+
+    asyncio.run(scenario())
+
+
 def test_stale_product_fetch_cannot_overwrite_new_target(tmp_path):
     from celestrium import planner
 
@@ -441,7 +465,7 @@ def test_do_runbook_writes_index_with_live_progress(monkeypatch, tmp_path):
             index = tmp_path / "runbook-euclid-q1.md"
             for _ in range(100):
                 await asyncio.sleep(0.02)
-                if index.exists():
+                if app.last_report == index:
                     break
             assert index.exists()
             assert app.last_report == index

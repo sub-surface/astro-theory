@@ -121,7 +121,7 @@ Header {
 }
 
 #status {
-    height: 3;
+    height: 8;
     background: transparent;
     border: none;
     color: $text-muted;
