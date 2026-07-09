@@ -325,6 +325,43 @@ Still open: second-stage MAST product downloads, rendered lightcurve plots,
 figure sidecars/captions, and source-specific image-production polish such as
 scale bars and north/east markers.
 
+## Phase 5 — the prompt-centric cockpit (rewrite + consolidation, built)
+
+Three passes across July 2026 turned the sidebar cockpit into a command-first instrument:
+
+1. **Zero-clutter rewrite** (Gemini, 2026-07-01 — log: `devlogs/2026-07-01-gemini.md`): one
+   unified prompt with slash commands replaced the sidebar; sequence-guarded workers and
+   thread-safe state committers; the session trail; scene-based orrery (transit / sky-scatter);
+   the time-domain modules (`exoplanet` · `neos` · `satellites` · `transients` · `solarsystem`).
+2. **Codex fix pass** (2026-07-01): restored the TUI baseline contract, repaired `/query`
+   dispatch, invalidated stale product fetches on Resolve change, routed tabular products
+   through the cache manifest, separated global feeds from target/field products.
+3. **Consolidation overhaul** (Claude, 2026-07-09): the rewrite had left the app command-first
+   but with *invisible* modal state (no sidebar, no header, no footer — and the mode machinery
+   still underneath). Deleted the dead pre-`products.py` fetch path and the orphaned sidebar
+   data; extracted prompt parsing into `tui/commands.py` (pure `Intent` parser — one COMMANDS
+   table powers dispatch, autocomplete, and the F1 card, pinned by `tests/test_commands.py`);
+   then re-laid the cockpit so state is visible and detail has exactly one home:
+
+```
+┌ context bar: VIEW · target chip · table 25r×8c · archive gaia · ADS ✓ ──────┐
+│ canvas: results grid (idle = orrery)     │ side: detail (the ONE sink)      │
+│                                          │       trail · mini-orrery        │
+├ status log — 3 lines; Ctrl+D expands it with debug tracing ─────────────────┤
+│ ❯ prompt (slash-command autocomplete)                                       │
+└ Footer: key hints ──────────────────────────────────────────────────────────┘
+```
+
+   Enter always acts on the row (fetch plan / open cached / load candidates / run runbook /
+   open paper on ADS); highlight always renders in the side detail panel. New desk actions:
+   **Ctrl+B** cites the highlighted paper into `refs.bib` (`ads.add_to_refs`, deduped);
+   **Ctrl+E** exports the retained table to `data/exports/*.csv` (Ctrl+O opens it). The hidden
+   archive `Select` became plain `self.archive` state; the ADS token is checked once on mount.
+
+Still open, deliberately: second-stage MAST product downloads, rendered lightcurve plots,
+figure sidecars/captions (the Phase 4.3 tail); and the standing "substance over surface" rule —
+the next cockpit feature should be earned by real use on the Euclid σ_D forecast.
+
 ## Fun polish backlog
 
 These are intentionally non-core, low-risk cockpit treats to add between heavier

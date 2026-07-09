@@ -27,12 +27,13 @@ literature census.
 celestrium/   the instrument (Python package — the app's namespace)
 docs/         data-atlas.md · toolbox.md · imaging-guide.md · roadmap.md
   research/   directions · field-map · candidates · theoretical-threads · euclid-dr1-prep  (theory wing)
+  devlogs/    per-session agent logs (e.g. 2026-07-01-gemini.md)
 scripts/      arxiv_tally.py · fetch_papers.sh   (field-cartography utilities)
 tests/        hermetic CLI + service-layer tests
 Archive/      shelved completed lines (e.g. 2026-06-G-dipole)
-data/         git-ignored: cache, manifest, reports, atlas, posters
+data/         git-ignored: cache, manifest, reports, atlas, posters, exports
 refs.bib      bibliography (committed; ads.py appends here)
-README.md · CLAUDE.md · AGENT.md
+README.md · CLAUDE.md · AGENTS.md
 ```
 
 ## The instrument (`celestrium/`)
@@ -46,15 +47,17 @@ only present.
 - `cache.py` — `cached_query` + `data/manifest.jsonl` provenance + `load_cached`/`find_record` (by hash).
 - `cutouts.py` · `resolvers.py` · `ads.py` · `xmatch.py` · `<archive>.py` — thin primitives.
 - `hub.py` — Typer CLI, a thin presenter; commands grouped by wing in `--help`. Global `--json`.
-- `tui/` — Textual cockpit (`python -m celestrium.tui`). **Phases 2 + 3 + 4 built**: async, modes
-  Resolve/Literature/Query/**Crossmatch**/**Candidates**/**Runbooks**/History. The desk loop is
-  interactive — the current result table is retained, Crossmatch matches it to a VizieR catalogue,
-  Ctrl+S saves rows as a candidate list (`celestrium/candidates.py`). **Resolve is now a planner
-  surface** (`celestrium/planner.py`): it plans first (layered identity + ranked product actions)
-  and fetches a colour image / multi-panel / NED spectrum only when you Enter a product row.
-  **Runbooks** runs a curated workflow with live per-step progress and opens the index report.
-  History is actionable (Enter opens / F5 re-runs). Remaining: product fetch executors for
-  metadata/exoplanet/high-energy (`docs/roadmap.md` Phase 4.2).
+- `tui/` — Textual cockpit (`python -m celestrium.tui`), **prompt-centric** (Phase 5): one REPL
+  prompt with slash-command autocomplete; `tui/commands.py` parses text → `Intent` (pure,
+  unit-tested — a single COMMANDS table powers dispatch, autocomplete, and the F1 card). A
+  context bar shows view · target · retained table · archive · ADS. A bare name resolves;
+  `gaia: SELECT…` queries; `match <cat>` crossmatches the retained table; `run <rb>` executes a
+  runbook; `/global` browses live feeds (neos/satellites/transients). **Resolve is a planner
+  surface**: `planner.py` ranks products, `products.py` executes the chosen one (colour image,
+  multi-panel, spectra, SDSS/MAST, exoplanet, HEASARC, ephemeris…) — fetch happens only when you
+  Enter a product row. Highlight always renders in the side detail panel; Enter always acts on
+  the row (open cached / load candidates / run runbook / open paper on ADS). Desk actions:
+  Ctrl+S save candidates · Ctrl+B cite highlighted paper → refs.bib · Ctrl+E export table → CSV.
 
 **Rule:** `hub.py` and `tui/` import `celestrium/*`, never each other. New behaviour goes in
 `registry.py`/`packets.py` so both surfaces get it. The CLI tests monkeypatch names ON the
@@ -63,7 +66,7 @@ only present.
 keep that (don't bind functions by value at import). Tests must stay hermetic (no network).
 
 ```bash
-python -m pytest tests/ -q          # 39 tests, hermetic
+python -m pytest tests/ -q          # hermetic (no network); ~120 tests as of 2026-07
 python -m celestrium --help         # wing-grouped commands
 python -m celestrium runbook list
 python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # X-match audit primitive
@@ -91,10 +94,13 @@ decide "measure vs. rehearse". The fuller backlog (A–H, leverage thesis, effor
 
 ## Collaboration
 
-Codex (GPT) has also committed here (author `Sub-Surface`, `feat:` prefix). Two agents touch
-this repo — check `git log`/working tree before editing. As of late June 2026 Codex was on a
-reheating-in-inflation thread (project **F**, the Copeland GW scorecard) but stopped; the hub
-refactor + Celestrium reorg are mine.
+Three agents work this repo — Claude, Codex (GPT), and occasionally Gemini — and **all commits
+carry the author `Sub-Surface`** (Leon's GitHub account, this machine's git identity), so the
+author field does not identify the agent. Check `git log` and the working tree before editing;
+session logs live in `docs/devlogs/` (e.g. the 2026-07-01 Gemini TUI rewrite + Codex fix pass).
+As of July 2026 Codex is active again (artifact-fallback hardening, Rubin-watch scoping); the
+Celestrium reorg, the `tui/commands.py` parser extraction, and the Phase 5 cockpit overhaul are
+Claude's.
 
 ## Where to go deeper
 - `docs/roadmap.md` — the instrument's architecture + the Textual-TUI plan (Phase 2/3).

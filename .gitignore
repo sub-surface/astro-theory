@@ -14,3 +14,6 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 .env
+
+# research PDFs stay local — the bibliographic record lives in refs.bib
+docs/research/*.pdf

@@ -164,3 +164,21 @@ NCA/black-box surrogate, and on-brand for a wing that prizes defensible, legible
   the Creminelli toolkit) — does any live anomaly touch them?
 - EFT-of-inflation operator basis → which operators are observationally reachable by 2027 data.
 - Diffusion/generative models for fast survey mocks on the DR1 footprint (feeds T3's null suite).
+
+### Unfiled reading set (July 2026 — PDFs local in `docs/research/`, git-ignored)
+Seven papers pulled but not yet classified into a thread; two visible clusters:
+
+**Self-organized criticality + stochastic-dynamics machinery** (reads T2-adjacent —
+the SPDE/ergodicity toolkit under stochastic inflation's Fokker–Planck):
+- Moffat, *A Self-Organized Critical Universe* (gr-qc/9702014, 1997)
+- Jin & Li, *The Self-Organized Criticality of Dark Matter in the Early Universe* (arXiv:2409.18103)
+- Hairer & Mattingly, *Yet another look at Harris' ergodic theorem for Markov chains* (arXiv:0810.2777)
+- Bruned, Chandra, Chevyrev & Hairer, *Renormalising SPDEs in regularity structures* (JEMS 23, 2021)
+
+**Horizons, complexity, wormholes** (new territory — no existing thread covers it):
+- Susskind, *Computational complexity and black hole horizons* (Fortschr. Phys. 64, 2016)
+- Betzios & Papadoulaki, *Wilson Loops and Wormholes* (arXiv:2311.09289)
+- *Is Time Reversal in de Sitter Space a Spontaneously Broken Gauge Symmetry?* (arXiv:2603.12434, 2026)
+
+Next touch: either fold cluster 1 into T2's stochastic-dynamics story or open a T6;
+say why cluster 2 is here (idle curiosity is a fine answer — then park it explicitly).
