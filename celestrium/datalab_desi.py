@@ -7,16 +7,33 @@ probe); Legacy Surveys = deep optical imaging catalogues (sweeps/tractor).
 Install: pip install astro-datalab
 Docs: https://datalab.noirlab.edu/  ·  https://datalab.noirlab.edu/data/desi
 """
-from dl import queryClient as qc
+try:
+    from dl import queryClient as qc
+except ImportError:
+    # Optional dependency (`pip install astro-datalab`) — the registry's lazy
+    # adaptor only imports this module when 'desi'/'casda'-family archives are
+    # actually queried, but a direct `import celestrium.datalab_desi` (e.g. a
+    # bulk backend-module sweep) shouldn't crash at import time either; defer
+    # the real error to first use, where it's actionable.
+    qc = None
+
+
+def _require_dl():
+    if qc is None:
+        raise ImportError(
+            "NOIRLab Astro Data Lab access needs the optional 'dl' package: "
+            "pip install astro-datalab")
 
 
 def query(sql: str, fmt: str = "pandas"):
     """Run ADQL/SQL server-side. fmt='pandas' -> DataFrame, 'table' -> astropy."""
+    _require_dl()
     return qc.query(sql=sql, fmt=fmt)
 
 
 def schema(table: str = ""):
     """Browse available schemas/tables/columns (names differ per release)."""
+    _require_dl()
     return qc.schema(table) if table else qc.schema()
 
 

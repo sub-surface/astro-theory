@@ -113,6 +113,34 @@ def test_feed_runs_executor_through_cache(monkeypatch):
     assert "1 rows" in result.output
 
 
+def test_feed_planned_backend_does_not_cache_or_execute(monkeypatch):
+    """transient is still a stub (planner status='planned') pre-Wave-4: the
+    CLI must report that plainly, mirroring the TUI's do_global_feed gate,
+    and must not cache an empty result as if it were a real scientific pull."""
+    from celestrium import transients
+
+    called = {"n": 0}
+
+    def spy_fetch():
+        called["n"] += 1
+        return None
+
+    monkeypatch.setattr(transients, "fetch_latest_transients", spy_fetch)
+    called_cache = {"n": 0}
+
+    def spy_cache(*a, **kw):
+        called_cache["n"] += 1
+        raise AssertionError("planned feeds must not reach cached_query")
+
+    monkeypatch.setattr(hub.cache, "cached_query", spy_cache)
+    result = runner.invoke(hub.app, ["--json", "feed", "transient"])
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["status"] == "planned"
+    assert called["n"] == 0
+    assert called_cache["n"] == 0
+
+
 def test_feed_unknown_key_lists_supported():
     result = runner.invoke(hub.app, ["feed", "quasars"])
     assert result.exit_code == 1

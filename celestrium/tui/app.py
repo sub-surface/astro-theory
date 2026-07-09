@@ -799,7 +799,7 @@ class CelestriumApp(App):
         self.last_plans = []
         self.context.target = None
         self.context.dataset = None
-        for name in ("resolve", "fetch", "table", "literature"):
+        for name in ("resolve", "fetch", "table", "literature", "plot", "sweep"):
             self._bump(name)
         self._refresh_subtitle()
 
@@ -1468,6 +1468,9 @@ class CelestriumApp(App):
         """Resolve trigger on the UI thread to prevent sequence race."""
         seq = self._bump("resolve")
         self._bump("fetch")
+        # A late-landing sweep for the *previous* target would silently flip
+        # the mode back to "sweep" over whatever Resolve is about to show.
+        self._bump("sweep")
         self._feedback("resolve", f"queued identity lookup for {name}")
         self._set_detail(
             f"[b]Resolving[/] {escape(name)}\n"

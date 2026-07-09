@@ -30,6 +30,7 @@ packets.py = builders), so this CLI and the Textual TUI (tui/) share one brain.
 Global: add --json before any subcommand for machine-readable output.
 """
 import json as _json
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -37,6 +38,19 @@ import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
+
+
+def _ensure_utf8_console() -> None:
+    """Windows consoles often default to cp1252, which can't encode the
+    arrows/em-dashes in help text and Markdown docs (atlas/toolbox) — every
+    such command then crashes with UnicodeEncodeError instead of printing.
+    Reconfigure stdout/stderr to UTF-8 with a safe fallback; no-ops under
+    Typer's CliRunner (its captured streams don't support `.reconfigure`)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
 from . import (cache, candidates, census as census_mod, cutouts, packets, planner,
                plots, products, registry, resolvers, spectra, tables)
@@ -539,6 +553,15 @@ def feed(name: str,
     if executor is None:
         supported = ", ".join(sorted(registry.GLOBAL_FEED_EXECUTORS))
         raise _fail(f"unknown feed {name!r}", hint=f"supported: {supported}")
+    cap = next((c for c in planner.SOURCE_CAPABILITIES
+               if c.scope == "global" and c.key == key), None)
+    if cap is not None and cap.status != "executable":
+        # Mirror the TUI's do_global_feed gate: a planned backend (still
+        # returning None, e.g. transients.py pre-Wave-4) must read as "not
+        # implemented here yet", not a cache-worthy empty scientific result.
+        _emit({"feed": key, "status": "planned", "label": cap.label},
+              lambda: console.print(f"[yellow]{cap.label} is planned, not executable yet[/]"))
+        return
     module_name, func_name = executor
     func = getattr(importlib.import_module(module_name), func_name)
 
