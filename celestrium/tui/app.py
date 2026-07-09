@@ -31,6 +31,7 @@ from rich.text import Text
 
 from .. import (cache, candidates, cutouts, packets, paths, planner, products,
                  registry, xmatch)
+from . import commands
 from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
 
 _PROMPTS = {
@@ -46,36 +47,12 @@ _PROMPTS = {
 THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
 
-_EGGS = {
-    "42": "[b gold1]42[/] — the Answer to the Ultimate Question of Life, "
-          "the Universe, and Everything. (Now find the Question.)",
-    "elite": "[b green]RIGHT ON, COMMANDER![/] Wireframe drive engaged.",
-    "thargoid": "[b green]⚠ THARGOID DETECTED[/] — raise shields, deploy E.C.M.",
-    "xyzzy": "[dim]Nothing happens.[/]",
-    "tea": "[b]Share and Enjoy.[/] ☕  (the Sirius Cybernetics Corp. thanks you)",
-    "cake": "[yellow]The cake is a lie.[/]",
-}
-
 ARCHIVES_LIST = list(registry.ARCHIVES)
 GLOBAL_FEED_EXECUTORS = {
     "neo": ("celestrium.neos", "fetch_close_approaches"),
     "satellite": ("celestrium.satellites", "fetch_visible_satellites"),
     "transient": ("celestrium.transients", "fetch_latest_transients"),
 }
-GLOBAL_FEED_ALIASES = {
-    "neos": "neo",
-    "cneos": "neo",
-    "satellites": "satellite",
-    "tle": "satellite",
-    "tles": "satellite",
-    "transients": "transient",
-    "alerts": "transient",
-}
-
-
-def _global_feed_key(text: str) -> str:
-    key = text.strip().lower()
-    return GLOBAL_FEED_ALIASES.get(key, key)
 
 
 def _ads_token_ok() -> bool:
@@ -619,185 +596,108 @@ class CelestriumApp(App):
         self._handle_command(event.value.strip())
 
     def _handle_command(self, text: str) -> None:
-        """Central command dispatcher."""
-        if not text:
-            return
+        """Prompt dispatcher: commands.parse decides, the app's workers execute."""
+        intent = commands.parse(text, mode=self.mode)
+        args = intent.args
 
-        lower = text.lower()
-        if lower == "clear" or lower == "/clear":
+        if intent.kind == "empty":
+            return
+        if intent.kind == "clear":
             self.action_clear()
             return
-
-        # Slash Commands
-        if lower in ("/help", "?"):
+        if intent.kind == "help":
             self.action_about()
             return
-        if lower.startswith("/history"):
-            self.switch_to_mode("history")
+        if intent.kind == "mode":
+            self.switch_to_mode(args["mode"])
+            if "usage" in args:
+                self._log(f"[dim]usage:[/] {escape(args['usage'])}")
+            if "feed" in args:
+                self.do_global_feed(args["feed"], refresh=True)
             return
-        if lower.startswith("/global") or lower.startswith("/feeds"):
-            parts = text.split(maxsplit=1)
-            self.switch_to_mode("global")
-            if len(parts) > 1:
-                self.do_global_feed(_global_feed_key(parts[1]), refresh=True)
+        if intent.kind == "egg":
+            self._show_egg(args["word"], args["markup"])
             return
-        if lower.startswith("/runbooks"):
-            self.switch_to_mode("runbooks")
-            return
-        if lower.startswith("/candidates"):
-            self.switch_to_mode("candidates")
-            return
-        if lower.startswith("/resolve"):
-            target = text.removeprefix("/resolve").strip()
-            if target:
-                self.switch_to_mode("resolve")
-                self._last_action = ("resolve", target)
-                self.do_resolve(target)
-            else:
-                self.switch_to_mode("resolve")
-                self._log("[dim]usage:[/] /resolve <object name or coordinates>\n[dim]example:[/] /resolve TRAPPIST-1")
+        if intent.kind == "unknown":
+            self._log(f"[yellow]Unknown command:[/] {escape(args['command'])}\n"
+                      "[dim]Type /help for available commands.[/]")
             return
 
-        if lower.startswith("/query"):
-            q = text.removeprefix("/query").strip()
-            if not q:
-                self.switch_to_mode("query")
-                self._log("[dim]usage:[/] /query <ADQL statement>\n[dim]example:[/] /query SELECT TOP 5 source_id FROM gaiadr3.gaia_source")
-                return
-            archive = "gaia"
-            query_text = q
-            for arch in registry.ARCHIVES:
-                prefix = f"{arch}:"
-                if q.startswith(prefix):
-                    archive = arch
-                    query_text = q[len(prefix):].strip()
-                    break
-            self.query_one("#archive", Select).value = archive
-            self.switch_to_mode("query")
-            self._last_action = ("query", archive, query_text, False)
-            self.do_query(archive, query_text, False)
-            return
+        self._log(f"[dim]{self.mode}:[/] {escape(text)}")
 
-        # Easter eggs
-        if self.mode == "resolve" and lower in _EGGS:
-            # Shift canvas to display the detail Scroll panel, hiding others
-            self.query_one("#orrery-idle", Wireframe).display = False
-            self.query_one("#results", DataTable).display = False
-            self.query_one("#detail-scroll", VerticalScroll).display = True
-            self.query_one("#ambient-strip", Vertical).display = True  # Show sidebar
-
-            self._set_detail(_EGGS[lower])
-            if lower in ("elite", "thargoid"):
-                # Engage correct solid in both mini and idle orreries
-                self.query_one("#orrery", Wireframe).set_solid("icosahedron")
-                try:
-                    self.query_one("#orrery-idle", Wireframe).set_solid("icosahedron")
-                except Exception:
-                    pass
-            return
-
-        self._log(f"[dim]{self.mode}:[/] {text}")
-
-        # Crossmatch prefix
-        if text.startswith("×") or text.startswith("match "):
-            cat = text.removeprefix("×").removeprefix("match ").strip()
-            self.switch_to_mode("crossmatch")
-            self._last_action = ("crossmatch", cat, False)
-            self.do_crossmatch(cat, False)
-            return
-
-        # Runbook prefix
-        if text.startswith("run "):
-            rb = text.removeprefix("run ").strip()
-            self.switch_to_mode("runbooks")
-            self.do_runbook(rb)
-            return
-
-        if text.startswith("feed "):
-            key = _global_feed_key(text.removeprefix("feed "))
-            self.switch_to_mode("global")
-            self.do_global_feed(key, refresh=True)
-            return
-
-        # Query prefixes (e.g. gaia: SELECT ...) or starting with SELECT
-        is_query = False
-        archive = "gaia"
-        query_text = text
-        for arch in registry.ARCHIVES:
-            if text.startswith(f"{arch}:"):
-                is_query = True
-                archive = arch
-                query_text = text[len(arch)+1:].strip()
-                break
-        if not is_query and (lower.startswith("select ") or lower.startswith("select\n")):
-            is_query = True
-            archive = self.query_one("#archive", Select).value or "gaia"
-
-        if is_query:
+        if intent.kind == "resolve":
+            self.switch_to_mode("resolve")
+            self._last_action = ("resolve", args["target"])
+            self.do_resolve(args["target"])
+        elif intent.kind == "query":
+            # archive=None means "whatever archive is active" (bare SELECT)
+            archive = args["archive"] or self.query_one("#archive", Select).value or "gaia"
             # Set the Select value before switching mode to prevent label race
             self.query_one("#archive", Select).value = archive
             self.switch_to_mode("query")
-            self._last_action = ("query", archive, query_text, False)
-            self.do_query(archive, query_text, False)
-            return
-
-        # Literature prefixes
-        is_lit = False
-        if any(p in lower for p in ("abs:", "author:", "year:", "title:", "bibcode:")):
-            is_lit = True
-        elif text.startswith("papers "):
-            is_lit = True
-            text = text.removeprefix("papers ").strip()
-        elif lower == "papers":
+            self._last_action = ("query", archive, args["adql"], False)
+            self.do_query(archive, args["adql"], False)
+        elif intent.kind == "crossmatch":
+            self.switch_to_mode("crossmatch")
+            self._last_action = ("crossmatch", args["catalog"], False)
+            self.do_crossmatch(args["catalog"], False)
+        elif intent.kind == "runbook":
+            self.switch_to_mode("runbooks")
+            self.do_runbook(args["name"])
+        elif intent.kind == "feed":
+            self.switch_to_mode("global")
+            self.do_global_feed(args["key"], refresh=True)
+        elif intent.kind == "literature":
+            self.switch_to_mode("literature")
+            self._last_action = ("literature", args["query"])
+            self.do_literature(args["query"])
+        elif intent.kind == "papers_context":
             if self.context.target:
-                is_lit = True
-                text = f'"{self.context.target.display_name}"'
+                query = f'"{self.context.target.display_name}"'
+                self.switch_to_mode("literature")
+                self._last_action = ("literature", query)
+                self.do_literature(query)
             else:
                 self._log("[yellow]No active target for papers search — specify a query[/]")
-                return
+        elif intent.kind == "product":
+            self._fetch_product_word(args["word"])
 
-        if is_lit:
-            self.switch_to_mode("literature")
-            self._last_action = ("literature", text)
-            self.do_literature(text)
+    def _show_egg(self, word: str, markup: str) -> None:
+        # Shift canvas to display the detail Scroll panel, hiding others
+        self.query_one("#orrery-idle", Wireframe).display = False
+        self.query_one("#results", DataTable).display = False
+        self.query_one("#detail-scroll", VerticalScroll).display = True
+        self.query_one("#ambient-strip", Vertical).display = True
+
+        self._set_detail(markup)
+        if word in ("elite", "thargoid"):
+            # Engage the right solid in both the mini and the idle orrery
+            self.query_one("#orrery", Wireframe).set_solid("icosahedron")
+            try:
+                self.query_one("#orrery-idle", Wireframe).set_solid("icosahedron")
+            except Exception:
+                pass
+
+    def _fetch_product_word(self, word: str) -> None:
+        """'image' / 'cutout' / 'panel' / 'spectrum' fetch that product for the
+        active target, if a matching ranked plan exists."""
+        if not self.context.target:
+            self._log("[yellow]No active target to fetch products for[/]")
             return
+        plans = self.last_plans or planner.recommend_plans(self.context.target)
+        self.last_plans = plans
 
-        # Product fetch command for target
-        if lower in ("image", "cutout", "panel", "spectrum"):
-            if not self.context.target:
-                self._log("[yellow]No active target to fetch products for[/]")
-                return
-            plans = self.last_plans or planner.recommend_plans(self.context.target)
-            self.last_plans = plans
-
-            matched_idx = -1
-            for idx, p in enumerate(plans):
-                mods = p.product.modalities
-                if lower == "spectrum" and "spectrum" in mods:
-                    matched_idx = idx
-                    break
-                elif lower == "panel" and "multi_panel" in mods:
-                    matched_idx = idx
-                    break
-                elif lower in ("image", "cutout") and "colour_image" in mods:  # Alias fix
-                    matched_idx = idx
-                    break
-
-            if matched_idx != -1:
-                self.switch_to_mode("resolve")
-                self.execute_plan(matched_idx)
-            else:
-                self._log(f"[yellow]Product {lower} not available/executable for {escape(self.context.target.display_name)}[/]")
-            return
-
-        # Default: coordinates / object name -> Resolve
-        if text.startswith("/"):
-            self._log(f"[yellow]Unknown command:[/] {text.split()[0]}\n[dim]Type /help for available commands.[/]")
-            return
-
-        self.switch_to_mode("resolve")
-        self._last_action = ("resolve", text)
-        self.do_resolve(text)
+        wanted = {"spectrum": "spectrum", "panel": "multi_panel",
+                  "image": "colour_image", "cutout": "colour_image"}[word]
+        matched_idx = next(
+            (idx for idx, p in enumerate(plans) if wanted in p.product.modalities),
+            -1)
+        if matched_idx != -1:
+            self.switch_to_mode("resolve")
+            self.execute_plan(matched_idx)
+        else:
+            self._log(f"[yellow]Product {word} not available/executable for "
+                      f"{escape(self.context.target.display_name)}[/]")
 
     # ----- key / focus overrides ------------------------------------------- #
     def on_key(self, event) -> None:
@@ -1076,7 +976,7 @@ class CelestriumApp(App):
         if i is None or i >= len(self._row_payloads):
             return
         rec = self._row_payloads[i]
-        key = _global_feed_key(str(rec.get("key", "")))
+        key = commands.feed_key(str(rec.get("key", "")))
         if not key:
             return
         if rec.get("status") != "executable":
@@ -1540,7 +1440,7 @@ class CelestriumApp(App):
 
     @work(thread=True, exclusive=True)
     def do_global_feed(self, key: str, refresh: bool = True) -> None:
-        key = _global_feed_key(key)
+        key = commands.feed_key(key)
         self.call_from_thread(
             self._feedback, "global",
             f"feed request {key}; refresh={refresh}")
