@@ -132,10 +132,57 @@ def test_default_is_resolve():
     assert parse("187.7059 12.3911").kind == "resolve"
 
 
+# ----- promoted slash forms (discoverability parity with bare idioms) ------ #
+def test_slash_match_run_feed_parse_like_bare_forms():
+    assert parse("/match vizier:VIII/65/nvss").kind == "crossmatch"
+    assert (parse("/match vizier:VIII/65/nvss").args
+            == parse("match vizier:VIII/65/nvss").args)
+    assert parse("/run euclid-q1").args == parse("run euclid-q1").args
+    assert parse("/feed tles").args == parse("feed tles").args
+
+
+def test_bare_slash_idioms_give_usage_not_unknown():
+    for text, mode in (("/match", "crossmatch"), ("/run", "runbooks"),
+                       ("/feed", "global")):
+        intent = parse(text)
+        assert intent.kind == "mode", text
+        assert intent.args["mode"] == mode
+        assert "usage" in intent.args
+
+
+def test_slash_papers_forms():
+    intent = parse("/papers Euclid Q1 AGN")
+    assert intent.kind == "literature"
+    assert intent.args["query"] == "Euclid Q1 AGN"
+    assert parse("/papers").kind == "papers_context"
+
+
+# ----- imaging-wing idioms (dossier / field / poster) ----------------------- #
+def test_dossier_idiom_slash_and_bare():
+    assert parse("/dossier M87").args == {"target": "M87"}
+    assert parse("dossier M87").args == {"target": "M87"}
+    assert parse("/dossier").args == {"target": None}   # app uses active target
+    assert parse("dossier").kind == "dossier"
+
+
+def test_field_idiom_passes_position_text():
+    assert parse("/field 187.70 12.39").args == {"position": "187.70 12.39"}
+    assert parse("field").args == {"position": None}
+
+
+def test_poster_idiom_slash_and_bare():
+    assert parse("/poster 3C 273").args == {"target": "3C 273"}
+    assert parse("poster").args == {"target": None}     # highlighted row / target
+
+
 # ----- table-driven surfaces ----------------------------------------------- #
 def test_suggestions_are_slash_commands():
     sugg = commands.suggestions()
     assert "/resolve" in sugg and "/query" in sugg
+    # the once-hidden idioms are now discoverable from the prompt
+    for name in ("/match", "/run", "/feed", "/papers",
+                 "/dossier", "/field", "/poster"):
+        assert name in sugg
     assert all(s.startswith("/") for s in sugg)
 
 

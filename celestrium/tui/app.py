@@ -52,11 +52,8 @@ THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
 
 ARCHIVES_LIST = list(registry.ARCHIVES)
-GLOBAL_FEED_EXECUTORS = {
-    "neo": ("celestrium.neos", "fetch_close_approaches"),
-    "satellite": ("celestrium.satellites", "fetch_visible_satellites"),
-    "transient": ("celestrium.transients", "fetch_latest_transients"),
-}
+# Global feed executors are registry data (shared with the CLI `feed` command).
+GLOBAL_FEED_EXECUTORS = registry.GLOBAL_FEED_EXECUTORS
 
 
 def _ads_token_ok() -> bool:
@@ -68,17 +65,44 @@ def _ads_token_ok() -> bool:
         return False
 
 
+_RA_ALIASES = ("ra", "RA", "ra_deg", "RA_ICRS", "RAJ2000", "_RAJ2000", "raj2000", "RAdeg")
+_DEC_ALIASES = ("dec", "DEC", "dec_deg", "DE_ICRS", "DEJ2000", "_DEJ2000", "dej2000", "DEdeg")
+_NAME_ALIASES = ("main_id", "name", "designation", "objectId", "Satellite", "source_id")
+
+
 def _find_coord_cols(tab: Table) -> tuple[str, str]:
     """Identify RA/Dec columns or raise a helpful error."""
-    aliases_ra = ("ra", "RA", "ra_deg", "RA_ICRS", "RAJ2000", "_RAJ2000", "raj2000", "RAdeg")
-    aliases_dec = ("dec", "DEC", "dec_deg", "DE_ICRS", "DEJ2000", "_DEJ2000", "dej2000", "DEdeg")
-    ra = next((c for c in aliases_ra if c in tab.colnames), None)
-    dec = next((c for c in aliases_dec if c in tab.colnames), None)
+    ra = next((c for c in _RA_ALIASES if c in tab.colnames), None)
+    dec = next((c for c in _DEC_ALIASES if c in tab.colnames), None)
     if not ra or not dec:
         raise ValueError(
             f"Could not identify RA/Dec columns. Available columns: {tab.colnames}"
         )
     return ra, dec
+
+
+def _payload_coords(payload: dict) -> tuple[float, float] | None:
+    """RA/Dec from a row-detail payload dict, or None if it isn't sky-shaped."""
+    ra_key = next((k for k in _RA_ALIASES if k in payload), None)
+    dec_key = next((k for k in _DEC_ALIASES if k in payload), None)
+    if not ra_key or not dec_key:
+        return None
+    try:
+        ra, dec = float(payload[ra_key]), float(payload[dec_key])
+    except (TypeError, ValueError):
+        return None
+    if ra != ra or dec != dec or not (-90.0 <= dec <= 90.0):
+        return None
+    return ra % 360.0, dec
+
+
+def _payload_name(payload: dict, ra: float, dec: float) -> str:
+    """A displayable name for a row payload (falls back to its coordinates)."""
+    for key in _NAME_ALIASES:
+        value = payload.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return f"field {ra:.4f} {dec:+.4f}"
 
 
 def _sky_points(tab: Table, limit: int = 500) -> list[tuple[float, float]]:
@@ -657,6 +681,12 @@ class CelestriumApp(App):
                 self._log("[yellow]No active target for papers search — specify a query[/]")
         elif intent.kind == "product":
             self._fetch_product_word(args["word"])
+        elif intent.kind == "dossier":
+            self.trigger_dossier(args.get("target"))
+        elif intent.kind == "field":
+            self.trigger_field(args.get("position"))
+        elif intent.kind == "poster":
+            self.trigger_poster(args.get("target"))
 
     def _show_egg(self, word: str, markup: str) -> None:
         self.query_one("#side", Vertical).display = True
@@ -1666,6 +1696,128 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "error",
                 f"rerun failed: {type(e).__name__}: {str(e)}", "red")
+
+    # ----- imaging & recreation (the third wing, in the cockpit) ------------ #
+    def _accept_report_result(self, kind: str, name: str, path) -> None:
+        """Shared committer for imaging-wing artifacts (dossier/field/poster)."""
+        self.last_image = path
+        self._feedback(kind, f"{name} -> {path}", "green")
+        self._set_detail(f"[b green]{escape(kind)} ready[/] — [b]{escape(str(name))}[/]\n"
+                         f"[dim]{escape(str(path))}[/]\n[b]Ctrl+O[/] open")
+
+    def trigger_dossier(self, target: str | None) -> None:
+        name = (target or "").strip() or (
+            self.context.target.display_name if self.context.target else "")
+        if not name:
+            self._log("[yellow]no target — /dossier <name>, or resolve one first[/]")
+            return
+        self._feedback("dossier", f"queued object packet for {name}")
+        self._set_detail(f"[b]Building dossier[/] {escape(name)}\n"
+                         "[dim]identity · images · literature → Markdown report[/]")
+        self.do_dossier(name)
+
+    @work(thread=True, exclusive=True)
+    def do_dossier(self, name: str) -> None:
+        try:
+            pkt = packets.build_object_packet(
+                name,
+                on_error=lambda m: self.call_from_thread(
+                    self._feedback, "dossier", m, "yellow"))
+            path = packets.write_report(paths.REPORTS_DIR, "dossier",
+                                        pkt.name, pkt.to_markdown())
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"dossier failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_report_result, "dossier", pkt.name, path)
+
+    def trigger_field(self, position: str | None) -> None:
+        coords = None
+        if position:
+            coords = planner.parse_request(position).coordinates
+            if coords is None:
+                self._log(f"[yellow]could not parse a position from "
+                          f"{escape(position)} — try '/field 187.70 12.39'[/]")
+                return
+        elif self.context.target is not None:
+            t = self.context.target
+            if t.ra == t.ra and t.dec == t.dec:  # NaN-safe
+                coords = (t.ra, t.dec)
+        if coords is None:
+            self._log("[yellow]no position — /field <RA Dec>, or resolve a target first[/]")
+            return
+        ra, dec = coords
+        self._feedback("field", f"queued field packet for {ra:.5f} {dec:+.5f}")
+        self.do_field(ra, dec)
+
+    @work(thread=True, exclusive=True)
+    def do_field(self, ra: float, dec: float) -> None:
+        try:
+            pkt = packets.build_field_packet(
+                ra, dec,
+                on_error=lambda m: self.call_from_thread(
+                    self._feedback, "field", m, "yellow"))
+            path = packets.write_report(paths.REPORTS_DIR, "field",
+                                        f"{ra:.5f}_{dec:+.5f}", pkt.to_markdown())
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"field packet failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_report_result, "field",
+                              f"{ra:.5f} {dec:+.5f}", path)
+
+    def trigger_poster(self, target: str | None) -> None:
+        """Poster of an explicit target, else the highlighted row, else the active target."""
+        target = (target or "").strip()
+        if target:
+            self._feedback("poster", f"queued poster for {target}")
+            self.do_poster(target, None, None, None)
+            return
+        i = self._current_row_index()
+        if (i is not None and 0 <= i < len(self._row_payloads)
+                and isinstance(self._row_payloads[i], dict)):
+            payload = self._row_payloads[i]
+            coords = _payload_coords(payload)
+            if coords:
+                ra, dec = coords
+                name = _payload_name(payload, ra, dec)
+                self._feedback("poster", f"queued poster for highlighted row: {name}")
+                self.do_poster(None, name, ra, dec)
+                return
+        t = self.context.target
+        if t is not None and t.ra == t.ra:
+            self._feedback("poster", f"queued poster for {t.display_name}")
+            self.do_poster(None, t.display_name, t.ra, t.dec, t.otype)
+            return
+        self._log("[yellow]nothing to poster — /poster <target>, highlight a row "
+                  "with RA/Dec, or resolve a target[/]")
+
+    @work(thread=True, exclusive=True)
+    def do_poster(self, target: str | None, name: str | None,
+                  ra: float | None, dec: float | None, otype: str = "") -> None:
+        try:
+            if target:
+                obj = packets.resolve_target(target)
+                name, ra, dec = obj["name"], obj["ra"], obj["dec"]
+                otype = str(obj.get("otype", ""))
+            fov = self.image_cfg.get("fov", "auto")
+            if not isinstance(fov, (int, float)):
+                fov = packets.default_fov(otype or "", 10.0, 4.0)
+            self.call_from_thread(
+                self._feedback, "poster",
+                f"rendering {name}; fov={fov}' 1920x1080 style=label")
+            paths.POSTERS_DIR.mkdir(parents=True, exist_ok=True)
+            out = paths.POSTERS_DIR / f"{packets.slug(str(name))}-1080p-label.jpg"
+            path = cutouts.poster(ra, dec, fov_arcmin=fov, width=1920, height=1080,
+                                  out=out, label=str(name), style="label")
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"poster failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_report_result, "poster", str(name), path)
 
     @work(thread=True, exclusive=True)
     def do_runbook(self, name: str) -> None:

@@ -31,6 +31,20 @@ COMMANDS: tuple[CommandSpec, ...] = (
                 "Resolve a target via SIMBAD/Horizons and rank its products."),
     CommandSpec("/query", "/query [archive:] <ADQL>",
                 "Run ADQL against gaia/irsa/euclid/heasarc/… (cached)."),
+    CommandSpec("/match", "/match <catalogue>  (or: match <cat> · ×<cat>)",
+                "Crossmatch the current table against a VizieR catalogue."),
+    CommandSpec("/run", "/run <runbook>  (or: run <runbook>)",
+                "Execute a runbook with live progress."),
+    CommandSpec("/feed", "/feed <neo|satellite|transient>  (or: feed <x>)",
+                "Run a global feed into the Query view."),
+    CommandSpec("/papers", "/papers [ADS query]  (bare 'papers' = active target)",
+                "Literature search via ADS/SciX."),
+    CommandSpec("/dossier", "/dossier [target]",
+                "Object packet: identity + images + literature → Markdown report."),
+    CommandSpec("/field", "/field [RA Dec]",
+                "Field packet for a sky position (defaults to the active target)."),
+    CommandSpec("/poster", "/poster [target]",
+                "Wallpaper poster of a target, the highlighted row, or the active target."),
     CommandSpec("/global", "/global [feed]",
                 "Browse live sky/event feeds (NEOs, satellites, transients)."),
     CommandSpec("/history", "/history", "Browse the provenance manifest."),
@@ -38,16 +52,6 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("/runbooks", "/runbooks", "Browse curated runbook workflows."),
     CommandSpec("/help", "/help  (or ?)", "Open the command reference."),
     CommandSpec("/clear", "/clear", "Clear the canvas and session state."),
-    CommandSpec("match", "match <catalogue>  (or ×<catalogue>)",
-                "Crossmatch the current table against a VizieR catalogue.",
-                slash=False),
-    CommandSpec("run", "run <runbook>", "Execute a runbook with live progress.",
-                slash=False),
-    CommandSpec("feed", "feed <neo|satellite|transient>",
-                "Run a global feed into the Query view.", slash=False),
-    CommandSpec("papers", "papers [ADS query]",
-                "Literature search (bare 'papers' uses the active target).",
-                slash=False),
 )
 
 SLASH_NAMES: tuple[str, ...] = tuple(c.name for c in COMMANDS if c.slash)
@@ -62,23 +66,12 @@ EGGS = {
     "cake": "[yellow]The cake is a lie.[/]",
 }
 
-FEED_ALIASES = {
-    "neos": "neo",
-    "cneos": "neo",
-    "satellites": "satellite",
-    "tle": "satellite",
-    "tles": "satellite",
-    "transients": "transient",
-    "alerts": "transient",
-}
+# Canonical feed-alias table lives in registry (shared with the CLI `feed`).
+FEED_ALIASES = registry.FEED_ALIASES
+feed_key = registry.feed_key
 
 _LITERATURE_FIELDS = ("abs:", "author:", "year:", "title:", "bibcode:")
 _PRODUCT_WORDS = ("image", "cutout", "panel", "spectrum")
-
-
-def feed_key(text: str) -> str:
-    key = text.strip().lower()
-    return FEED_ALIASES.get(key, key)
 
 
 @dataclass(frozen=True)
@@ -86,7 +79,8 @@ class Intent:
     """A parsed prompt entry. `kind` selects the worker; `args` parameterise it.
 
     kinds: empty · clear · help · mode · resolve · query · crossmatch ·
-    runbook · feed · literature · papers_context · product · egg · unknown
+    runbook · feed · literature · papers_context · product · dossier ·
+    field · poster · egg · unknown
     """
     kind: str
     args: dict[str, Any] = field(default_factory=dict)
@@ -142,18 +136,45 @@ def parse(text: str, mode: str = "resolve") -> Intent:
         archive, adql = _split_archive_prefix(q)
         return Intent("query", {"archive": archive or "gaia", "adql": adql})
 
+    if lower.startswith("/dossier") or lower == "dossier" or lower.startswith("dossier "):
+        target = text.removeprefix("/dossier").removeprefix("dossier").strip()
+        return Intent("dossier", {"target": target or None})
+
+    if lower.startswith("/field") or lower == "field" or lower.startswith("field "):
+        position = text.removeprefix("/field").removeprefix("field").strip()
+        return Intent("field", {"position": position or None})
+
+    if lower.startswith("/poster") or lower == "poster" or lower.startswith("poster "):
+        target = text.removeprefix("/poster").removeprefix("poster").strip()
+        return Intent("poster", {"target": target or None})
+
+    if lower.startswith("/papers"):
+        q = text.removeprefix("/papers").strip()
+        if q:
+            return Intent("literature", {"query": q})
+        return Intent("papers_context")
+
     if mode == "resolve" and lower in EGGS:
         return Intent("egg", {"word": lower, "markup": EGGS[lower]})
 
-    if text.startswith("×") or text.startswith("match "):
-        catalog = text.removeprefix("×").removeprefix("match ").strip()
+    if text.startswith("×") or text.startswith("match ") or lower.startswith("/match"):
+        catalog = (text.removeprefix("×").removeprefix("/match")
+                   .removeprefix("match ").strip())
+        if not catalog:
+            return _mode("crossmatch", usage="/match <catalogue>, e.g. /match vizier:VIII/65/nvss")
         return Intent("crossmatch", {"catalog": catalog})
 
-    if text.startswith("run "):
-        return Intent("runbook", {"name": text.removeprefix("run ").strip()})
+    if text.startswith("run ") or lower.startswith("/run"):
+        name = text.removeprefix("/run").removeprefix("run ").strip()
+        if not name:
+            return _mode("runbooks", usage="/run <runbook> — Enter on a row also runs it")
+        return Intent("runbook", {"name": name})
 
-    if text.startswith("feed "):
-        return Intent("feed", {"key": feed_key(text.removeprefix("feed "))})
+    if text.startswith("feed ") or lower.startswith("/feed"):
+        key = text.removeprefix("/feed").removeprefix("feed ").strip()
+        if not key:
+            return _mode("global", usage="/feed <neo|satellite|transient>")
+        return Intent("feed", {"key": feed_key(key)})
 
     archive, adql = _split_archive_prefix(text)
     if archive is not None:

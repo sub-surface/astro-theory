@@ -94,6 +94,37 @@ def resolve_query_source(key: str, table: Optional[dict] = None):
 
 
 # --------------------------------------------------------------------------- #
+# Global feeds (live sky/event streams — not target/field products)
+# --------------------------------------------------------------------------- #
+# key -> (module path, zero-arg fetch function returning an astropy Table|None).
+# Data, not code: both surfaces resolve these lazily via importlib so the CLI
+# `feed` command and the TUI `/global` browser share one executor table (and
+# the same cache tags in cache.cached_query).
+GLOBAL_FEED_EXECUTORS = {
+    "neo": ("celestrium.neos", "fetch_close_approaches"),
+    "satellite": ("celestrium.satellites", "fetch_visible_satellites"),
+    "transient": ("celestrium.transients", "fetch_latest_transients"),
+}
+
+# Friendly plurals/synonyms -> canonical feed keys (shared by CLI + TUI prompts).
+FEED_ALIASES = {
+    "neos": "neo",
+    "cneos": "neo",
+    "satellites": "satellite",
+    "tle": "satellite",
+    "tles": "satellite",
+    "transients": "transient",
+    "alerts": "transient",
+}
+
+
+def feed_key(text: str) -> str:
+    """Normalise user feed spellings ('neos', 'tles', …) to canonical keys."""
+    key = text.strip().lower()
+    return FEED_ALIASES.get(key, key)
+
+
+# --------------------------------------------------------------------------- #
 # Sample recipes (low-compute, row-capped science pulls)
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)

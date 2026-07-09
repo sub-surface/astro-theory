@@ -9,6 +9,9 @@ packets.py = builders), so this CLI and the Textual TUI (tui/) share one brain.
 
     python -m celestrium --help
     python -m celestrium resolve M87
+    python -m celestrium fetch M87 --product colour-image   # plan -> deliberate fetch
+    python -m celestrium feed neos                          # global live feeds
+    python -m celestrium export agn                         # any table-ref -> CSV
     python -m celestrium image 187.7059 12.3911
     python -m celestrium where 213.6906 -12.5801
     python -m celestrium cite 'abs:"cosmic dipole" year:2024-2026' --add
@@ -35,7 +38,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
 
-from . import cache, candidates, cutouts, packets, planner, registry, resolvers, spectra
+from . import (cache, candidates, cutouts, packets, planner, products, registry,
+               resolvers, spectra, tables)
 # Re-exported so the test suite (and any importer) can patch these on `hub`.
 from .registry import QUERY_ARCHIVES, SAMPLE_RECIPES, SampleRecipe, ATLAS_TARGETS  # noqa: F401
 
@@ -92,6 +96,12 @@ def _print_astropy_table(tab, title: str, limit: int = 12):
     console.print(_rich_table_from_rows(title, columns, tab[:limit]))
     if len(tab) > limit:
         console.print(f"[dim]showing {limit} of {len(tab)} rows[/]")
+
+
+def _table_payload(tab) -> dict:
+    """Serialise an astropy Table for --json output (values via default=str)."""
+    return {"nrows": len(tab), "columns": list(tab.colnames),
+            "rows": [{c: row[c] for c in tab.colnames} for row in tab]}
 
 
 def _contact_sheet(paths, out: Path, title: str):
@@ -190,6 +200,71 @@ def plan(target: str,
         console.print(t)
         console.print(f"[dim]{coverage}[/]")
     _emit(payload, render)
+
+
+@app.command(rich_help_panel=IMAGING)
+def fetch(target: str,
+          product: Optional[str] = typer.Option(
+              None, help="product key from `plan` (e.g. colour-image, sdss, "
+                         "transit, ephemeris); default = top executable plan"),
+          fov: Optional[float] = typer.Option(None, help="field of view in arcmin (default auto)"),
+          pix: int = typer.Option(512, help="pixels per side for image products"),
+          survey: str = typer.Option("auto", help="preferred colour survey "
+                                                  "(legacy/panstarrs/des/dss2)")):
+    """Fetch a planned product for a target — the deliberate step after `plan`.
+
+    Resolves TARGET through the layered planner, picks the requested (or top
+    executable) product, and executes it through the shared product registry —
+    the same brain the TUI's Resolve → Enter flow uses. Tables print (and cache);
+    images/panels/spectra report their rendered path.
+    """
+    tgt = planner.resolve_target(target)
+    if tgt is None:
+        console.print(f"[red]could not resolve {target!r} (try 'RA Dec' or an alias)[/]")
+        raise typer.Exit(1)
+    plans = planner.recommend_plans(tgt)
+    if product:
+        chosen = next((p for p in plans if p.product.key == product), None)
+        if chosen is None or products.executor_for(product) is None:
+            keys = ", ".join(sorted(
+                p.product.key for p in plans
+                if products.executor_for(p.product.key) is not None))
+            console.print(f"[red]product {product!r} is not fetchable for "
+                          f"{tgt.display_name}; try one of: {keys}[/]")
+            raise typer.Exit(1)
+    else:
+        chosen = next((p for p in plans if p.next_action == "fetch"
+                       and products.executor_for(p.product.key) is not None), None)
+        if chosen is None:
+            console.print(f"[red]no executable product for {tgt.display_name}; "
+                          "see `plan` for what's ranked[/]")
+            raise typer.Exit(1)
+    settings = {"fov": fov if fov is not None else "auto", "pix": pix, "survey": survey}
+    try:
+        result = products.execute_product(
+            tgt, chosen, settings,
+            emit=None if _STATE["json"] else lambda m: console.print(f"[dim]{m}[/]"))
+    except Exception as e:
+        console.print(f"[red]{type(e).__name__}: {e}[/]")
+        raise typer.Exit(1)
+    if result is None:
+        _emit({"target": tgt.to_dict(), "product": chosen.product.key, "status": "empty"},
+              lambda: console.print(f"[yellow]{chosen.product.label}: no records for "
+                                    f"{tgt.display_name}[/]"))
+        return
+    payload = {"target": tgt.to_dict(), "product": chosen.product.key,
+               "kind": result.kind, "label": result.label,
+               "summary": result.summary, "provenance": result.provenance}
+    if result.kind == "table" and result.table is not None:
+        payload.update(_table_payload(result.table))
+        _emit(payload, lambda: _print_astropy_table(
+            result.table, f"{result.label}: {len(result.table)} rows"))
+    else:
+        payload["path"] = str(result.path)
+        payload["fov"] = result.fov
+        _emit(payload, lambda: console.print(
+            f"{result.kind} -> [green]{result.path}[/]  "
+            f"[dim]{result.label}{'  ' + result.summary if result.summary else ''}[/]"))
 
 
 @app.command(rich_help_panel=IMAGING)
@@ -436,6 +511,66 @@ def log(limit: int = typer.Option(20, help="manifest rows to show"),
         t.add_row(str(r.get("utc", "")), str(r.get("archive", "")), str(r.get("nrows", "")),
                   str(r.get("hash", "")), str(r.get("query", ""))[:80])
     console.print(t)
+
+
+@app.command(rich_help_panel=VALIDATION)
+def feed(name: str,
+         refresh: bool = typer.Option(False, help="bypass cached result"),
+         show: int = typer.Option(12, help="rows to display")):
+    """Run a live global feed (neo / satellite / transient) through the cache.
+
+    Global feeds are sky/event streams, not target products — the same
+    executors the TUI's /global browser runs, sharing its cache tags.
+    """
+    import importlib
+    from astropy.table import Table
+    key = registry.feed_key(name)
+    executor = registry.GLOBAL_FEED_EXECUTORS.get(key)
+    if executor is None:
+        supported = ", ".join(sorted(registry.GLOBAL_FEED_EXECUTORS))
+        console.print(f"[red]unknown feed {name!r}; supported: {supported}[/]")
+        raise typer.Exit(1)
+    module_name, func_name = executor
+    func = getattr(importlib.import_module(module_name), func_name)
+
+    def _fetch():
+        result = func()
+        return result if result is not None else Table()
+
+    query = f"global-feed:{key}|executor={module_name}.{func_name}"
+    try:
+        tab = cache.cached_query(f"global-{key}", query, _fetch, refresh=refresh)
+    except Exception as e:
+        console.print(f"[red]{e}[/]")
+        raise typer.Exit(1)
+    if len(tab) == 0:
+        _emit({"feed": key, "status": "empty"},
+              lambda: console.print(f"[yellow]{key}: no rows returned "
+                                    "(feed unavailable or not wired yet)[/]"))
+        return
+    _emit({"feed": key, **_table_payload(tab)},
+          lambda: _print_astropy_table(tab, f"feed {key}: {len(tab)} rows", limit=show))
+
+
+@app.command(rich_help_panel=VALIDATION)
+def export(ref: str,
+           out: Optional[Path] = typer.Option(None, help="output CSV path "
+                                                         "(default data/exports/)")):
+    """Export a table (candidate list, sample recipe, or manifest hash) to CSV."""
+    from . import paths
+    try:
+        tab, note = tables.load_table_ref(ref, QUERY_ARCHIVES)
+    except Exception as e:
+        console.print(f"[red]{e}[/]")
+        raise typer.Exit(1)
+    if out is None:
+        paths.EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        out = paths.EXPORTS_DIR / f"{_slug(ref)}.csv"
+    else:
+        out.parent.mkdir(parents=True, exist_ok=True)
+    tab.write(out, format="ascii.csv", overwrite=True)
+    _emit({"ref": ref, "source": note, "nrows": len(tab), "path": str(out)},
+          lambda: console.print(f"exported {len(tab)} rows ({note}) -> [green]{out}[/]"))
 
 
 # --------------------------------------------------------------------------- #

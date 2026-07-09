@@ -430,6 +430,87 @@ def test_do_runbook_writes_index_with_live_progress(monkeypatch, tmp_path):
     asyncio.run(scenario())
 
 
+def test_imaging_idioms_dispatch_to_triggers():
+    """/dossier, /field and /poster route from the prompt to their triggers."""
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seen = {}
+            app.trigger_dossier = lambda t: seen.setdefault("dossier", t)
+            app.trigger_field = lambda p: seen.setdefault("field", p)
+            app.trigger_poster = lambda t: seen.setdefault("poster", t)
+            app._handle_command("/dossier M87")
+            app._handle_command("/field 187.70 12.39")
+            app._handle_command("poster 3C 273")
+            await pilot.pause()
+            assert seen == {"dossier": "M87", "field": "187.70 12.39",
+                            "poster": "3C 273"}
+
+    asyncio.run(scenario())
+
+
+def test_trigger_poster_uses_highlighted_row_coordinates():
+    """Bare 'poster' with a sky-shaped highlighted row posters that row."""
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seen = {}
+            app.do_poster = lambda target, name, ra, dec, otype="": seen.update(
+                target=target, name=name, ra=ra, dec=dec)
+            app._fill_table(["name", "ra", "dec"], [("NVSS J1", "10.5", "-3.2")],
+                            payloads=[{"name": "NVSS J1", "ra": 10.5, "dec": -3.2}])
+            app._current_row_index = lambda: 0
+            app.trigger_poster(None)
+            await pilot.pause()
+            assert seen == {"target": None, "name": "NVSS J1",
+                            "ra": 10.5, "dec": -3.2}
+
+    asyncio.run(scenario())
+
+
+def test_trigger_imaging_without_context_logs_no_crash():
+    """No target, no rows: the imaging triggers refuse politely."""
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.trigger_dossier(None)
+            app.trigger_field(None)
+            app.trigger_poster(None)
+            app.trigger_field("not coordinates")
+            await pilot.pause()
+
+    asyncio.run(scenario())
+
+
+def test_dossier_worker_writes_report(monkeypatch, tmp_path):
+    from celestrium import packets, paths
+
+    monkeypatch.setattr(paths, "REPORTS_DIR", tmp_path)
+
+    class FakePacket:
+        name = "M 87"
+
+        def to_markdown(self):
+            return "# Dossier: M 87"
+
+    monkeypatch.setattr(packets, "build_object_packet",
+                        lambda name, **kw: FakePacket())
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.trigger_dossier("M87")
+            for _ in range(100):
+                await asyncio.sleep(0.02)
+                if app.last_image is not None:
+                    break
+            assert app.last_image is not None
+            assert app.last_image.exists()
+            assert "Dossier" in app.last_image.read_text(encoding="utf-8")
+
+    asyncio.run(scenario())
+
+
 def test_trail_selection_is_safe_against_race(monkeypatch):
     """Clicking/selecting a trail item restores it without raising ValueError."""
     async def scenario():
