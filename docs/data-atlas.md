@@ -27,6 +27,36 @@ we mostly can't touch yet; NVSS is old radio data that sits at the heart of a li
 **The desk filter:** prefer *catalogue-level* data reachable by TAP/astroquery, where the
 science lives in the *selection* of rows, not in pixel reduction.
 
+### Rubin access reality -> Celestrium feature shape
+
+Rubin is the main case where "open-source" and "open data" can mislead us. The
+pipelines, schemas, and documentation are inspectable, but the full Rubin Science
+Platform archive is not an anonymous public survey backend. DP1/DP2, prompt
+processed images, and annual release products are data-rights/RSP surfaces with
+proprietary periods. Do not model Rubin as another `gaia`/`irsa`/`euclid` TAP
+archive until we have data rights or a genuinely public query surface.
+
+The open feature worth adding is narrower and still useful: a **Rubin watch**
+layer for live sky activity.
+
+- **Public inputs:** broker alert APIs/substreams, world-public alert packet
+  contents, MPC solar-system submissions from Rubin observatory code `X05`,
+  and the public scheduler/live-status pages.
+- **Useful Celestrium actions:** "show Rubin alerts near this object/field",
+  "watch this candidate list for new transients", "summarize last-night Rubin
+  activity in these atlas fields", and "cross-match a broker alert against our
+  existing object/candidate context."
+- **Artifact shape:** row-capped alert tables, small alert cutout references or
+  extracted postage stamps when provided by the broker, per-field watch reports,
+  and provenance entries in `data/manifest.jsonl`.
+- **Implementation boundary:** keep this out of the generic archive registry
+  unless/until the PPDB or a public TAP-like service is actually available.
+  Start with a dedicated service module plus packet builders so the CLI/TUI can
+  share it; tests should use canned broker/MPC responses and remain hermetic.
+
+In short: first Rubin feature = **live alert intelligence around our targets**,
+not "download Rubin images".
+
 ---
 
 ## 2. Key release calendar (2026–2027)
