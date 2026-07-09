@@ -23,26 +23,16 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import (Button, DataTable, Footer, Header, Input, Label,
+from textual.widgets import (Button, DataTable, Input, Label,
                              ListItem, ListView, RichLog, Select, Static)
 from astropy.table import Table
 from rich.markup import escape
 from rich.text import Text
 
 from .. import (cache, candidates, cutouts, packets, paths, planner, products,
-                 registry, spectra, xmatch)
+                 registry, xmatch)
 from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
 
-MODES = [
-    ("Resolve  ·  object → identity + ranked products", "resolve"),
-    ("Literature  ·  ADS query → paper set", "literature"),
-    ("Query  ·  ADQL → rows (cached)", "query"),
-    ("Crossmatch  ·  current rows × catalogue", "crossmatch"),
-    ("Global Feeds  ·  live sky/event streams", "global"),
-    ("Candidates  ·  saved short-lists", "candidates"),
-    ("Runbooks  ·  curated workflow → index report", "runbooks"),
-    ("History  ·  the provenance manifest", "history"),
-]
 _PROMPTS = {
     "resolve": "object / 'RA Dec' — plan first, Enter a product row to fetch",
     "literature": 'ADS query, e.g. abs:"cosmic dipole" year:2024-2026',
@@ -53,7 +43,6 @@ _PROMPTS = {
     "runbooks": "(Runbooks load automatically — Enter runs the highlighted one)",
     "history": "(History loads automatically — no input)",
 }
-_NO_INPUT = {"global", "candidates", "runbooks", "history"}
 THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
 
@@ -99,7 +88,7 @@ def _ads_token_ok() -> bool:
 
 
 def _find_coord_cols(tab: Table) -> tuple[str, str]:
-    """Identify RA/Dec columns or raise a helpful error (Issue 5 / Issue 4)."""
+    """Identify RA/Dec columns or raise a helpful error."""
     aliases_ra = ("ra", "RA", "ra_deg", "RA_ICRS", "RAJ2000", "_RAJ2000", "raj2000", "RAdeg")
     aliases_dec = ("dec", "DEC", "dec_deg", "DE_ICRS", "DEJ2000", "_DEJ2000", "dej2000", "DEdeg")
     ra = next((c for c in aliases_ra if c in tab.colnames), None)
@@ -131,7 +120,7 @@ def _sky_points(tab: Table, limit: int = 500) -> list[tuple[float, float]]:
 
 
 def open_path(path: str | os.PathLike) -> None:
-    """Platform-agnostic path opener (Issue 13)."""
+    """Platform-agnostic path opener."""
     system = platform.system()
     path_str = str(path)
     if system == "Windows":
@@ -389,7 +378,7 @@ class CelestriumApp(App):
         self.last_target = None         # planner.ResolvedTarget from the last Resolve
         self.last_plans = []            # ranked ObservationPlans for last_target
         self._resolve_seq = 0           # request id: guards stale Resolve workers
-        self._fetch_seq = 0             # fetch request id: guards stale product fetches (Issue 5)
+        self._fetch_seq = 0             # fetch request id: guards stale product fetches
         self.debug_mode = False
         self.image_cfg = {
             "preset": "quick-look", "fov": "auto", "pix": 512, "survey": "auto",
@@ -485,11 +474,13 @@ class CelestriumApp(App):
         except Exception:
             pass
 
-        # Instead of the heavy detail scroll, we parse out the critical info for the HUD
+        # Instead of the heavy detail scroll, we parse out the critical info for the HUD.
+        # An identity card puts "RA <deg>  Dec <deg>" on its third line — that's the cue.
         clean = Text.from_markup(text).plain
         lines = clean.split('\n')
-        if lines and "RA=" in lines[0]:
-            self.query_one("#target-hud", Label).update(f"[b]{lines[0]}[/b]  {lines[1] if len(lines)>1 else ''}")
+        if len(lines) >= 3 and lines[2].startswith("RA "):
+            self.query_one("#target-hud", Label).update(
+                f"[b]{escape(lines[0])}[/b]  {escape(lines[1])}")
         else:
             self.query_one("#target-hud", Label).update(f"[dim]{escape(clean.replace(chr(10), ' · '))}[/]")
 
@@ -583,7 +574,7 @@ class CelestriumApp(App):
         if len(self.context.trail) > 15:
             self.context.trail.pop(0)
 
-        # Postpone UI rebuilding to avoid ValueError race when clicked (Issue 8)
+        # Postpone UI rebuilding to avoid ValueError race when clicked
         self.call_later(self._rebuild_trail_ui)
 
     def _rebuild_trail_ui(self) -> None:
@@ -608,10 +599,11 @@ class CelestriumApp(App):
         elif mode == "query":
             self.do_query(data["archive"], data["query"], False)
         elif mode == "crossmatch":
-            # Semantic crossmatch restore via exact cached tag loader (Issue 2)
+            # Semantic crossmatch restore via exact cached tag loader
             self.do_open_cached(data["key"])
         elif mode == "global":
-            self.do_global_feed(data["key"], refresh=True)
+            # Trail restore is a revisit — serve the cached pull, don't re-hit the feed.
+            self.do_global_feed(data["key"], refresh=False)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id == "trail-list":
@@ -627,7 +619,7 @@ class CelestriumApp(App):
         self._handle_command(event.value.strip())
 
     def _handle_command(self, text: str) -> None:
-        """Central command dispatcher (Issue 15)."""
+        """Central command dispatcher."""
         if not text:
             return
 
@@ -659,6 +651,7 @@ class CelestriumApp(App):
             target = text.removeprefix("/resolve").strip()
             if target:
                 self.switch_to_mode("resolve")
+                self._last_action = ("resolve", target)
                 self.do_resolve(target)
             else:
                 self.switch_to_mode("resolve")
@@ -741,7 +734,7 @@ class CelestriumApp(App):
             archive = self.query_one("#archive", Select).value or "gaia"
 
         if is_query:
-            # Set the Select value before switching mode to prevent label race (Issue 8)
+            # Set the Select value before switching mode to prevent label race
             self.query_one("#archive", Select).value = archive
             self.switch_to_mode("query")
             self._last_action = ("query", archive, query_text, False)
@@ -786,7 +779,7 @@ class CelestriumApp(App):
                 elif lower == "panel" and "multi_panel" in mods:
                     matched_idx = idx
                     break
-                elif lower in ("image", "cutout") and "colour_image" in mods:  # Alias fix (Issue 4)
+                elif lower in ("image", "cutout") and "colour_image" in mods:  # Alias fix
                     matched_idx = idx
                     break
 
@@ -866,7 +859,7 @@ class CelestriumApp(App):
         self.query_one("#inline-detail", VerticalScroll).display = False
         self.query_one("#ambient-strip", Vertical).display = False  # Hide sidebar in idle
 
-        # Clear session context as well to prevent stale state bugs (Issue 6)
+        # Clear session context as well to prevent stale state bugs
         self.last_table = None
         self.last_target = None
         self.last_plans = []
@@ -923,7 +916,7 @@ class CelestriumApp(App):
             self._log("[yellow]nothing to open yet (fetch a product or run a runbook)[/]")
             return
         try:
-            open_path(target)  # Platform-agnostic (Issue 13)
+            open_path(target)  # Platform-agnostic
         except Exception as e:
             self._log(f"[red]open failed: {escape(type(e).__name__)}[/]")
 
@@ -1122,7 +1115,7 @@ class CelestriumApp(App):
         name = str(self._row_payloads[i].get("name", ""))
         try:
             tab = candidates.load(name)
-            self._accept_table_result(tab)  # Updates last_table/context.dataset (Issue 1)
+            self._accept_table_result(tab)  # Updates last_table/context.dataset
             self._set_detail(f"[b]{escape(name)}[/] — {len(tab)} candidate rows loaded.\n"
                              "[dim]Crossmatch[/] mode can now match these.")
             self._log(f"[green]loaded candidate list {name} ({len(tab)} rows)[/]")
@@ -1179,9 +1172,9 @@ class CelestriumApp(App):
             else:
                 self.query_one("#inline-detail-text", Static).update(markup)
 
-    # ----- UI thread safe result acceptors (Issue 2) ----------------------- #
+    # ----- UI thread safe result acceptors ----------------------- #
     def _accept_table_result(self, tab: Table) -> None:
-        """Central table state committer (Issue 1)."""
+        """Central table state committer."""
         self.last_table = tab
         self.context.dataset = tab
         self._show_astropy(tab)
@@ -1206,8 +1199,8 @@ class CelestriumApp(App):
         return target_key is None or target_key == self._target_key(self.last_target)
 
     def _accept_resolve_result(self, seq: int, target: planner.ResolvedTarget | None, plans: list) -> None:
-        """Apply state changes and update UI on the main thread (Issue 2)."""
-        # Resolve seq check (Issue 1)
+        """Apply state changes and update UI on the main thread."""
+        # Resolve seq check
         if seq != self._resolve_seq:
             return
         if target is None:
@@ -1360,13 +1353,14 @@ class CelestriumApp(App):
             self._accept_plan_no_records(target_name, plan_label, detail, seq, target_key)
 
     def _accept_runbook_result(self, index: Path, name: str, steps_count: int, created_count: int) -> None:
-        """Central runbook state committer on the main thread (Issue 6)."""
+        """Central runbook state committer on the main thread."""
         self.last_report = index
         self._set_detail(f"[b green]runbook {name} done[/]\n{steps_count} steps · "
                           f"{created_count} artifacts\n[dim]{escape(str(index))}[/]\n[b]Ctrl+O[/] open index")
         self._log(f"[green]runbook {name} → {index}[/]")
 
     def _accept_global_feed_result(self, tab: Table, key: str, label: str) -> None:
+        self._last_action = ("global", key)
         self.switch_to_mode("query")
         self._accept_table_result(tab)
         self._feedback("global", f"{label}: loaded {len(tab)} rows", "green")
@@ -1378,7 +1372,7 @@ class CelestriumApp(App):
 
     # ----- workers (threaded; blocking calls off the UI loop) --------------- #
     def do_resolve(self, name: str) -> None:
-        """Resolve trigger on the UI thread to prevent sequence race (Issue 1 / Issue 7)."""
+        """Resolve trigger on the UI thread to prevent sequence race."""
         self._resolve_seq += 1
         self._fetch_seq += 1
         seq = self._resolve_seq
@@ -1403,7 +1397,7 @@ class CelestriumApp(App):
                 f"resolve failed: {type(e).__name__}: {str(e)}", "red")
             return
 
-        # Thread scheduling race check (Issue 1)
+        # Thread scheduling race check
         if seq != self._resolve_seq:
             return
 
@@ -1435,14 +1429,6 @@ class CelestriumApp(App):
             target.dec, self.image_cfg.get("survey", "auto"))]
         return "\n".join(lines)
 
-    def _planner_detail(self, name: str, otype: str, ra: float, dec: float,
-                        base: str) -> str:
-        target = planner.ResolvedTarget(
-            display_name=name, aliases=(), ra=ra, dec=dec, otype=otype,
-            object_class=planner.classify_otype(otype), confidence=1.0,
-            match_kind="exact")
-        return f"{base}\n\n{self._identity_card(target)}"
-
     def _render_plan_detail(self, plan) -> str:
         head = self._identity_card(self.last_target) if self.last_target else ""
         fetch = ("Enter to fetch" if plan.next_action == "fetch"
@@ -1453,7 +1439,7 @@ class CelestriumApp(App):
                 f"status {escape(plan.product.status)}\n[b green]{fetch}[/]")
 
     def execute_plan(self, index: int) -> None:
-        """Trigger background product fetch execution with sequence guarding (Issue 5)."""
+        """Trigger background product fetch execution with sequence guarding."""
         target = self.last_target
         if target is None:
             self._feedback("product", "no active target to fetch from", "yellow")
@@ -1523,72 +1509,6 @@ class CelestriumApp(App):
 
         self.call_from_thread(
             self._accept_product_result, result, plan.product.label, card, seq, target_key)
-
-    def _fetch_colour_image(self, name, otype, ra, dec, detail,
-                            label_text: str = "colour_image", seq: int = 0,
-                            target_key: str | None = None) -> None:
-        cfg = self.image_cfg
-        fov = cfg["fov"] if isinstance(cfg["fov"], (int, float)) \
-            else packets.default_fov(otype or "", 8.0, 3.0)
-        survey = None if cfg["survey"] == "auto" else cfg["survey"]
-        self.call_from_thread(
-            self._feedback, "product",
-            f"image fetch {name}; fov={fov}' pix={cfg['pix']} survey={cfg['survey']}")
-        try:
-            path, label = cutouts.color_auto(ra, dec, fov_arcmin=fov,
-                                              pix=cfg["pix"], survey=survey)
-            self.call_from_thread(self._accept_plan_image_result, path, label,
-                                  detail, fov, seq, target_key)
-        except Exception as e:
-            self.call_from_thread(self._accept_plan_error, label_text, detail,
-                                  type(e).__name__, str(e), seq, target_key)
-
-    def _fetch_panel(self, name, otype, ra, dec, detail,
-                     label_text: str = "multi_panel", seq: int = 0,
-                     target_key: str | None = None) -> None:
-        cfg = self.image_cfg
-        fov = cfg["fov"] if isinstance(cfg["fov"], (int, float)) \
-            else packets.default_fov(otype or "", 8.0, 3.0)
-        self.call_from_thread(
-            self._feedback, "product",
-            f"panel fetch {name}; fov={fov}' datatype=multi-wavelength image")
-        try:
-            path = cutouts.panel(ra, dec, fov_arcmin=fov)
-            self.call_from_thread(self._accept_plan_panel_result, path, detail,
-                                  fov, seq, target_key)
-        except Exception as e:
-            self.call_from_thread(self._accept_plan_error, label_text, detail,
-                                  type(e).__name__, str(e), seq, target_key)
-
-    def _fetch_spectrum(self, name, ra, dec, detail,
-                        label_text: str = "spectrum", seq: int = 0,
-                        target_key: str | None = None) -> None:
-        self.call_from_thread(
-            self._feedback, "product",
-            f"spectrum fetch {name}; source=NED datatype=1D spectrum")
-        try:
-            result = spectra.fetch_ned_spectrum(name)
-            if result is None:
-                self.call_from_thread(
-                    self._accept_plan_no_records, name, "NED spectrum",
-                    detail, seq, target_key)
-                return
-            self.call_from_thread(self._accept_plan_spectrum_result, result.path,
-                                  result.source, result.summary, detail, seq,
-                                  target_key)
-        except Exception as e:
-            self.call_from_thread(self._accept_plan_error, label_text, detail,
-                                  type(e).__name__, str(e), seq, target_key)
-
-    def _render_preview_image(self, name, row, ra, dec, detail) -> None:
-        product = self.image_cfg.get("product", "colour_image")
-        otype = str(row.get("otype", "")) if hasattr(row, "get") else ""
-        if product == "spectrum":
-            self._fetch_spectrum(name, ra, dec, detail, "spectrum")
-        elif product == "multi_panel":
-            self._fetch_panel(name, otype, ra, dec, detail, "multi_panel")
-        else:
-            self._fetch_colour_image(name, otype, ra, dec, detail, "colour_image")
 
     @work(thread=True, exclusive=True)
     def do_literature(self, query_text: str) -> None:
@@ -1674,7 +1594,6 @@ class CelestriumApp(App):
                     "[dim]The feed may be unavailable or not wired yet.[/]"
                 )
                 return
-            self._last_action = ("global", key)
             self.call_from_thread(self._accept_global_feed_result, tab, key, cap.label)
         except Exception as e:
             self.call_from_thread(
@@ -1720,7 +1639,7 @@ class CelestriumApp(App):
             f"{len(local)} local rows -> {catalog}; refresh={refresh}")
 
         try:
-            ra, dec = _find_coord_cols(local)  # Explicit columns (Issue 5)
+            ra, dec = _find_coord_cols(local)  # Explicit columns
         except ValueError as e:
             self.call_from_thread(
                 self._feedback, "error",
@@ -1728,7 +1647,7 @@ class CelestriumApp(App):
             return
 
         try:
-            # Strong unique cache key based on hashed coordinates (Issue 3)
+            # Strong unique cache key based on hashed coordinates
             coords = []
             for r in local:
                 try:
@@ -1765,7 +1684,7 @@ class CelestriumApp(App):
                 self._feedback, "history",
                 f"opening cached table {hash_prefix}")
             tab = cache.load_cached(hash_prefix)
-            self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset (Issue 1)
+            self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
             self.call_from_thread(
                 self._feedback, "history",
                 f"{hash_prefix}: loaded {len(tab)} rows", "green")
@@ -1797,7 +1716,7 @@ class CelestriumApp(App):
                 return
             tab = cache.cached_query(rec["archive"], rec["query"],
                                      lambda: source.query(rec["query"]), refresh=True)
-            self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset (Issue 1)
+            self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
             self.call_from_thread(
                 self._feedback, "history",
                 f"{hash_prefix}: rerun returned {len(tab)} rows", "green")

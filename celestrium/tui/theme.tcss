@@ -87,7 +87,7 @@ Header {
     padding: 1 1;
 }
 
-#orrery-mini {
+#orrery {
     height: 9;
     border: none;
     color: $primary;

@@ -147,36 +147,14 @@ def test_planner_settings_can_select_spectrum_network_free():
     asyncio.run(scenario())
 
 
-def test_render_preview_uses_spectrum_backend_for_spectrum_product(tmp_path, monkeypatch):
-    from celestrium import spectra
+def test_identity_card_includes_planner_recommendations():
+    from celestrium import planner
 
-    class Result:
-        path = tmp_path / "spec.png"
-        summary = "fake spectrum"
-        source = "NED"
-
-    seen = {}
-
-    def fake_fetch(name):
-        seen["name"] = name
-        Result.path.write_text("fake", encoding="utf-8")
-        return Result()
-
-    monkeypatch.setattr(spectra, "fetch_ned_spectrum", fake_fetch)
+    target = planner.ResolvedTarget(
+        display_name="3C 273", aliases=(), ra=187.2779, dec=2.0524, otype="QSO",
+        object_class="galaxy_agn", confidence=1.0, match_kind="exact")
     app = CelestriumApp(active_line="test-line")
-    app.call_from_thread = lambda fn, *args, **kwargs: fn(*args, **kwargs)
-    app._set_detail = lambda text: None
-    app.image_cfg = {"fov": "auto", "pix": 512, "survey": "auto",
-                     "product": "spectrum", "wavelength": "auto"}
-    row = {"otype": "QSO"}
-    app._render_preview_image("3C 273", row, 187.2, 2.0, "detail")
-    assert seen["name"] == "3C 273"
-    assert app.last_image == Result.path
-
-
-def test_resolve_detail_includes_planner_recommendations():
-    app = CelestriumApp(active_line="test-line")
-    detail = app._planner_detail("3C 273", "QSO", 187.2779, 2.0524, "base")
+    detail = app._identity_card(target)
     assert "recommended" in detail.lower()
     assert "NED" in detail or "SDSS" in detail
     assert "HEASARC" in detail
@@ -404,22 +382,6 @@ def test_global_feed_runs_through_cache(monkeypatch):
             assert len(app.last_table) == 1
 
     asyncio.run(scenario())
-
-
-def test_execute_plan_row_fetches_colour_image(monkeypatch, tmp_path):
-    """Enter on a colour-image plan row fetches via cutouts.color_auto (no network)."""
-    from celestrium import cutouts
-
-    path = tmp_path / "color.jpg"
-    path.write_text("img", encoding="utf-8")
-    monkeypatch.setattr(cutouts, "color_auto",
-                        lambda *a, **k: (path, "Legacy Surveys DR10 (deep)"))
-
-    app = CelestriumApp(active_line="test-line")
-    app.call_from_thread = lambda fn, *args, **kwargs: fn(*args, **kwargs)
-    app._set_detail = lambda text: None
-    app._fetch_colour_image("3C 273", "QSO", 187.2779, 2.0524, "card")
-    assert app.last_image == path
 
 
 def test_runbooks_browser_is_network_free():
