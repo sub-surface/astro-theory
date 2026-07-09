@@ -48,10 +48,16 @@ def query_region(ra_deg: float, dec_deg: float, radius_arcsec: float = 3.0,
 
 
 def fetch_photometry(ra_deg: float, dec_deg: float, radius_arcsec: float = 3.0):
-    """Return SDSS photo-object rows around a coordinate."""
-    return SDSS.query_photoobj(
-        coordinates=_coord(ra_deg, dec_deg),
+    """Return SDSS photo-object rows around a coordinate.
+
+    `query_photoobj` is keyed by run/rerun/camcol/field (SDSS imaging-run
+    identifiers), not a coordinate + radius cone search — `query_region`
+    (spectro=False) is the actual coordinate-based photo-object lookup.
+    """
+    return SDSS.query_region(
+        _coord(ra_deg, dec_deg),
         radius=radius_arcsec * u.arcsec,
+        spectro=False,
     )
 
 

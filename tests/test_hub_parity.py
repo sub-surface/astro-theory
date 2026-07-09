@@ -113,32 +113,47 @@ def test_feed_runs_executor_through_cache(monkeypatch):
     assert "1 rows" in result.output
 
 
-def test_feed_planned_backend_does_not_cache_or_execute(monkeypatch):
-    """transient is still a stub (planner status='planned') pre-Wave-4: the
-    CLI must report that plainly, mirroring the TUI's do_global_feed gate,
-    and must not cache an empty result as if it were a real scientific pull."""
-    from celestrium import transients
+def test_feed_transient_is_executable_since_wave_4(monkeypatch):
+    """transient flipped from planned to executable once Wave 4 wired a real
+    ALeRCE-backed transients.py — the CLI must actually run and cache it now,
+    exactly like neo/satellite (mirrors test_feed_runs_executor_through_cache)."""
+    from celestrium import cache, transients
+
+    monkeypatch.setattr(transients, "fetch_latest_transients",
+                        lambda: Table({"main_id": ["ZTF25abc"], "ra": [10.0]}))
+    seen = {}
+
+    def fake_cached_query(archive, query, fetch, refresh=False, **kw):
+        seen.update(archive=archive, query=query)
+        return fetch()
+
+    monkeypatch.setattr(cache, "cached_query", fake_cached_query)
+    result = runner.invoke(hub.app, ["--json", "feed", "transient"])
+    assert result.exit_code == 0
+    assert seen["archive"] == "global-transient"
+    payload = json.loads(result.output)
+    assert payload["nrows"] == 1
+
+
+def test_feed_gates_on_planner_status_generically(monkeypatch):
+    """The parity fix (feed must not run a 'planned' capability) is generic,
+    not transient-specific — verified by temporarily marking a feed planned."""
+    from celestrium import planner
+    caps = list(planner.SOURCE_CAPABILITIES)
+    idx = next(i for i, c in enumerate(caps) if c.key == "neo")
+    from dataclasses import replace
+    caps[idx] = replace(caps[idx], status="planned")
+    monkeypatch.setattr(planner, "SOURCE_CAPABILITIES", tuple(caps))
 
     called = {"n": 0}
-
-    def spy_fetch():
-        called["n"] += 1
-        return None
-
-    monkeypatch.setattr(transients, "fetch_latest_transients", spy_fetch)
-    called_cache = {"n": 0}
-
-    def spy_cache(*a, **kw):
-        called_cache["n"] += 1
-        raise AssertionError("planned feeds must not reach cached_query")
-
-    monkeypatch.setattr(hub.cache, "cached_query", spy_cache)
-    result = runner.invoke(hub.app, ["--json", "feed", "transient"])
+    from celestrium import neos
+    monkeypatch.setattr(neos, "fetch_close_approaches",
+                        lambda: called.__setitem__("n", called["n"] + 1))
+    result = runner.invoke(hub.app, ["--json", "feed", "neo"])
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["status"] == "planned"
     assert called["n"] == 0
-    assert called_cache["n"] == 0
 
 
 def test_feed_unknown_key_lists_supported():

@@ -34,7 +34,7 @@ from rich.markup import escape
 from rich.text import Text
 
 from .. import (cache, candidates, cutouts, packets, paths, planner, plots,
-                 products, registry, xmatch)
+                 products, registry, tables, xmatch)
 from . import commands
 from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
 
@@ -48,6 +48,7 @@ _PROMPTS = {
     "runbooks": "(Runbooks load automatically — Enter runs the highlighted one)",
     "history": "(History loads automatically — no input)",
     "sweep": "/sweep [target] — active target by default",
+    "watch": "/watch [target | candidate-list] — active target by default",
 }
 THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
@@ -66,20 +67,20 @@ def _ads_token_ok() -> bool:
         return False
 
 
-_RA_ALIASES = ("ra", "RA", "ra_deg", "RA_ICRS", "RAJ2000", "_RAJ2000", "raj2000", "RAdeg")
-_DEC_ALIASES = ("dec", "DEC", "dec_deg", "DE_ICRS", "DEJ2000", "_DEJ2000", "dej2000", "DEdeg")
+# RA/Dec alias lists live in tables.py (shared with the watch packet's
+# per-row cone search over a candidate list) — kept as module attrs here
+# only so _payload_coords can scan a plain dict (not a Table).
+_RA_ALIASES = tables.RA_ALIASES
+_DEC_ALIASES = tables.DEC_ALIASES
 _NAME_ALIASES = ("main_id", "name", "designation", "objectId", "Satellite", "source_id")
 
 
 def _find_coord_cols(tab: Table) -> tuple[str, str]:
     """Identify RA/Dec columns or raise a helpful error."""
-    ra = next((c for c in _RA_ALIASES if c in tab.colnames), None)
-    dec = next((c for c in _DEC_ALIASES if c in tab.colnames), None)
-    if not ra or not dec:
-        raise ValueError(
-            f"Could not identify RA/Dec columns. Available columns: {tab.colnames}"
-        )
-    return ra, dec
+    try:
+        return tables.find_coord_columns(tab)
+    except KeyError as e:
+        raise ValueError(str(e))
 
 
 def _payload_coords(payload: dict) -> tuple[float, float] | None:
@@ -623,6 +624,8 @@ class CelestriumApp(App):
             self.do_global_feed(data["key"], refresh=False)
         elif mode == "sweep":
             self.trigger_sweep(data["target"])
+        elif mode == "watch":
+            self.trigger_watch(data["arg"])
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id == "trail-list":
@@ -711,6 +714,8 @@ class CelestriumApp(App):
             self.trigger_plot(args.get("x"), args.get("y"), args.get("kind", "scatter"))
         elif intent.kind == "sweep":
             self.trigger_sweep(args.get("target"))
+        elif intent.kind == "watch":
+            self.trigger_watch(args.get("arg"))
 
     def _show_egg(self, word: str, markup: str) -> None:
         self.query_one("#side", Vertical).display = True
@@ -799,7 +804,7 @@ class CelestriumApp(App):
         self.last_plans = []
         self.context.target = None
         self.context.dataset = None
-        for name in ("resolve", "fetch", "table", "literature", "plot", "sweep"):
+        for name in ("resolve", "fetch", "table", "literature", "plot", "sweep", "watch"):
             self._bump(name)
         self._refresh_subtitle()
 
@@ -1404,6 +1409,24 @@ class CelestriumApp(App):
         self._feedback("sweep", f"{name}: {pkt.hits}/{len(pkt.entries)} hits", "green")
         self.add_trail(f"sweep:{name[:12]}", "sweep", {"target": name})
 
+    def _render_watch_detail(self, entry) -> str:
+        return (f"[b]{escape(entry.label)}[/]\n"
+                f"RA {entry.ra:.5f}  Dec {entry.dec:+.5f}\n"
+                f"status {escape(entry.status)}  alerts {entry.nrows}\n"
+                f"{escape(entry.note)}")
+
+    def _accept_watch_result(self, pkt: packets.WatchPacket, seq: int) -> None:
+        if not self._current("watch", seq):
+            return
+        self.switch_to_mode("watch")
+        rows = [(e.label, e.status, str(e.nrows), e.note[:80]) for e in pkt.entries]
+        self._fill_table(["position", "status", "alerts", "note"], rows,
+                         pkt.entries, self._render_watch_detail)
+        self._set_detail(escape(pkt.to_markdown()))
+        self._feedback("watch", f"{pkt.label}: {pkt.total_alerts} alert(s) "
+                                f"across {len(pkt.entries)} position(s)", "green")
+        self.add_trail(f"watch:{pkt.label[:12]}", "watch", {"arg": pkt.label})
+
     # ----- workers (threaded; blocking calls off the UI loop) --------------- #
     def trigger_plot(self, x: str | None, y: str | None, kind: str = "scatter") -> None:
         if self.last_table is None or len(self.last_table) == 0:
@@ -1464,13 +1487,45 @@ class CelestriumApp(App):
             return
         self.call_from_thread(self._accept_sweep_result, pkt, seq)
 
+    def trigger_watch(self, arg: str | None) -> None:
+        text = (arg or "").strip()
+        if not text and self.context.target is None:
+            self._log("[yellow]no target — /watch <target|list>, or resolve one first[/]")
+            return
+        # A bare word that names a saved candidate list wins over treating it
+        # as a target name — watch's whole point is chasing your shortlist.
+        list_name = text if text and candidates.find_record(text) else None
+        target_arg = None if list_name else (text or self.context.target)
+        label = list_name or (text or self.context.target.display_name)
+        self.switch_to_mode("watch")
+        self._feedback("watch", f"queued alert watch for {label}")
+        self.do_watch(target_arg, list_name)
+
+    def do_watch(self, target, list_name: str | None) -> None:
+        self._run_watch_worker(target, list_name, self._bump("watch"))
+
+    @work(thread=True, exclusive=True)
+    def _run_watch_worker(self, target, list_name: str | None, seq: int) -> None:
+        try:
+            pkt = packets.build_watch_packet(
+                target=target, candidate_list=list_name,
+                on_note=lambda m: self.call_from_thread(self._feedback, "watch", m),
+            )
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"watch failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_watch_result, pkt, seq)
+
     def do_resolve(self, name: str) -> None:
         """Resolve trigger on the UI thread to prevent sequence race."""
         seq = self._bump("resolve")
         self._bump("fetch")
-        # A late-landing sweep for the *previous* target would silently flip
-        # the mode back to "sweep" over whatever Resolve is about to show.
+        # A late-landing sweep/watch for the *previous* target would silently
+        # flip the mode back over whatever Resolve is about to show.
         self._bump("sweep")
+        self._bump("watch")
         self._feedback("resolve", f"queued identity lookup for {name}")
         self._set_detail(
             f"[b]Resolving[/] {escape(name)}\n"

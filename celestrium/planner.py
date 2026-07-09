@@ -235,15 +235,29 @@ SOURCE_CAPABILITIES: tuple[ProductSourceCapability, ...] = (
     ),
     ProductSourceCapability(
         key="transient",
-        label="Transient Alerts (TNS/ZTF)",
+        label="Transient Alerts (ALeRCE/ZTF)",
         modalities=("transient", "metadata"),
         object_classes=("transient",),
         access="api",
-        coverage_hint="Global transient-alert feed; target-aware executor is planned.",
+        coverage_hint="Global feed of recent ALeRCE ZTF alerts; a Rubin-era broker "
+                      "will extend this once its alert stream is public.",
         fetch_cost="low",
-        status="planned",
+        status="executable",
         service_module="celestrium.transients",
         scope="global",
+    ),
+    ProductSourceCapability(
+        key="transient-alerts",
+        label="Transient alerts near this target (ALeRCE)",
+        modalities=("transient", "metadata"),
+        object_classes=("*",),
+        access="api",
+        coverage_hint="ALeRCE ZTF-alert cone search around the resolved position — "
+                      "the 'show alerts near this object/field' watch action.",
+        fetch_cost="low",
+        status="executable",
+        service_module="celestrium.transients",
+        scope="target",
     ),
 )
 

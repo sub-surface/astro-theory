@@ -210,6 +210,17 @@ def _ephemeris(target, plan, settings, emit):
         (target.display_name,), emit)
 
 
+def _transient_alerts(target, plan, settings, emit):
+    radius = float(settings.get("transient_radius_arcmin", 2.0) or 2.0)
+    days = settings.get("transient_days", 30.0)
+    days = float(days) if days not in (None, "auto") else 30.0
+    _emit(emit, f"ALeRCE cone search {target.display_name}; "
+                f"radius={radius}' window={days}d")
+    return _table_result(
+        target, plan, "celestrium.transients", "fetch_transients_near",
+        (target.ra, target.dec, radius, days), emit)
+
+
 EXECUTORS: dict[str, ProductExecutor] = {
     "colour-image": ProductExecutor("colour-image", _colour_image, "HiPS colour cutout"),
     "multi-panel": ProductExecutor("multi-panel", _multi_panel, "SkyView multi-wavelength panel"),
@@ -222,6 +233,8 @@ EXECUTORS: dict[str, ProductExecutor] = {
     "exoplanet-archive": ProductExecutor("exoplanet-archive", _exoplanet, "NASA Exoplanet Archive query"),
     "transit": ProductExecutor("transit", _transit, "Exoplanet transit prediction"),
     "ephemeris": ProductExecutor("ephemeris", _ephemeris, "JPL Horizons ephemeris"),
+    "transient-alerts": ProductExecutor("transient-alerts", _transient_alerts,
+                                        "ALeRCE transient cone search"),
 }
 
 

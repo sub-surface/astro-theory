@@ -610,6 +610,119 @@ def test_dossier_worker_writes_report(monkeypatch, tmp_path):
     asyncio.run(scenario())
 
 
+def test_watch_idiom_dispatches_to_trigger():
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seen = {}
+            app.trigger_watch = lambda arg: seen.setdefault("arg", arg)
+            app._handle_command("/watch M87")
+            await pilot.pause()
+            assert seen == {"arg": "M87"}
+
+    asyncio.run(scenario())
+
+
+def test_trigger_watch_prefers_a_saved_candidate_list_over_a_target_name(monkeypatch):
+    from celestrium import candidates
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            monkeypatch.setattr(candidates, "find_record",
+                                lambda name: {"name": name} if name == "agn" else None)
+            seen = {}
+            app.do_watch = lambda target, list_name: seen.update(
+                target=target, list_name=list_name)
+            app.trigger_watch("agn")
+            await pilot.pause()
+            assert seen == {"target": None, "list_name": "agn"}
+
+    asyncio.run(scenario())
+
+
+def test_trigger_watch_falls_back_to_active_target_with_no_arg():
+    from celestrium import planner
+
+    target = planner.ResolvedTarget(
+        display_name="M87", aliases=(), ra=187.7059, dec=12.3911, otype="G",
+        object_class="galaxy_agn", confidence=1.0, match_kind="exact")
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.context.target = target
+            seen = {}
+            app.do_watch = lambda t, list_name: seen.update(target=t, list_name=list_name)
+            app.trigger_watch(None)
+            await pilot.pause()
+            assert seen == {"target": target, "list_name": None}
+
+    asyncio.run(scenario())
+
+
+def test_trigger_watch_without_arg_or_target_is_a_safe_no_op():
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.do_watch = lambda *a: (_ for _ in ()).throw(
+                AssertionError("must not run without a target"))
+            app.trigger_watch(None)
+            await pilot.pause()
+
+    asyncio.run(scenario())
+
+
+def test_watch_worker_populates_grid_and_trail(monkeypatch):
+    from celestrium import packets, planner
+
+    target = planner.ResolvedTarget(
+        display_name="M87", aliases=(), ra=187.7059, dec=12.3911, otype="G",
+        object_class="galaxy_agn", confidence=1.0, match_kind="exact")
+    pkt = packets.WatchPacket(
+        kind="target", label="M87", radius_arcmin=2.0, days=7.0,
+        entries=[packets.WatchEntry("M87", 187.7059, 12.3911, "hit", 2, [{}, {}])])
+    monkeypatch.setattr(packets, "build_watch_packet", lambda **kw: pkt)
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            app.context.target = target
+            app.trigger_watch(None)
+            for _ in range(100):
+                await asyncio.sleep(0.02)
+                if app.query_one("#results").row_count:
+                    break
+            assert app.mode == "watch"
+            assert app.query_one("#results").row_count == 1
+            assert any(item["label"] == "watch:M87" for item in app.context.trail)
+
+    asyncio.run(scenario())
+
+
+def test_clear_invalidates_in_flight_watch():
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            seq = app._bump("watch")
+            app.action_clear()
+            assert not app._current("watch", seq)
+
+    asyncio.run(scenario())
+
+
+def test_resolve_invalidates_in_flight_watch_for_previous_target():
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            stale_seq = app._bump("watch")
+            app.do_resolve("NGC 1275")
+            await pilot.pause()
+            assert not app._current("watch", stale_seq)
+
+    asyncio.run(scenario())
+
+
 def test_trail_selection_is_safe_against_race(monkeypatch):
     """Clicking/selecting a trail item restores it without raising ValueError."""
     async def scenario():

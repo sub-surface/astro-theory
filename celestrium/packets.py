@@ -253,7 +253,7 @@ def build_field_packet(ra: float, dec: float, fov: float = 5.0, images: bool = T
 # Table-returning product keys interrogated by a sweep, regardless of the
 # target's object class: a sweep asks everyone, that's the point.
 SWEEP_PRODUCT_KEYS = ("vizier", "heasarc", "sdss", "mast", "lightcurve",
-                      "exoplanet-archive")
+                      "exoplanet-archive", "transient-alerts")
 
 
 @dataclass
@@ -336,6 +336,124 @@ def build_sweep_packet(target, on_note: Optional[Callable[[str], None]] = None,
             if on_note:
                 on_note(f"{key}: {rows if rows is not None else result.kind}")
     return SweepPacket(target.to_dict(), entries)
+
+
+# --------------------------------------------------------------------------- #
+# Watch packet — "show alerts near this object/field" / "watch this candidate
+# list for new transients" (the live-alert-intelligence actions scoped in
+# docs/data-atlas.md's Rubin-watch section).
+# --------------------------------------------------------------------------- #
+@dataclass
+class WatchEntry:
+    label: str
+    ra: float
+    dec: float
+    status: str      # "hit" | "empty" | "error"
+    nrows: int
+    alerts: list     # row dicts, present only for status == "hit"
+    note: str = ""
+
+    def to_dict(self) -> dict:
+        return {"label": self.label, "ra": self.ra, "dec": self.dec,
+                "status": self.status, "nrows": self.nrows,
+                "alerts": self.alerts, "note": self.note}
+
+
+@dataclass
+class WatchPacket:
+    kind: str        # "target" | "field" | "list"
+    label: str
+    radius_arcmin: float
+    days: float
+    entries: List[WatchEntry]
+
+    @property
+    def total_alerts(self) -> int:
+        return sum(e.nrows for e in self.entries)
+
+    def to_dict(self) -> dict:
+        return {"kind": self.kind, "label": self.label,
+                "radius_arcmin": self.radius_arcmin, "days": self.days,
+                "total_alerts": self.total_alerts,
+                "entries": [e.to_dict() for e in self.entries]}
+
+    def to_markdown(self) -> str:
+        lines = [
+            f"# Watch: {self.label}",
+            "",
+            f"radius={self.radius_arcmin}' window={self.days}d — "
+            f"{self.total_alerts} alert(s) across {len(self.entries)} position(s)",
+            "",
+            "| position | status | alerts | note |",
+            "|---|---|---|---|",
+        ]
+        for e in self.entries:
+            lines.append(f"| {e.label} | {e.status} | {e.nrows} | {e.note} |")
+        return "\n".join(lines)
+
+
+def build_watch_packet(*, target=None, ra: Optional[float] = None,
+                       dec: Optional[float] = None,
+                       candidate_list: Optional[str] = None,
+                       radius_arcmin: float = 2.0, days: float = 7.0,
+                       row_limit: int = 20,
+                       on_note: Optional[Callable[[str], None]] = None,
+                       fetch: Optional[Callable] = None) -> WatchPacket:
+    """Alerts near a resolved target, a bare position, or every row of a
+    candidate list (row-capped) — exactly one of target / (ra, dec) /
+    candidate_list should be given. `target` may be raw text or an
+    already-resolved planner.ResolvedTarget. `fetch` defaults to
+    transients.fetch_transients_near (injectable for tests).
+    """
+    from . import candidates as candidates_mod
+    from . import planner as planner_mod
+    from . import tables as tables_mod
+    from . import transients as transients_mod
+    fetch = fetch or transients_mod.fetch_transients_near
+
+    def _one(label: str, ra_: float, dec_: float) -> WatchEntry:
+        try:
+            tab = fetch(ra_, dec_, radius_arcmin=radius_arcmin, days=days)
+        except Exception as e:
+            if on_note:
+                on_note(f"{label}: error ({type(e).__name__})")
+            return WatchEntry(label, ra_, dec_, "error", 0, [],
+                              f"{type(e).__name__}: {e}")
+        if tab is None or len(tab) == 0:
+            if on_note:
+                on_note(f"{label}: no alerts")
+            return WatchEntry(label, ra_, dec_, "empty", 0, [])
+        rows = [{c: tab[c][i] for c in tab.colnames} for i in range(len(tab))]
+        if on_note:
+            on_note(f"{label}: {len(tab)} alert(s)")
+        return WatchEntry(label, ra_, dec_, "hit", len(tab), rows)
+
+    if candidate_list:
+        tab = candidates_mod.load(candidate_list)
+        ra_col, dec_col = tables_mod.find_coord_columns(tab)
+        name_col = next((c for c in ("main_id", "name", "designation", "objectId")
+                        if c in tab.colnames), None)
+        entries = [
+            _one(str(row[name_col]) if name_col else f"row {i}",
+                float(row[ra_col]), float(row[dec_col]))
+            for i, row in enumerate(tab[:row_limit])
+        ]
+        return WatchPacket("list", candidate_list, radius_arcmin, days, entries)
+
+    if target is not None:
+        resolved = (planner_mod.resolve_target(target)
+                   if isinstance(target, str) else target)
+        if resolved is None:
+            raise RuntimeError(f"could not resolve {target!r}")
+        entry = _one(resolved.display_name, resolved.ra, resolved.dec)
+        return WatchPacket("target", resolved.display_name, radius_arcmin, days, [entry])
+
+    if ra is not None and dec is not None:
+        label = f"field {ra:.4f} {dec:+.4f}"
+        entry = _one(label, ra, dec)
+        return WatchPacket("field", label, radius_arcmin, days, [entry])
+
+    raise ValueError("build_watch_packet needs target, (ra, dec), or candidate_list")
 
 
 # --------------------------------------------------------------------------- #

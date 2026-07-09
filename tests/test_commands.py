@@ -175,6 +175,13 @@ def test_poster_idiom_slash_and_bare():
     assert parse("poster").args == {"target": None}     # highlighted row / target
 
 
+def test_watch_idiom_slash_and_bare():
+    assert parse("/watch M87").args == {"arg": "M87"}
+    assert parse("watch agn-shortlist").args == {"arg": "agn-shortlist"}
+    assert parse("watch").args == {"arg": None}          # active target default
+    assert parse("watch").kind == "watch"
+
+
 def test_plot_idiom_parses_columns_and_kind():
     assert parse("/plot ra dec").args == {"x": "ra", "y": "dec", "kind": "scatter"}
     assert parse("plot mag hist").args == {"x": "mag", "y": None, "kind": "hist"}
@@ -192,7 +199,7 @@ def test_suggestions_are_slash_commands():
     assert "/resolve" in sugg and "/query" in sugg
     # the once-hidden idioms are now discoverable from the prompt
     for name in ("/match", "/run", "/feed", "/papers",
-                 "/dossier", "/field", "/poster", "/plot", "/sweep"):
+                 "/dossier", "/field", "/poster", "/plot", "/sweep", "/watch"):
         assert name in sugg
     assert all(s.startswith("/") for s in sugg)
 

@@ -664,6 +664,47 @@ def sweep(target: str,
     _emit(payload, render)
 
 
+@app.command(rich_help_panel=VALIDATION)
+def watch(target: Optional[str] = typer.Argument(
+              None, help="a target name/coordinates to watch"),
+          list_name: Optional[str] = typer.Option(
+              None, "--list", help="watch every row of a saved candidate list instead"),
+          radius: float = typer.Option(2.0, help="cone-search radius in arcmin"),
+          days: float = typer.Option(7.0, help="lookback window in days"),
+          report: bool = typer.Option(False, help="write a Markdown watch report")):
+    """Live alert intelligence: ALeRCE transient alerts near a target or a
+    whole candidate list (the 'Rubin watch' scoping in docs/data-atlas.md).
+    """
+    if bool(target) == bool(list_name):
+        raise _fail("give exactly one of TARGET or --list NAME")
+    try:
+        pkt = packets.build_watch_packet(
+            target=target, candidate_list=list_name,
+            radius_arcmin=radius, days=days,
+            on_note=None if _STATE["json"] else lambda m: console.print(f"[dim]{m}[/]"))
+    except Exception as e:
+        raise _fail(e)
+    report_path = None
+    if report:
+        report_path = _write_report("watch", pkt.label, pkt.to_markdown())
+    payload = pkt.to_dict()
+    if report_path:
+        payload["report"] = str(report_path)
+
+    def render():
+        t = RichTable("position", "status", "alerts", "note",
+                      title=f"watch: {pkt.label}")
+        for e in pkt.entries:
+            t.add_row(e.label, e.status, str(e.nrows), e.note[:60])
+        console.print(t)
+        console.print(f"[dim]{pkt.total_alerts} alert(s) across "
+                      f"{len(pkt.entries)} position(s)[/]")
+        if report_path:
+            console.print(f"report -> [green]{report_path}[/]")
+
+    _emit(payload, render)
+
+
 def _markdown_table(tab, title: str) -> str:
     lines = [f"# {title}", ""]
     cols = list(tab.colnames)
