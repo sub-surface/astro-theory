@@ -34,7 +34,7 @@ def write_report(reports_dir: Path, kind: str, stem: str, body: str) -> Path:
 
 def paper_lines(docs) -> List[str]:
     if not docs:
-        return ["- No ADS records returned."]
+        return ["- No literature records returned."]
     return [
         f"- {d.get('bibcode', '?')} ({d.get('year', '?')}): {title_of(d)}"
         for d in docs
@@ -85,6 +85,28 @@ def build_paper_set(query_text: str, rows: int = 8) -> PaperSet:
     return PaperSet(query_text, ads.search(query_text, rows=rows))
 
 
+def _bibliography_docs(name: str, rows: int) -> list:
+    """SIMBAD per-object bibliography as the doc shape used by reports/TUI."""
+    try:
+        bib = resolvers.bibliography(name, limit=rows)
+    except Exception:
+        return []
+    if bib is None:
+        return []
+    cols = set(getattr(bib, "colnames", []))
+    docs = []
+    for row in bib:
+        doc = {
+            "bibcode": str(row["bibcode"]) if "bibcode" in cols else "?",
+            "title": [str(row["title"])] if "title" in cols else ["(untitled)"],
+            "source": "SIMBAD",
+        }
+        if "year" in cols:
+            doc["year"] = str(row["year"])
+        docs.append(doc)
+    return docs
+
+
 # --------------------------------------------------------------------------- #
 # Object packet (dossier)
 # --------------------------------------------------------------------------- #
@@ -125,7 +147,7 @@ class ObjectPacket:
             f"- Colour image: {self.color_path or 'not rendered'}",
             f"- Multi-wavelength panel: {self.panel_path or 'not rendered'}",
             "",
-            "## ADS",
+            "## Literature",
             *paper_lines(self.docs),
         ]
         return "\n".join(lines)
@@ -148,21 +170,21 @@ def build_object_packet(target: str, rows: int = 6, fov: Optional[float] = None,
                         on_error: Optional[Callable[[str], None]] = None) -> ObjectPacket:
     obj = resolve_target(target)
     fov_arcmin = fov or default_fov(obj["otype"], 8.0, 3.0)
-    hips, survey = cutouts.best_color_hips(obj["dec"])
+    _, survey = cutouts.best_color_hips(obj["dec"])
     color_path = panel_path = None
     if images:
         try:
-            color_path = cutouts.color(obj["ra"], obj["dec"], fov_arcmin=fov_arcmin, hips=hips)
-            panel_path = cutouts.panel(obj["ra"], obj["dec"], fov_arcmin=fov_arcmin)
+            color_path, survey = cutouts.color_auto(obj["ra"], obj["dec"], fov_arcmin=fov_arcmin)
         except Exception as e:  # imaging is optional; don't sink the whole packet
             if on_error:
-                on_error(f"imaging unavailable ({type(e).__name__})")
+                on_error(f"colour imaging unavailable ({type(e).__name__})")
+        try:
+            panel_path = cutouts.panel(obj["ra"], obj["dec"], fov_arcmin=fov_arcmin)
+        except Exception as e:
+            if on_error:
+                on_error(f"panel imaging unavailable ({type(e).__name__})")
     redshift = _ned_redshift(obj["name"]) if ned else None
-    try:
-        from . import ads
-        docs = ads.search(f'object:"{obj["name"]}"', rows=rows)
-    except Exception:
-        docs = []
+    docs = _bibliography_docs(obj["name"], rows)
     return ObjectPacket(obj["name"], obj["otype"], obj["ra"], obj["dec"], survey,
                         fov_arcmin, color_path, panel_path, docs, redshift)
 
@@ -209,15 +231,19 @@ class FieldPacket:
 def build_field_packet(ra: float, dec: float, fov: float = 5.0, images: bool = True,
                        on_error: Optional[Callable[[str], None]] = None) -> FieldPacket:
     nearest = cutouts.identify_field(ra, dec)
-    hips, survey = cutouts.best_color_hips(dec)
+    _, survey = cutouts.best_color_hips(dec)
     color_path = panel_path = None
     if images:
         try:
-            color_path = cutouts.color(ra, dec, fov_arcmin=fov, hips=hips)
+            color_path, survey = cutouts.color_auto(ra, dec, fov_arcmin=fov)
+        except Exception as e:
+            if on_error:
+                on_error(f"colour imaging unavailable ({type(e).__name__})")
+        try:
             panel_path = cutouts.panel(ra, dec, fov_arcmin=fov)
         except Exception as e:
             if on_error:
-                on_error(f"imaging unavailable ({type(e).__name__})")
+                on_error(f"panel imaging unavailable ({type(e).__name__})")
     return FieldPacket(ra, dec, fov, survey, nearest, color_path, panel_path)
 
 
@@ -312,8 +338,11 @@ def run_runbook(name: str, *, reports_dir: Path, atlas_dir: Path, posters_dir: P
                 paths = []
                 for target in registry.ATLAS_TARGETS[:limit]:
                     out = atlas_dir / f"{slug(target['name'])}.jpg"
-                    paths.append(cutouts.color(target["ra"], target["dec"],
-                                               fov_arcmin=target["fov"], pix=768, out=out))
+                    path, _ = cutouts.color_auto(
+                        target["ra"], target["dec"],
+                        fov_arcmin=target["fov"], pix=768, out=out,
+                    )
+                    paths.append(path)
                 sheet = contact_sheet(paths, atlas_dir / "atlas-targets.png", "atlas targets")
                 created.append(("atlas", sheet))
                 note(f"- Atlas contact sheet -> `{sheet}`")

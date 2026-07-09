@@ -158,6 +158,29 @@ def _is_blank(img, tol: float = 3.0) -> bool:
         return False
 
 
+def _crop_to_aspect(img, width: int, height: int):
+    """Centre-crop an image array to the requested output aspect ratio."""
+    try:
+        import numpy as np
+        arr = np.asarray(img)
+        ih, iw = arr.shape[:2]
+        if ih <= 0 or iw <= 0:
+            return img
+        target = width / height
+        current = iw / ih
+        if current > target:
+            new_w = max(1, int(ih * target))
+            x0 = max(0, (iw - new_w) // 2)
+            return arr[:, x0:x0 + new_w]
+        if current < target:
+            new_h = max(1, int(iw / target))
+            y0 = max(0, (ih - new_h) // 2)
+            return arr[y0:y0 + new_h, :]
+        return arr
+    except Exception:
+        return img
+
+
 def fetch_direct_cutout(hips, ra, dec, fov_arcmin, max_pix=2048):
     """Attempt to pull a native-resolution cutout directly from the survey's REST API."""
     import urllib.request
@@ -209,6 +232,8 @@ def color_auto(ra, dec, fov_arcmin=8.0, pix=None, survey=None, out=None):
     OUT.mkdir(parents=True, exist_ok=True)
     out = out or OUT / f"color_{ra:.4f}_{dec:+.4f}.jpg"
     last_label = candidates[-1][1]
+    img = None
+    last_error = None
     for hips, label in candidates:
         img = fetch_direct_cutout(hips, ra, dec, fov_arcmin)
 
@@ -218,7 +243,8 @@ def color_auto(ra, dec, fov_arcmin=8.0, pix=None, survey=None, out=None):
                                       ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
                                       fov=Angle(fov_arcmin * u.arcmin),
                                       projection="TAN", format="jpg")
-            except Exception:
+            except Exception as e:
+                last_error = e
                 continue
 
         if not _is_blank(img):
@@ -228,6 +254,10 @@ def color_auto(ra, dec, fov_arcmin=8.0, pix=None, survey=None, out=None):
     # Everything was blank — save the last attempt so the user sees *something*.
     if img is not None:
         plt.imsave(out, img)
+    else:
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("no colour image returned")
     return Path(out), f"{last_label} (blank — no coverage?)"
 
 
@@ -305,18 +335,50 @@ def poster(ra, dec, fov_arcmin=8.0, hips=None, width=1920, height=1080,
     style='clean' writes only the image; 'label' adds a small caption; 'science'
     adds a caption plus a subtle centre marker. Returns the saved path.
     """
-    if hips is None:
-        hips, _ = best_color_hips(dec)
+    candidates = [(hips, "requested HiPS")] if hips else color_hips_candidates(dec)
     OUT.mkdir(parents=True, exist_ok=True)
     out = out or OUT / f"poster_{ra:.4f}_{dec:+.4f}_{width}x{height}.jpg"
-    img = hips2fits.query(hips=hips, width=width, height=height,
-                          ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
-                          fov=Angle(fov_arcmin * u.arcmin),
-                          projection="TAN", format="jpg")
+    img = last_img = None
+    last_error = None
+    for candidate_hips, _label in candidates:
+        last_img = fetch_direct_cutout(
+            candidate_hips, ra, dec, fov_arcmin, max_pix=max(width, height)
+        )
+        if last_img is None:
+            try:
+                last_img = hips2fits.query(
+                    hips=candidate_hips, width=width, height=height,
+                    ra=Longitude(ra * u.deg), dec=Latitude(dec * u.deg),
+                    fov=Angle(fov_arcmin * u.arcmin),
+                    projection="TAN", format="jpg",
+                )
+            except Exception as e:
+                last_error = e
+                continue
+        if not _is_blank(last_img):
+            img = last_img
+            break
+    if img is None:
+        if last_img is not None:
+            img = last_img
+        else:
+            try:
+                fallback = OUT / f"poster_source_{ra:.4f}_{dec:+.4f}.jpg"
+                fallback_path, _ = color_auto(
+                    ra, dec, fov_arcmin=fov_arcmin,
+                    pix=min(max(width, height), 768),
+                    out=fallback,
+                )
+                img = plt.imread(fallback_path)
+            except Exception:
+                if last_error is not None:
+                    raise last_error
+                raise RuntimeError("no poster image returned")
+    img = _crop_to_aspect(img, width, height)
     dpi = 100
     fig = plt.figure(figsize=(width / dpi, height / dpi), dpi=dpi)
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.imshow(img, origin="lower")
+    ax.imshow(img, origin="lower", aspect="auto")
     ax.set_axis_off()
     if label and style in {"label", "science"}:
         ax.text(0.025, 0.045, label, transform=ax.transAxes,

@@ -27,6 +27,8 @@ def test_classify_object_type_groups_agn_and_blank():
     assert planner.classify_otype("QSO") == "galaxy_agn"
     assert planner.classify_otype("Rad") == "galaxy_agn"
     assert planner.classify_otype("G") == "galaxy_agn"
+    assert planner.classify_otype("BLL") == "galaxy_agn"
+    assert planner.classify_otype("ClG") == "cluster"
     assert planner.classify_otype("") == "unknown"
     assert planner.classify_otype(None) == "unknown"
 

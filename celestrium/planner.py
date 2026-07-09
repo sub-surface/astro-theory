@@ -300,8 +300,8 @@ def classify_otype(otype: str | None) -> str:
         return "solar"
 
     groups = {
-        "galaxy_agn": {"QSO", "AGN", "Rad", "G", "GiG"},
-        "cluster": {"Cl", "Cluster"},
+        "galaxy_agn": {"QSO", "AGN", "Rad", "G", "GiG", "BLL"},
+        "cluster": {"Cl", "ClG", "Cluster"},
         "nebula": {"Neb", "SNR"},
         "star": {"*", "Star", "PM", "exoplanet"},
     }

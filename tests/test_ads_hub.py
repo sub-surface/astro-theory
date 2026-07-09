@@ -227,10 +227,18 @@ def test_dossier_writes_report_and_calls_imaging(monkeypatch, tmp_path):
         "identify",
         lambda name: Table({"main_id": ["M  87"], "otype": ["G"], "ra": [187.7], "dec": [12.4]}),
     )
-    monkeypatch.setattr(hub.cutouts, "color", lambda *args, **kwargs: tmp_path / "color.jpg")
+    monkeypatch.setattr(
+        hub.cutouts,
+        "color_auto",
+        lambda *args, **kwargs: (tmp_path / "color.jpg", "Deep Survey"),
+    )
     monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "panel.png")
     monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(ads, "search", lambda query, rows: [{"bibcode": "abc", "year": 2026, "title": ["Paper"]}])
+    monkeypatch.setattr(
+        hub.resolvers,
+        "bibliography",
+        lambda name, limit: Table({"bibcode": ["abc"], "title": ["Paper"]}),
+    )
 
     result = runner.invoke(hub.app, ["dossier", "M87", "--rows", "1"])
 
@@ -248,7 +256,11 @@ def test_field_writes_report(monkeypatch, tmp_path):
     monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
     monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 4.2))
     monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(hub.cutouts, "color", lambda *args, **kwargs: tmp_path / "field.jpg")
+    monkeypatch.setattr(
+        hub.cutouts,
+        "color_auto",
+        lambda *args, **kwargs: (tmp_path / "field.jpg", "Deep Survey"),
+    )
     monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
 
     result = runner.invoke(hub.app, ["field", "1.5", "-2.5", "--fov", "6"])
@@ -259,6 +271,26 @@ def test_field_writes_report(monkeypatch, tmp_path):
     text = reports[0].read_text(encoding="utf-8")
     assert "Obj" in text
     assert "Deep Survey" in text
+
+
+def test_field_keeps_panel_when_colour_fails(monkeypatch, tmp_path):
+    runner = CliRunner()
+    monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
+    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 4.2))
+    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
+
+    def colour_fails(*args, **kwargs):
+        raise TimeoutError("colour down")
+
+    monkeypatch.setattr(hub.cutouts, "color_auto", colour_fails)
+    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
+
+    result = runner.invoke(hub.app, ["field", "1.5", "-2.5", "--fov", "6"])
+
+    assert result.exit_code == 0
+    text = next(tmp_path.glob("field-*.md")).read_text(encoding="utf-8")
+    assert "Colour image: not rendered" in text
+    assert "field.png" in text
 
 
 def test_sample_runs_named_recipe_through_cache(monkeypatch):
@@ -293,7 +325,11 @@ def test_sample_runs_named_recipe_through_cache(monkeypatch):
 def test_atlas_targets_makes_contact_sheet(monkeypatch, tmp_path):
     runner = CliRunner()
     monkeypatch.setattr(hub, "ATLAS_DIR", tmp_path)
-    monkeypatch.setattr(hub.cutouts, "color", lambda *args, **kwargs: tmp_path / f"{kwargs['out'].stem}.jpg")
+    monkeypatch.setattr(
+        hub.cutouts,
+        "color_auto",
+        lambda *args, **kwargs: (tmp_path / f"{kwargs['out'].stem}.jpg", "Deep Survey"),
+    )
     monkeypatch.setattr(hub, "_contact_sheet", lambda paths, out, title: out.write_text(title, encoding="utf-8") or out)
 
     result = runner.invoke(hub.app, ["atlas-targets", "--limit", "2"])
@@ -338,7 +374,11 @@ def test_runbook_euclid_q1_writes_index(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: None)
     monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(hub.cutouts, "color", lambda *args, **kwargs: tmp_path / "field.jpg")
+    monkeypatch.setattr(
+        hub.cutouts,
+        "color_auto",
+        lambda *args, **kwargs: (tmp_path / "field.jpg", "Deep Survey"),
+    )
     monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
     monkeypatch.setattr(
         hub.resolvers,

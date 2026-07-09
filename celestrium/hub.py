@@ -443,7 +443,7 @@ def log(limit: int = typer.Option(20, help="manifest rows to show"),
 # --------------------------------------------------------------------------- #
 @app.command(rich_help_panel=THEORY)
 def dossier(target: str,
-            rows: int = typer.Option(6, help="ADS rows to include"),
+            rows: int = typer.Option(6, help="literature rows to include"),
             fov: Optional[float] = typer.Option(None, help="field of view in arcmin"),
             ned: bool = typer.Option(False, help="add NED redshift (slower; extragalactic)"),
             images: bool = typer.Option(True, help="render colour and panel images")):
@@ -485,8 +485,11 @@ def atlas_targets(limit: int = typer.Option(6, help="number of curated targets")
     for target in ATLAS_TARGETS[:limit]:
         out = ATLAS_DIR / f"{_slug(target['name'])}.jpg"
         try:
-            paths.append(cutouts.color(target["ra"], target["dec"],
-                                       fov_arcmin=target["fov"] * fov_scale, pix=768, out=out))
+            path, _ = cutouts.color_auto(
+                target["ra"], target["dec"],
+                fov_arcmin=target["fov"] * fov_scale, pix=768, out=out,
+            )
+            paths.append(path)
         except Exception as e:
             console.print(f"[yellow]skip {target['name']} ({type(e).__name__})[/]")
     sheet = _contact_sheet(paths, ATLAS_DIR / "atlas-targets.png", "atlas targets")

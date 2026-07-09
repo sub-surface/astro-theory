@@ -31,6 +31,7 @@ def test_color_auto_skips_blank_survey(tmp_path, monkeypatch):
             return np.full((16, 16, 3), 255, dtype="uint8")  # Legacy: blank white
         return (np.arange(16 * 16 * 3).reshape(16, 16, 3) % 256).astype("uint8")
 
+    monkeypatch.setattr(cutouts, "fetch_direct_cutout", lambda *a, **k: None)
     monkeypatch.setattr(cutouts.hips2fits, "query", fake_query)
     monkeypatch.setattr(cutouts.plt, "imsave", lambda *a, **k: None)  # no disk
 
@@ -47,11 +48,29 @@ def test_color_auto_survey_override_tried_first(tmp_path, monkeypatch):
         seen.append(hips)
         return (np.arange(16 * 16 * 3).reshape(16, 16, 3) % 256).astype("uint8")
 
+    monkeypatch.setattr(cutouts, "fetch_direct_cutout", lambda *a, **k: None)
     monkeypatch.setattr(cutouts.hips2fits, "query", fake_query)
     monkeypatch.setattr(cutouts.plt, "imsave", lambda *a, **k: None)
 
     cutouts.color_auto(10.68, 41.27, survey="panstarrs", out=tmp_path / "x.jpg")
     assert "PanSTARRS" in seen[0]  # the forced survey is queried first
+
+
+def test_color_auto_raises_when_all_sources_fail(tmp_path, monkeypatch):
+    def fail_query(*args, **kwargs):
+        raise TimeoutError("all sources slow")
+
+    monkeypatch.setattr(cutouts, "fetch_direct_cutout", lambda *a, **k: None)
+    monkeypatch.setattr(cutouts.hips2fits, "query", fail_query)
+
+    out = tmp_path / "missing.jpg"
+    try:
+        cutouts.color_auto(10.68, 41.27, out=out)
+    except TimeoutError:
+        pass
+    else:
+        raise AssertionError("expected colour source failure")
+    assert not out.exists()
 
 
 def test_color_survey_metadata_matches_candidates():
@@ -94,3 +113,46 @@ def test_color_survey_metadata_defaults_for_unknown_candidate(monkeypatch):
     assert meta[0]["label"] == "Future colour survey"
     assert meta[0]["wavelength"]
     assert meta[0]["coverage"]
+
+
+def test_poster_falls_back_after_first_survey_timeout(tmp_path, monkeypatch):
+    seen = []
+
+    def fake_query(hips, **kw):
+        seen.append(hips)
+        if len(seen) == 1:
+            raise TimeoutError("slow survey")
+        return (np.arange(90 * 160 * 3).reshape(90, 160, 3) % 256).astype("uint8")
+
+    monkeypatch.setattr(cutouts, "fetch_direct_cutout", lambda *a, **k: None)
+    monkeypatch.setattr(cutouts.hips2fits, "query", fake_query)
+
+    out = cutouts.poster(
+        187.7059, 12.3911, fov_arcmin=8.0, width=160, height=90,
+        out=tmp_path / "poster.jpg", label="M87", style="science",
+    )
+
+    assert out == tmp_path / "poster.jpg"
+    assert len(seen) >= 2
+
+
+def test_poster_uses_color_auto_when_high_res_sources_timeout(tmp_path, monkeypatch):
+    def fail_query(*args, **kwargs):
+        raise TimeoutError("all high-res sources slow")
+
+    fallback_source = tmp_path / "fallback.jpg"
+
+    def fake_color_auto(*args, **kwargs):
+        cutouts.plt.imsave(fallback_source, np.zeros((32, 32, 3), dtype="uint8"))
+        return fallback_source, "fallback"
+
+    monkeypatch.setattr(cutouts, "fetch_direct_cutout", lambda *a, **k: None)
+    monkeypatch.setattr(cutouts.hips2fits, "query", fail_query)
+    monkeypatch.setattr(cutouts, "color_auto", fake_color_auto)
+
+    out = cutouts.poster(
+        187.7059, 12.3911, fov_arcmin=8.0, width=160, height=90,
+        out=tmp_path / "poster.jpg", label="M87", style="label",
+    )
+
+    assert out == tmp_path / "poster.jpg"
