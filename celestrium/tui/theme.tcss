@@ -1,5 +1,12 @@
 /* Celestrium cockpit styling.
- * Collapsed minimal, prompt-centric design.
+ *
+ * Layout contract (matches app.compose):
+ *   #context-bar   one always-on line: view · target · table · archive · ADS
+ *   #body          canvas (results / idle orrery) | side (detail · trail · orrery)
+ *   #status        slim event log (Ctrl+D expands with debug)
+ *   #controls      the prompt, REPL-style at the bottom
+ *   Footer         key hints
+ * Colours ride the active Textual theme via variables — no hard-coded hex.
  */
 
 Screen {
@@ -7,57 +14,27 @@ Screen {
     color: $foreground;
 }
 
-Header {
+#context-bar {
+    height: 1;
+    padding: 0 1;
     background: $panel;
-    color: $primary;
-    text-style: bold;
 }
 
 #body {
     height: 1fr;
 }
 
-#canvas-container {
-    width: 1fr;
-    height: 1fr;
-    padding: 0 1;
-}
-
-#controls {
-    height: auto;
-    padding: 1 0;
-    align: left middle;
-}
-
-#prompt-prefix {
-    text-style: bold;
-    color: $accent;
-    padding: 0 1 0 0;
-}
-
-#sys-status {
-    padding: 0 0 0 1;
-}
-
-#entry {
-    width: 1fr;
-    border: none;
-    background: $surface;
-    padding: 0 1;
-}
-
-#entry:focus {
-    background: $panel;
-}
-
 #canvas {
+    width: 1fr;
     height: 1fr;
-    border: none;
-    background: transparent;
+    padding: 0 1;
 }
 
-#canvas.idle {
-    border: none;
+#orrery-idle {
+    height: 1fr;
+    color: $primary;
+    background: transparent;
+    content-align: center middle;
 }
 
 #results {
@@ -65,39 +42,20 @@ Header {
     border: none;
 }
 
-/* Detail scroll when showing cards */
+/* Side panel: detail on top, trail + orrery beneath */
+#side {
+    width: 44;
+    padding: 0 1;
+    border-left: solid $panel;
+}
+
 #detail-scroll {
     height: 1fr;
-    padding: 1 2;
-    overflow-y: scroll;
-}
-
-#target-hud {
-    height: 1;
-    width: 1fr;
-    content-align: center top;
-    margin-bottom: 1;
-}
-
-/* Ambient strip on the right */
-#ambient-strip {
-    width: 26;
-    background: transparent;
-    border: none;
-    padding: 1 1;
-}
-
-#orrery {
-    height: 9;
-    border: none;
-    color: $primary;
-    background: transparent;
-    content-align: center middle;
-    margin-bottom: 1;
+    padding: 0 1;
 }
 
 #trail-list {
-    height: 1fr;
+    height: 7;
     background: transparent;
     border: none;
 }
@@ -120,12 +78,45 @@ Header {
     text-style: bold;
 }
 
+#orrery {
+    height: 9;
+    border: none;
+    color: $primary;
+    background: transparent;
+    content-align: center middle;
+    margin-bottom: 1;
+}
+
 #status {
-    height: 8;
+    height: 3;
     background: transparent;
     border: none;
     color: $text-muted;
     padding: 0 1;
+}
+
+/* The prompt — REPL-style, above the footer */
+#controls {
+    height: auto;
+    padding: 0 1;
+    align: left middle;
+}
+
+#prompt-prefix {
+    text-style: bold;
+    color: $accent;
+    padding: 0 1 0 0;
+}
+
+#entry {
+    width: 1fr;
+    border: none;
+    background: $surface;
+    padding: 0 1;
+}
+
+#entry:focus {
+    background: $panel;
 }
 
 .heading {

@@ -1,11 +1,13 @@
 """The Celestrium cockpit — a Textual app over registry + packets + cache.
 
-Reimagined as a minimal, prompt-centric instrument:
-- Unified prompt input with auto-parsing and Tab-cycle prefixing.
-- Session context (remembers target and dataset across calls).
-- Adaptive canvas vertical layout (collapses/expands views dynamically).
-- Inline details panel (drawer style, toggles on Enter/Esc).
-- Ambient strip containing the mini-orrery and breadcrumb session trail.
+A prompt-centric instrument with visible state:
+- Context bar (top): view · target · retained table · archive · ADS status.
+- Canvas: one results grid (idle shows the big orrery).
+- Side panel: the single detail sink (identity cards, row expansions, product
+  results), plus the session trail and the mini-orrery.
+- REPL prompt (bottom) with slash-command autocomplete; parsing lives in
+  commands.parse (pure + unit-tested), workers execute here.
+- Slim status log (Ctrl+D expands it with debug tracing) and a Footer of keys.
 
 Launch with: python -m celestrium.tui
 """
@@ -21,9 +23,11 @@ from pathlib import Path
 
 from textual import work
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import (Button, DataTable, Input, Label,
+from textual.suggester import SuggestFromList
+from textual.widgets import (Button, DataTable, Footer, Input, Label,
                              ListItem, ListView, RichLog, Select, Static)
 from astropy.table import Table
 from rich.markup import escape
@@ -263,42 +267,34 @@ class ImageSettingsScreen(ModalScreen):
 
 
 class AboutScreen(ModalScreen):
-    """A tiny about/help card."""
+    """The command reference — generated from commands.COMMANDS so it can't drift."""
 
     BINDINGS = [("escape", "dismiss", "Close"), ("enter", "dismiss", "Close")]
 
     def compose(self) -> ComposeResult:
+        width = max(len(usage) for usage, _ in commands.help_rows())
+        cmd_rows = "\n".join(
+            f" [green]{escape(usage.ljust(width))}[/]  [dim]{escape(desc)}[/]"
+            for usage, desc in commands.help_rows())
         with Vertical(id="modal-box"):
             yield Static(
-                "[b cyan]CELESTRIUM[/] — A Zero-Clutter Astrophysics Terminal\n"
-                "[dim]Target Resolution · Time-Domain Data · ADQL Queries · Runbook Workflows[/]\n\n"
+                "[b cyan]CELESTRIUM[/] — a three-wing astrophysics instrument\n"
+                "[dim]One prompt, many idioms: a bare name resolves; "
+                "everything else is a command.[/]\n\n"
 
-                "Celestrium operates on a command-palette philosophy. Type slash commands to transition modes, "
-                "or directly enter targets and ADQL queries.\n\n"
-
-                "━━━━━━━━━ [b]CORE COMMANDS[/] ━━━━━━━━━━━━━━━━━\n"
-                " [green]/resolve[/] [dim]<target>[/]  Resolve a star, exoplanet, NEO, or galaxy via SIMBAD/NASA.\n"
-                " [green]/query[/] [dim]<adql>[/]      Execute raw ADQL against Gaia, VizieR, or MAST.\n"
-                " [green]match[/] [dim]<catalog>[/]    Crossmatch the current active table against a catalog.\n"
-                " [green]papers[/] [dim]<target>[/]   Search the ADS astrophysical literature database.\n"
-                " [green]run[/] [dim]<workflow>[/]    Execute an automated multi-step runbook.\n"
-                " [green]/global[/]                  Browse global feeds, separate from target/field products.\n\n"
-
-                "━━━━━━━━━ [b]HUD PANELS[/] ━━━━━━━━━━━━━━━━━━━━\n"
-                " [cyan]/history[/]      Browse past queries and results.\n"
-                " [cyan]/candidates[/]   View saved target shortlists.\n"
-                " [cyan]/runbooks[/]     View available automated workflows.\n"
-                " [cyan]/global[/]       View live sky/event feeds.\n\n"
+                f"━━━━━━━━━ [b]COMMANDS[/] ━━━━━━━━━━━━━━━━━━━━━\n{cmd_rows}\n\n"
 
                 "━━━━━━━━━ [b]PRODUCT SCOPES[/] ━━━━━━━━━━━━━━━━\n"
                 " [b]Target[/] products belong to the resolved object.\n"
                 " [b]Field[/] products belong to the sky position or blank field.\n"
-                " [b]Global[/] feeds are live streams and are never mixed into Resolve plans.\n\n"
+                " [b]Global[/] feeds are live streams, never mixed into Resolve plans.\n\n"
 
                 "━━━━━━━━━ [b]SHORTCUTS[/] ━━━━━━━━━━━━━━━━━━━━━\n"
-                "  [b]Ctrl+S[/] Save List       [b]Ctrl+O[/] Open Output     [b]Ctrl+G[/] Image Settings\n"
-                "  [b]Ctrl+R[/] Refresh Cache   [b]F5[/] Re-run Action       [b]Ctrl+T[/] Toggle Theme\n"
-                "  [b]F2[/] Next Solid          [b]F3[/] Toggle Spin         [b]i[/] or [b]/[/] Focus Prompt\n\n"
+                "  [b]Enter[/] Act on row      [b]Ctrl+S[/] Save List     [b]Ctrl+O[/] Open Artifact\n"
+                "  [b]Ctrl+G[/] Planner Cfg    [b]Ctrl+R[/] Refresh       [b]F5[/] Re-run Action\n"
+                "  [b]Ctrl+T[/] Theme          [b]Ctrl+D[/] Log + Debug   [b]Ctrl+H[/] Focus Trail\n"
+                "  [b]F2[/] Next Solid         [b]F3[/] Toggle Spin       [b]Tab[/] Cycle Archive\n"
+                "  [b]Esc[/] Focus Table       [b]i[/] or [b]/[/] Focus Prompt\n\n"
 
                 "[dim]'Pull rows, not pixels.' — the house rule[/]",
                 id="about-body")
@@ -319,36 +315,40 @@ class CelestriumApp(App):
 
     CSS_PATH = "theme.tcss"
     TITLE = "Celestrium"
+    # show=True bindings surface in the Footer; the rest stay chord-only (F1 lists all).
     BINDINGS = [
-        ("ctrl+c", "quit", "Quit"),
-        ("ctrl+l", "clear", "Clear"),
-        ("ctrl+s", "save_candidate", "Save list"),
-        ("ctrl+o", "open_image", "Open img"),
-        ("ctrl+g", "image_settings", "Image cfg"),
-        ("ctrl+r", "refresh", "Refresh cache"),
-        ("ctrl+t", "cycle_theme", "Theme"),
-        ("ctrl+d", "toggle_debug", "Debug"),
-        ("ctrl+h", "toggle_trail", "Trail"),
-        ("f1", "about", "About"),
-        ("f2", "next_solid", "Solid"),
-        ("f3", "toggle_spin", "Spin"),
-        ("f5", "rerun", "Re-run"),
-        ("enter", "row_action", "Open row"),
-        # Mode switch fallbacks
-        ("alt+r", "mode_resolve", "Mode Resolve"),
-        ("alt+l", "mode_literature", "Mode Lit"),
-        ("alt+q", "mode_query", "Mode Query"),
-        ("alt+x", "mode_crossmatch", "Mode X-match"),
-        ("alt+g", "mode_global", "Mode Global"),
-        ("alt+c", "mode_candidates", "Mode Cand"),
-        ("alt+b", "mode_runbooks", "Mode Runbooks"),
-        ("alt+h", "mode_history", "Mode Hist"),
+        Binding("ctrl+c", "quit", "Quit", show=False),
+        Binding("ctrl+l", "clear", "Clear", show=False),
+        Binding("ctrl+s", "save_candidate", "Save list"),
+        Binding("ctrl+o", "open_image", "Open artifact"),
+        Binding("ctrl+g", "image_settings", "Planner cfg"),
+        Binding("ctrl+r", "refresh", "Refresh"),
+        Binding("ctrl+t", "cycle_theme", "Theme", show=False),
+        Binding("ctrl+d", "toggle_debug", "Log+debug"),
+        Binding("ctrl+h", "toggle_trail", "Trail", show=False),
+        Binding("f1", "about", "Help"),
+        Binding("f2", "next_solid", "Solid", show=False),
+        Binding("f3", "toggle_spin", "Spin", show=False),
+        Binding("f5", "rerun", "Re-run", show=False),
+        Binding("ctrl+b", "cite_paper", "Cite→refs.bib"),
+        Binding("ctrl+e", "export_table", "Export CSV"),
+        Binding("enter", "row_action", "Open row", show=False),
+        # Mode switch fallbacks (chord-only; slash commands are the front door)
+        Binding("alt+r", "mode_resolve", "Mode Resolve", show=False),
+        Binding("alt+l", "mode_literature", "Mode Lit", show=False),
+        Binding("alt+q", "mode_query", "Mode Query", show=False),
+        Binding("alt+x", "mode_crossmatch", "Mode X-match", show=False),
+        Binding("alt+g", "mode_global", "Mode Global", show=False),
+        Binding("alt+c", "mode_candidates", "Mode Cand", show=False),
+        Binding("alt+b", "mode_runbooks", "Mode Runbooks", show=False),
+        Binding("alt+h", "mode_history", "Mode Hist", show=False),
     ]
 
     def __init__(self, active_line: str = "G-Euclid DR1 prep"):
         super().__init__()
         self.active_line = active_line
         self.mode = "resolve"
+        self.archive = "gaia"           # active archive for bare-SELECT queries
         self.last_table = None          # astropy Table from the last query/crossmatch
         self.last_image = None          # Path of the last rendered colour preview
         self.last_report = None         # Path of the last runbook index report
@@ -357,6 +357,7 @@ class CelestriumApp(App):
         self._resolve_seq = 0           # request id: guards stale Resolve workers
         self._fetch_seq = 0             # fetch request id: guards stale product fetches
         self.debug_mode = False
+        self._ads_ok = False            # checked once on mount, not per redraw
         self.image_cfg = {
             "preset": "quick-look", "fov": "auto", "pix": 512, "survey": "auto",
             "product": "colour_image", "wavelength": "auto",
@@ -377,60 +378,74 @@ class CelestriumApp(App):
 
     # ----- layout ----------------------------------------------------------- #
     def compose(self) -> ComposeResult:
-        # Keep the Select widget hidden so we don't break code references
-        archive_select = Select([(k, k) for k in registry.ARCHIVES],
-                                 prompt="archive", id="archive", value="gaia")
-        archive_select.display = False
-        yield archive_select
+        yield Static("", id="context-bar")
 
         with Horizontal(id="body"):
-            with Vertical(id="canvas-container"):
-                with Horizontal(id="controls"):
-                    yield Label("❯ ", id="prompt-prefix")
-                    yield Input(placeholder="enter object, /query, /help, etc.", id="entry")
-                    yield Label("", id="sys-status", classes="dim")
+            with Vertical(id="canvas"):
+                yield Wireframe(id="orrery-idle")
+                yield DataTable(id="results", zebra_stripes=True)
 
-                # Adaptive Canvas Area
-                with Vertical(id="canvas"):
-                    yield Label("", id="target-hud", classes="dim")
-                    yield Wireframe(id="orrery-idle")
-                    with VerticalScroll(id="detail-scroll"):
-                        yield Static("Pick a mode and submit.", id="detail")
-                    yield DataTable(id="results", zebra_stripes=True)
-                    with VerticalScroll(id="inline-detail"):
-                        yield Static(id="inline-detail-text")
-
-            with Vertical(id="ambient-strip"):
-                yield Label("◇ ORRERY", classes="heading")
-                yield Wireframe(id="orrery")  # ID is "#orrery" so test pilot functions
+            with Vertical(id="side"):
+                with VerticalScroll(id="detail-scroll"):
+                    yield Static("Resolve a target or type /help.", id="detail")
                 yield Label("◇ TRAIL", classes="heading")
                 yield ListView(id="trail-list")
+                yield Wireframe(id="orrery")  # ID is "#orrery" so test pilot functions
 
-        yield RichLog(id="status", max_lines=12, wrap=True, markup=True)
+        yield RichLog(id="status", max_lines=40, wrap=True, markup=True)
+        with Horizontal(id="controls"):
+            yield Label("❯ ", id="prompt-prefix")
+            yield Input(placeholder="object · 'RA Dec' · /query · match <cat> · /help",
+                        id="entry",
+                        suggester=SuggestFromList(commands.suggestions(),
+                                                  case_sensitive=False))
+        yield Footer()
 
     def on_mount(self) -> None:
         self.theme = "ansi-dark"  # the requested default
+        self._ads_ok = _ads_token_ok()
         self.query_one("#results", DataTable).cursor_type = "row"
         self._refresh_subtitle()
         self._log(f"[b]Celestrium[/] ready — {len(registry.ARCHIVES)} archives, "
                   f"{len(registry.SAMPLE_RECIPES)} recipes.  [dim]F1 for keys[/]")
         self.query_one("#entry", Input).focus()
 
-        # Hide non-active canvas items
+        # Idle state: the big orrery holds the canvas until the first action
         self.query_one("#orrery-idle", Wireframe).display = True
-        self.query_one("#detail-scroll", VerticalScroll).display = False
         self.query_one("#results", DataTable).display = False
-        self.query_one("#inline-detail", VerticalScroll).display = False
-        self.query_one("#ambient-strip", Vertical).display = False  # Hide sidebar in idle
+        self.query_one("#side", Vertical).display = False
 
     # ----- helpers ---------------------------------------------------------- #
     def _refresh_subtitle(self) -> None:
-        token = "[green]ADS ✓[/]" if _ads_token_ok() else "[yellow]ADS –[/]"
-        dbg = "[magenta]DBG[/]" if self.debug_mode else ""
-        plain_token = "ADS ok" if _ads_token_ok() else "ADS missing"
+        """Sync the window subtitle and the context bar with session state.
+
+        The context bar is the one always-visible answer to "what am I
+        operating on?" — view, target, retained table, archive, ADS status.
+        """
+        plain_token = "ADS ok" if self._ads_ok else "ADS missing"
         plain_dbg = " DEBUG" if self.debug_mode else ""
         self.sub_title = f"active: {self.active_line}   {plain_token}{plain_dbg}"
-        self.query_one("#sys-status", Label).update(f"{token} {dbg}")
+
+        parts = [f"[b]{escape(self.mode.upper())}[/]"]
+        target = self.context.target
+        if target is not None:
+            chip = (f"[b cyan]{escape(target.display_name)}[/] "
+                    f"[dim]{escape(target.object_class)}[/]")
+            if target.ra == target.ra:  # NaN-safe (the Sun has no fixed RA)
+                chip += f" [dim]RA {target.ra:.4f} Dec {target.dec:+.4f}[/]"
+            parts.append(chip)
+        if self.last_table is not None and len(self.last_table):
+            parts.append(f"table [b]{len(self.last_table)}r × "
+                         f"{len(self.last_table.colnames)}c[/]")
+        parts.append(f"archive [b]{escape(self.archive)}[/]")
+        parts.append("[green]ADS ✓[/]" if self._ads_ok else "[yellow]ADS –[/]")
+        if self.debug_mode:
+            parts.append("[magenta]DBG[/]")
+        try:
+            self.query_one("#context-bar", Static).update(
+                "  [dim]·[/]  ".join(parts))
+        except Exception:
+            pass
 
     def _log(self, msg: str) -> None:
         try:
@@ -446,24 +461,11 @@ class CelestriumApp(App):
             self._log(f"[magenta]· {msg}[/]")
 
     def _set_detail(self, text: str) -> None:
+        """The one detail sink: everything renders in the side panel."""
         try:
             self.query_one("#detail", Static).update(text)
         except Exception:
             pass
-
-        # Instead of the heavy detail scroll, we parse out the critical info for the HUD.
-        # An identity card puts "RA <deg>  Dec <deg>" on its third line — that's the cue.
-        clean = Text.from_markup(text).plain
-        lines = clean.split('\n')
-        if len(lines) >= 3 and lines[2].startswith("RA "):
-            self.query_one("#target-hud", Label).update(
-                f"[b]{escape(lines[0])}[/b]  {escape(lines[1])}")
-        else:
-            self.query_one("#target-hud", Label).update(f"[dim]{escape(clean.replace(chr(10), ' · '))}[/]")
-
-        # Also log it
-        if self.mode != "resolve":
-            self._log(f"[dim]{escape(clean.replace(chr(10), ' · '))}[/]")
 
     def _fill_table(self, columns, rows, payloads=None, render=None) -> None:
         table = self.query_one("#results", DataTable)
@@ -495,22 +497,18 @@ class CelestriumApp(App):
     def switch_to_mode(self, mode: str) -> None:
         self.mode = mode
 
-        # In a true CLI approach, the prompt stays minimalist.
-        self.query_one("#prompt-prefix", Label).update("❯ ")
+        prefix = f"{self.archive} ❯ " if mode == "query" else "❯ "
+        self.query_one("#prompt-prefix", Label).update(prefix)
         self.query_one("#entry", Input).placeholder = _PROMPTS.get(mode, "enter command or object")
 
-        # Adaptive views in canvas
+        # Leave idle: canvas shows results, side panel carries detail + trail
         self.query_one("#orrery-idle", Wireframe).display = False
-        self.query_one("#inline-detail", VerticalScroll).display = False
-        self.query_one("#ambient-strip", Vertical).display = True  # Show sidebar in active mode
+        self.query_one("#side", Vertical).display = True
 
         results = self.query_one("#results", DataTable)
-        detail_scroll = self.query_one("#detail-scroll", VerticalScroll)
-
-        detail_scroll.display = False
         results.display = True
-        results.styles.height = "1fr"
         results.show_header = (mode != "resolve")
+        self._refresh_subtitle()
 
         # Set ambient scene based on mode
         orrery = self.query_one("#orrery", Wireframe)
@@ -631,12 +629,10 @@ class CelestriumApp(App):
             self.do_resolve(args["target"])
         elif intent.kind == "query":
             # archive=None means "whatever archive is active" (bare SELECT)
-            archive = args["archive"] or self.query_one("#archive", Select).value or "gaia"
-            # Set the Select value before switching mode to prevent label race
-            self.query_one("#archive", Select).value = archive
+            self.archive = args["archive"] or self.archive or "gaia"
             self.switch_to_mode("query")
-            self._last_action = ("query", archive, args["adql"], False)
-            self.do_query(archive, args["adql"], False)
+            self._last_action = ("query", self.archive, args["adql"], False)
+            self.do_query(self.archive, args["adql"], False)
         elif intent.kind == "crossmatch":
             self.switch_to_mode("crossmatch")
             self._last_action = ("crossmatch", args["catalog"], False)
@@ -663,12 +659,7 @@ class CelestriumApp(App):
             self._fetch_product_word(args["word"])
 
     def _show_egg(self, word: str, markup: str) -> None:
-        # Shift canvas to display the detail Scroll panel, hiding others
-        self.query_one("#orrery-idle", Wireframe).display = False
-        self.query_one("#results", DataTable).display = False
-        self.query_one("#detail-scroll", VerticalScroll).display = True
-        self.query_one("#ambient-strip", Vertical).display = True
-
+        self.query_one("#side", Vertical).display = True
         self._set_detail(markup)
         if word in ("elite", "thargoid"):
             # Engage the right solid in both the mini and the idle orrery
@@ -703,18 +694,8 @@ class CelestriumApp(App):
     def on_key(self, event) -> None:
         if event.key == "escape":
             entry = self.query_one("#entry", Input)
-            detail_pane = self.query_one("#inline-detail", VerticalScroll)
-
             if self.focused == entry:
                 entry.blur()
-                if self.mode == "resolve":
-                    self.query_one("#detail-scroll").focus()
-                else:
-                    self.query_one("#results", DataTable).focus()
-                event.prevent_default()
-                event.stop()
-            elif detail_pane.display and self.focused == detail_pane:
-                detail_pane.display = False
                 self.query_one("#results", DataTable).focus()
                 event.prevent_default()
                 event.stop()
@@ -737,15 +718,15 @@ class CelestriumApp(App):
                         nxt = ARCHIVES_LIST[(idx + 1) % len(ARCHIVES_LIST)]
                         entry.value = f"{nxt}: {rest}"
                         entry.cursor_position = len(entry.value)
-
-                        # Update prompt prefix label too
+                        self.archive = nxt
                         self.query_one("#prompt-prefix", Label).update(f"{nxt} ❯ ")
+                        self._refresh_subtitle()
                         event.prevent_default()
                         event.stop()
                 elif val.lower().startswith("select"):
-                    entry.value = f"gaia: {val}"
+                    entry.value = f"{self.archive}: {val}"
                     entry.cursor_position = len(entry.value)
-                    self.query_one("#prompt-prefix", Label).update("gaia ❯ ")
+                    self.query_one("#prompt-prefix", Label).update(f"{self.archive} ❯ ")
                     event.prevent_default()
                     event.stop()
 
@@ -753,11 +734,10 @@ class CelestriumApp(App):
     def action_clear(self) -> None:
         self.query_one("#entry", Input).value = ""
         self._fill_table([], [])
+        self._set_detail("Resolve a target or type /help.")
         self.query_one("#orrery-idle", Wireframe).display = True
-        self.query_one("#detail-scroll", VerticalScroll).display = False
         self.query_one("#results", DataTable).display = False
-        self.query_one("#inline-detail", VerticalScroll).display = False
-        self.query_one("#ambient-strip", Vertical).display = False  # Hide sidebar in idle
+        self.query_one("#side", Vertical).display = False
 
         # Clear session context as well to prevent stale state bugs
         self.last_table = None
@@ -767,6 +747,7 @@ class CelestriumApp(App):
         self.context.dataset = None
         self._resolve_seq += 1
         self._fetch_seq += 1
+        self._refresh_subtitle()
 
         self._log("Canvas and session state cleared.")
 
@@ -796,7 +777,13 @@ class CelestriumApp(App):
         self._log(f"theme → [b]{nxt}[/]")
 
     def action_toggle_debug(self) -> None:
+        """One toggle for both: verbose tracing and an expanded log panel."""
         self.debug_mode = not self.debug_mode
+        try:
+            self.query_one("#status", RichLog).styles.height = (
+                10 if self.debug_mode else 3)
+        except Exception:
+            pass
         self._refresh_subtitle()
         self._log(f"debug [b]{'ON' if self.debug_mode else 'off'}[/]")
 
@@ -853,6 +840,54 @@ class CelestriumApp(App):
             self.query_one("#entry", Input).focus()
         else:
             trail.focus()
+
+    def action_cite_paper(self) -> None:
+        """Append the highlighted paper's canonical BibTeX to refs.bib (deduped)."""
+        if self.mode != "literature":
+            self._log("[yellow]cite works on a highlighted paper row — "
+                      "run a papers search first[/]")
+            return
+        i = self._current_row_index()
+        if i is None or i >= len(self._row_payloads):
+            return
+        bibcode = str(self._row_payloads[i].get("bibcode", "") or "")
+        if bibcode:
+            self.do_cite(bibcode)
+
+    @work(thread=True, exclusive=True)
+    def do_cite(self, bibcode: str) -> None:
+        try:
+            from .. import ads
+            self.call_from_thread(
+                self._feedback, "cite", f"exporting BibTeX for {bibcode}")
+            n = ads.add_to_refs([bibcode])
+            if n:
+                self.call_from_thread(
+                    self._feedback, "cite", f"+{n} new entry -> refs.bib", "green")
+            else:
+                self.call_from_thread(
+                    self._feedback, "cite", f"{bibcode} already in refs.bib", "yellow")
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"cite failed: {type(e).__name__}: {str(e)} (ADS token?)", "red")
+
+    def action_export_table(self) -> None:
+        """Write the retained table to data/exports/ as CSV; Ctrl+O opens it."""
+        if self.last_table is None or len(self.last_table) == 0:
+            self._log("[yellow]nothing to export — run a Query or Crossmatch first[/]")
+            return
+        try:
+            paths.EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+            stem = packets.slug(f"tui-{self.mode}-{len(self.last_table)}r")
+            out = paths.EXPORTS_DIR / f"{stem}.csv"
+            self.last_table.write(out, format="ascii.csv", overwrite=True)
+            self.last_image = out  # the "last artifact" — Ctrl+O opens it
+            self._feedback("export",
+                           f"{len(self.last_table)} rows -> {out}", "green")
+        except Exception as e:
+            self._feedback("error",
+                           f"export failed: {type(e).__name__}: {str(e)}", "red")
 
     def action_save_candidate(self) -> None:
         if self.last_table is None or len(self.last_table) == 0:
@@ -1008,6 +1043,21 @@ class CelestriumApp(App):
             self._log(f"[dim]opening cached[/] {h}")
             self.do_open_cached(h)
 
+    def _open_paper(self) -> None:
+        """Enter on a paper row opens its ADS abstract page in the browser."""
+        i = self._current_row_index()
+        if i is None or i >= len(self._row_payloads):
+            return
+        bibcode = str(self._row_payloads[i].get("bibcode", "") or "")
+        if not bibcode:
+            return
+        url = f"https://ui.adsabs.harvard.edu/abs/{bibcode}/abstract"
+        try:
+            open_path(url)
+            self._log(f"[dim]opened ADS[/] {escape(bibcode)}")
+        except Exception as e:
+            self._log(f"[red]open failed: {escape(type(e).__name__)}[/]")
+
     def _open_candidate(self) -> None:
         i = self._current_row_index()
         if i is None or i >= len(self._row_payloads):
@@ -1042,15 +1092,9 @@ class CelestriumApp(App):
             i = self._current_row_index()
             if i is not None and 0 <= i < len(self.last_plans):
                 self.execute_plan(i)
-        else:
-            # Inline detail drawer toggle
-            detail_pane = self.query_one("#inline-detail", VerticalScroll)
-            if detail_pane.display:
-                detail_pane.display = False
-                self.query_one("#results", DataTable).focus()
-            else:
-                detail_pane.display = True
-                detail_pane.focus()
+        elif self.mode == "literature":
+            self._open_paper()
+        # other table modes: the highlighted row already renders in the side panel
 
     def on_data_table_row_selected(self, event) -> None:
         """Enter/click on a result row should run the row's contextual action."""
@@ -1060,17 +1104,13 @@ class CelestriumApp(App):
         self._activate_current_row()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        """Contextual detail panel: expand the highlighted row."""
+        """Contextual detail: the highlighted row expands in the side panel."""
         try:
             i = self.query_one("#results", DataTable).get_row_index(event.row_key)
         except Exception:
             return
         if self._row_render and 0 <= i < len(self._row_payloads):
-            markup = self._row_render(self._row_payloads[i])
-            if self.mode == "resolve":
-                self._set_detail(markup)
-            else:
-                self.query_one("#inline-detail-text", Static).update(markup)
+            self._set_detail(self._row_render(self._row_payloads[i]))
 
     # ----- UI thread safe result acceptors ----------------------- #
     def _accept_table_result(self, tab: Table) -> None:
