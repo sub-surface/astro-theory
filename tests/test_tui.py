@@ -306,7 +306,7 @@ def test_stale_product_fetch_cannot_overwrite_new_target(tmp_path):
     path.write_text("old", encoding="utf-8")
 
     app = CelestriumApp(active_line="test-line")
-    app._fetch_seq = 1
+    app._seq["fetch"] = 1
     app.last_target = old_target
     old_key = app._target_key(old_target)
     app.last_target = new_target
@@ -314,6 +314,69 @@ def test_stale_product_fetch_cannot_overwrite_new_target(tmp_path):
     app._accept_plan_image_result(path, "Old survey", "detail", 5.0, 1, old_key)
 
     assert app.last_image is None
+
+
+def test_stale_query_result_cannot_overwrite_newer_query():
+    """The bug class Resolve was fixed for, generalized: a slow query that
+    finishes after a newer one was queued must not overwrite last_table."""
+    from astropy.table import Table
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            slow_seq = app._bump("table")        # first (slow) request queued
+            fast_seq = app._bump("table")        # second (fast) request queued
+            fast = Table({"ra": [1.0], "dec": [2.0]})
+            slow = Table({"ra": [9.0], "dec": [9.0]})
+            app._accept_query_result(fast, "gaia", "SELECT fast", fast_seq)
+            app._accept_query_result(slow, "irsa", "SELECT slow", slow_seq)
+            await pilot.pause()
+            assert app.last_table is fast        # stale commit was discarded
+
+    asyncio.run(scenario())
+
+
+def test_stale_literature_and_crossmatch_results_are_discarded():
+    from astropy.table import Table
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            old = app._bump("literature")
+            app._bump("literature")
+            app._accept_literature_result([{"bibcode": "X"}], "stale query", old)
+            await pilot.pause()
+            assert app._row_payloads == []       # stale docs never landed
+
+            old_t = app._bump("table")
+            app._bump("table")
+            app._accept_crossmatch_result(Table({"a": [1]}), "cat", "key", old_t)
+            assert app.last_table is None
+
+    asyncio.run(scenario())
+
+
+def test_every_worker_entry_bumps_its_sequence():
+    """do_query/do_crossmatch/do_literature/do_global_feed are UI-thread
+    triggers that stamp a fresh token before spawning their worker."""
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            calls = []
+            app._run_query_worker = lambda *a: calls.append(("query", a[-1]))
+            app._run_crossmatch_worker = lambda *a: calls.append(("xmatch", a[-1]))
+            app._run_literature_worker = lambda *a: calls.append(("lit", a[-1]))
+            app._run_global_feed_worker = lambda *a: calls.append(("feed", a[-1]))
+            app.do_query("gaia", "SELECT 1", False)
+            app.do_query("gaia", "SELECT 2", False)
+            app.do_crossmatch("cat", False)
+            app.do_literature("q")
+            app.do_global_feed("neo")
+            await pilot.pause()
+            assert calls == [("query", 1), ("query", 2), ("xmatch", 3),
+                             ("lit", 1), ("feed", 4)]
+
+    asyncio.run(scenario())
 
 
 def test_query_table_updates_scatter_scene_from_coordinates():

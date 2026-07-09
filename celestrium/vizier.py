@@ -8,6 +8,10 @@ Docs: https://astroquery.readthedocs.io/en/latest/vizier/vizier.html
 """
 from astroquery.vizier import Vizier
 
+from .net import set_timeout
+
+set_timeout(Vizier)
+
 
 def find(keyword: str):
     """Map keyword -> {CDS id: description}; pick the id you want."""

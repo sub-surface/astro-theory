@@ -8,6 +8,9 @@ Docs: https://astroquery.readthedocs.io/en/latest/mast/mast.html
 """
 from astroquery.mast import Observations
 
+from .net import set_timeout
+
+set_timeout(Observations)
 
 UV_OPTICAL_COLLECTIONS = ("GALEX", "HST", "HLA", "SWIFTUVOT")
 LIGHTCURVE_COLLECTIONS = ("TESS", "Kepler", "K2")

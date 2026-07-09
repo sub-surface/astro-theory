@@ -12,6 +12,7 @@ Both cache/ and manifest live under data/ (git-ignored) — local, not committed
 """
 import hashlib
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,12 +22,28 @@ _REPO = Path(__file__).resolve().parent.parent
 CACHE_DIR = _REPO / "data" / "cache"
 MANIFEST = _REPO / "data" / "manifest.jsonl"
 
+# Public archives hiccup (transient 500s, rate limits); a couple of short
+# retries removes most "just run it again" friction. The cache seam is the one
+# place every fetch already passes through, so the policy lives here.
+RETRY_BACKOFFS = (2.0, 5.0)   # seconds between attempts
+_sleep = time.sleep           # module attr so tests can stub the waiting
+
 
 def _key(archive: str, query: str) -> str:
     return hashlib.sha1(f"{archive}\n{query}".encode()).hexdigest()[:16]
 
 
-def cached_query(archive: str, query: str, fetch, refresh: bool = False) -> Table:
+def _fetch_with_retries(fetch, retries: int):
+    for attempt, backoff in enumerate(RETRY_BACKOFFS[:max(0, retries)], start=1):
+        try:
+            return fetch()
+        except Exception:
+            _sleep(backoff)
+    return fetch()  # final attempt: let the real exception propagate
+
+
+def cached_query(archive: str, query: str, fetch, refresh: bool = False,
+                 retries: int = len(RETRY_BACKOFFS)) -> Table:
     """Return an astropy Table for (archive, query), from cache if present.
 
     archive  short tag, e.g. 'gaia', 'irsa', 'euclid' (namespaces the cache).
@@ -34,13 +51,14 @@ def cached_query(archive: str, query: str, fetch, refresh: bool = False) -> Tabl
     fetch    zero-arg callable that actually runs the query -> astropy Table.
              e.g.  cached_query('gaia', adql, lambda: gaia.query(adql))
     refresh  True to bypass the cache and re-fetch.
+    retries  extra fetch attempts (short backoff) before the error propagates.
     """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     key = _key(archive, query)
     path = CACHE_DIR / f"{archive}_{key}.ecsv"
     if path.exists() and not refresh:
         return Table.read(path)
-    tab = fetch()
+    tab = _fetch_with_retries(fetch, retries)
     tab.write(path, format="ascii.ecsv", overwrite=True)
     _log(archive, query, key, path, len(tab))
     return tab

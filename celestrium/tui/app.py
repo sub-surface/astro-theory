@@ -378,8 +378,12 @@ class CelestriumApp(App):
         self.last_report = None         # Path of the last runbook index report
         self.last_target = None         # planner.ResolvedTarget from the last Resolve
         self.last_plans = []            # ranked ObservationPlans for last_target
-        self._resolve_seq = 0           # request id: guards stale Resolve workers
-        self._fetch_seq = 0             # fetch request id: guards stale product fetches
+        # Named request sequences guard EVERY worker against stale commits:
+        # @work(exclusive=True) cancels *future* calls, but an in-flight thread
+        # can still finish late and call back with old data. Sinks: "resolve"
+        # (identity+plans), "fetch" (product results), "table" (query/crossmatch/
+        # feed/cached commits to last_table), "literature" (ADS results).
+        self._seq: dict[str, int] = {}
         self.debug_mode = False
         self._ads_ok = False            # checked once on mount, not per redraw
         self.image_cfg = {
@@ -440,6 +444,19 @@ class CelestriumApp(App):
         self.query_one("#side", Vertical).display = False
 
     # ----- helpers ---------------------------------------------------------- #
+    def _bump(self, name: str) -> int:
+        """Start a new request in a named sequence; returns its token.
+
+        Call on the UI thread when *queuing* a worker, pass the token through,
+        and gate the acceptor with `_current` — a stale in-flight thread then
+        commits nothing instead of overwriting newer state.
+        """
+        self._seq[name] = self._seq.get(name, 0) + 1
+        return self._seq[name]
+
+    def _current(self, name: str, seq: int) -> bool:
+        return self._seq.get(name, 0) == seq
+
     def _refresh_subtitle(self) -> None:
         """Sync the window subtitle and the context bar with session state.
 
@@ -775,8 +792,8 @@ class CelestriumApp(App):
         self.last_plans = []
         self.context.target = None
         self.context.dataset = None
-        self._resolve_seq += 1
-        self._fetch_seq += 1
+        for name in ("resolve", "fetch", "table", "literature"):
+            self._bump(name)
         self._refresh_subtitle()
 
         self._log("Canvas and session state cleared.")
@@ -1164,14 +1181,13 @@ class CelestriumApp(App):
         )
 
     def _fetch_is_current(self, seq: int, target_key: str | None) -> bool:
-        if seq != self._fetch_seq:
+        if not self._current("fetch", seq):
             return False
         return target_key is None or target_key == self._target_key(self.last_target)
 
     def _accept_resolve_result(self, seq: int, target: planner.ResolvedTarget | None, plans: list) -> None:
         """Apply state changes and update UI on the main thread."""
-        # Resolve seq check
-        if seq != self._resolve_seq:
+        if not self._current("resolve", seq):
             return
         if target is None:
             self._feedback("resolve", "no match for target", "yellow")
@@ -1207,8 +1223,10 @@ class CelestriumApp(App):
             f"{len(plans)} ranked products",
             "green")
 
-    def _accept_literature_result(self, docs: list, query_text: str) -> None:
+    def _accept_literature_result(self, docs: list, query_text: str, seq: int) -> None:
         """Apply literature search result on the UI thread."""
+        if not self._current("literature", seq):
+            return
         rows = [(str(d.get("bibcode", "")), str(d.get("year", "")),
                  packets.title_of(d)[:50]) for d in docs]
         self._fill_table(["bibcode", "year", "title"], rows, docs, self._render_paper_detail)
@@ -1216,16 +1234,20 @@ class CelestriumApp(App):
                           "[dim]highlight a row for authors + abstract[/]")
         self.add_trail(query_text[:12], "literature", {"query": query_text})
 
-    def _accept_query_result(self, tab: Table, archive: str, adql: str) -> None:
+    def _accept_query_result(self, tab: Table, archive: str, adql: str, seq: int) -> None:
         """Apply ADQL query result on the UI thread."""
+        if not self._current("table", seq):
+            return
         self._accept_table_result(tab)
         self._set_detail(f"[b]{escape(archive)}[/] → {len(tab)} rows (cached + logged).\n"
                           "[dim]Crossmatch[/] matches these · [dim]Ctrl+S[/] saves · "
                           "[dim]highlight a row[/] for full values")
         self.add_trail(f"{archive}:{len(tab)}r", "query", {"archive": archive, "query": adql})
 
-    def _accept_crossmatch_result(self, out: Table, catalog: str, key: str) -> None:
+    def _accept_crossmatch_result(self, out: Table, catalog: str, key: str, seq: int) -> None:
         """Apply crossmatch result on the UI thread."""
+        if not self._current("table", seq):
+            return
         self._accept_table_result(out)
         self._set_detail(f"[b]xmatch[/] × {escape(catalog)}\n{len(out)} matches (r≤5\")\n"
                           "[b green]Ctrl+S[/] to save as candidates")
@@ -1329,7 +1351,9 @@ class CelestriumApp(App):
                           f"{created_count} artifacts\n[dim]{escape(str(index))}[/]\n[b]Ctrl+O[/] open index")
         self._log(f"[green]runbook {name} → {index}[/]")
 
-    def _accept_global_feed_result(self, tab: Table, key: str, label: str) -> None:
+    def _accept_global_feed_result(self, tab: Table, key: str, label: str, seq: int) -> None:
+        if not self._current("table", seq):
+            return
         self._last_action = ("global", key)
         self.switch_to_mode("query")
         self._accept_table_result(tab)
@@ -1343,9 +1367,8 @@ class CelestriumApp(App):
     # ----- workers (threaded; blocking calls off the UI loop) --------------- #
     def do_resolve(self, name: str) -> None:
         """Resolve trigger on the UI thread to prevent sequence race."""
-        self._resolve_seq += 1
-        self._fetch_seq += 1
-        seq = self._resolve_seq
+        seq = self._bump("resolve")
+        self._bump("fetch")
         self._feedback("resolve", f"queued identity lookup for {name}")
         self._set_detail(
             f"[b]Resolving[/] {escape(name)}\n"
@@ -1368,7 +1391,7 @@ class CelestriumApp(App):
             return
 
         # Thread scheduling race check
-        if seq != self._resolve_seq:
+        if not self._current("resolve", seq):
             return
 
         plans = []
@@ -1424,8 +1447,10 @@ class CelestriumApp(App):
                 f"{plan.product.label} is inspect-only for this target", "yellow")
             self._set_detail(self._render_plan_detail(plan))
             return
-        self._fetch_seq += 1
-        seq = self._fetch_seq
+        seq = self._bump("fetch")
+        # A product fetch is the newest table intent too: invalidate any older
+        # in-flight query/crossmatch so it can't overwrite the product's table.
+        self._bump("table")
         self._feedback(
             "product",
             f"queued {plan.product.label} for {target.display_name}; "
@@ -1480,8 +1505,11 @@ class CelestriumApp(App):
         self.call_from_thread(
             self._accept_product_result, result, plan.product.label, card, seq, target_key)
 
-    @work(thread=True, exclusive=True)
     def do_literature(self, query_text: str) -> None:
+        self._run_literature_worker(query_text, self._bump("literature"))
+
+    @work(thread=True, exclusive=True)
+    def _run_literature_worker(self, query_text: str, seq: int) -> None:
         try:
             self.call_from_thread(
                 self._feedback, "literature",
@@ -1493,7 +1521,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "literature",
                 f"ADS returned {len(docs)} documents", "green")
-            self.call_from_thread(self._accept_literature_result, docs, query_text)
+            self.call_from_thread(self._accept_literature_result, docs, query_text, seq)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
@@ -1508,8 +1536,11 @@ class CelestriumApp(App):
                 f"[dim]{doc.get('year', '?')} · {escape(doc.get('bibcode', ''))} · "
                 f"{cites} cites[/]\n\n{escape(str(abstract))}")
 
-    @work(thread=True, exclusive=True)
     def do_global_feed(self, key: str, refresh: bool = True) -> None:
+        self._run_global_feed_worker(key, refresh, self._bump("table"))
+
+    @work(thread=True, exclusive=True)
+    def _run_global_feed_worker(self, key: str, refresh: bool, seq: int) -> None:
         key = commands.feed_key(key)
         self.call_from_thread(
             self._feedback, "global",
@@ -1564,15 +1595,18 @@ class CelestriumApp(App):
                     "[dim]The feed may be unavailable or not wired yet.[/]"
                 )
                 return
-            self.call_from_thread(self._accept_global_feed_result, tab, key, cap.label)
+            self.call_from_thread(self._accept_global_feed_result, tab, key, cap.label, seq)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
                 f"global feed failed: {type(e).__name__}: {str(e)}", "red"
             )
 
-    @work(thread=True, exclusive=True)
     def do_query(self, archive: str, adql: str, refresh: bool) -> None:
+        self._run_query_worker(archive, adql, refresh, self._bump("table"))
+
+    @work(thread=True, exclusive=True)
+    def _run_query_worker(self, archive: str, adql: str, refresh: bool, seq: int) -> None:
         try:
             self.call_from_thread(
                 self._feedback, "query",
@@ -1590,14 +1624,17 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "query",
                 f"{archive} returned {len(tab)} rows", "green")
-            self.call_from_thread(self._accept_query_result, tab, archive, adql)
+            self.call_from_thread(self._accept_query_result, tab, archive, adql, seq)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
                 f"query failed: {type(e).__name__}: {str(e)}", "red")
 
-    @work(thread=True, exclusive=True)
     def do_crossmatch(self, catalog: str, refresh: bool) -> None:
+        self._run_crossmatch_worker(catalog, refresh, self._bump("table"))
+
+    @work(thread=True, exclusive=True)
+    def _run_crossmatch_worker(self, catalog: str, refresh: bool, seq: int) -> None:
         if self.last_table is None or len(self.last_table) == 0:
             self.call_from_thread(
                 self._feedback, "crossmatch",
@@ -1641,19 +1678,24 @@ class CelestriumApp(App):
 
             # Extract key for precise trail recovery
             key = hashlib.sha1(f"xmatch\n{tag}".encode()).hexdigest()[:16]
-            self.call_from_thread(self._accept_crossmatch_result, out, catalog, key)
+            self.call_from_thread(self._accept_crossmatch_result, out, catalog, key, seq)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
                 f"crossmatch failed: {type(e).__name__}: {str(e)}", "red")
 
-    @work(thread=True, exclusive=True)
     def do_open_cached(self, hash_prefix: str) -> None:
+        self._run_open_cached_worker(hash_prefix, self._bump("table"))
+
+    @work(thread=True, exclusive=True)
+    def _run_open_cached_worker(self, hash_prefix: str, seq: int) -> None:
         try:
             self.call_from_thread(
                 self._feedback, "history",
                 f"opening cached table {hash_prefix}")
             tab = cache.load_cached(hash_prefix)
+            if not self._current("table", seq):
+                return
             self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
             self.call_from_thread(
                 self._feedback, "history",
@@ -1666,8 +1708,11 @@ class CelestriumApp(App):
                 self._feedback, "error",
                 f"open cached failed: {type(e).__name__}: {str(e)}", "red")
 
-    @work(thread=True, exclusive=True)
     def do_rerun(self, hash_prefix: str) -> None:
+        self._run_rerun_worker(hash_prefix, self._bump("table"))
+
+    @work(thread=True, exclusive=True)
+    def _run_rerun_worker(self, hash_prefix: str, seq: int) -> None:
         try:
             self.call_from_thread(
                 self._feedback, "history",
@@ -1686,6 +1731,8 @@ class CelestriumApp(App):
                 return
             tab = cache.cached_query(rec["archive"], rec["query"],
                                      lambda: source.query(rec["query"]), refresh=True)
+            if not self._current("table", seq):
+                return
             self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
             self.call_from_thread(
                 self._feedback, "history",

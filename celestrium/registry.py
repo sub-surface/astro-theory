@@ -47,29 +47,37 @@ class Archive:
     label: str
     adql: bool          # True if `query` takes ADQL/SQL; False = different mode
     source: object      # module path str (lazy-imported) OR object with .query
+    health_url: str = ""  # VO /availability (or equivalent) endpoint for `doctor`
 
 
 # Native-ADQL archives are kept as module-path strings: lazily imported via
 # importlib, exactly as the original hub did (keeps anonymous/optional deps lazy).
 # Non-uniform archives use a _LazyAdaptor so the registry stays import-safe.
 ARCHIVES = {
-    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "celestrium.gaia"),
-    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "celestrium.irsa"),
-    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "celestrium.euclid"),
-    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, "celestrium.heasarc"),
+    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "celestrium.gaia",
+                    "https://gea.esac.esa.int/tap-server/tap/availability"),
+    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "celestrium.irsa",
+                    "https://irsa.ipac.caltech.edu/TAP/availability"),
+    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "celestrium.euclid",
+                      "https://eas.esac.esa.int/tap-server/tap/availability"),
+    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, "celestrium.heasarc",
+                       "https://heasarc.gsfc.nasa.gov/xamin/vo/tap/availability"),
     "desi": Archive(
         "desi", "NOIRLab Astro Data Lab — DESI/Legacy", True,
         _LazyAdaptor("celestrium.datalab_desi", lambda m, q: m.query(q, fmt="table")),
+        "https://datalab.noirlab.edu/tap/availability",
     ),
     "casda": Archive(
         "casda", "CSIRO CASDA — ASKAP/RACS (TAP)", True,
         _LazyAdaptor("celestrium.vo_generic",
                      lambda m, q: m.query(m.ENDPOINTS["casda"], q)),
+        "https://casda.csiro.au/casda_vo_tools/tap/availability",
     ),
     "vizier-tap": Archive(
         "vizier-tap", "VizieR over generic TAP", True,
         _LazyAdaptor("celestrium.vo_generic",
                      lambda m, q: m.query(m.ENDPOINTS["vizier"], q)),
+        "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/availability",
     ),
 }
 

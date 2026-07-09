@@ -6,6 +6,10 @@ exoplanets and host star metadata.
 """
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 
+from .net import set_timeout
+
+set_timeout(NasaExoplanetArchive)
+
 def query_target(target_name: str):
     """Fetch planetary system parameters for a target.
 

@@ -12,6 +12,9 @@ from astropy.visualization import simple_norm
 from astroquery.sdss import SDSS
 
 from . import spectra
+from .net import set_timeout
+
+set_timeout(SDSS)
 
 OUT = Path(__file__).resolve().parent.parent / "data" / "sdss"
 

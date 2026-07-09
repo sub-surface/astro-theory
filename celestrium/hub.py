@@ -80,6 +80,26 @@ def _emit(payload, render):
         render()
 
 
+def _fail(err, hint: Optional[str] = None) -> typer.Exit:
+    """Uniform error exit: structured JSON under --json, Rich red otherwise.
+
+    Usage: ``raise _fail(e)`` / ``raise _fail("message", hint="try …")``.
+    Under --json an agent gets ``{"error": …, "message": …}`` instead of Rich
+    markup — error handling is exactly where machine-readability matters most.
+    """
+    name = type(err).__name__ if isinstance(err, BaseException) else "Error"
+    if _STATE["json"]:
+        payload = {"error": name, "message": str(err)}
+        if hint:
+            payload["hint"] = hint
+        console.print_json(_json.dumps(payload, default=str))
+    else:
+        console.print(f"[red]{err}[/]")
+        if hint:
+            console.print(f"[dim]{hint}[/]")
+    return typer.Exit(1)
+
+
 def _write_report(kind: str, stem: str, body: str) -> Path:
     return packets.write_report(REPORTS_DIR, kind, stem, body)
 
@@ -118,8 +138,7 @@ def resolve(name: str):
     """Identify an object (SIMBAD) and list recent papers about it."""
     info = resolvers.identify(name)
     if info is None or len(info) == 0:
-        console.print(f"[red]No SIMBAD match for {name!r}[/]")
-        raise typer.Exit(1)
+        raise _fail(f"No SIMBAD match for {name!r}")
     row = info[0]
     payload = {"name": str(row["main_id"]), "otype": str(row.get("otype", "?")),
                "ra": float(row["ra"]), "dec": float(row["dec"])}
@@ -176,8 +195,7 @@ def plan(target: str,
     """
     tgt = planner.resolve_target(target)
     if tgt is None:
-        console.print(f"[red]could not resolve {target!r} (try 'RA Dec' or an alias)[/]")
-        raise typer.Exit(1)
+        raise _fail(f"could not resolve {target!r}", hint="try 'RA Dec' or an alias")
     plans = planner.recommend_plans(tgt, modality=modality)
     coverage = planner.image_coverage_note(tgt.dec)
     payload = {"target": tgt.to_dict(),
@@ -220,8 +238,7 @@ def fetch(target: str,
     """
     tgt = planner.resolve_target(target)
     if tgt is None:
-        console.print(f"[red]could not resolve {target!r} (try 'RA Dec' or an alias)[/]")
-        raise typer.Exit(1)
+        raise _fail(f"could not resolve {target!r}", hint="try 'RA Dec' or an alias")
     plans = planner.recommend_plans(tgt)
     if product:
         chosen = next((p for p in plans if p.product.key == product), None)
@@ -229,24 +246,21 @@ def fetch(target: str,
             keys = ", ".join(sorted(
                 p.product.key for p in plans
                 if products.executor_for(p.product.key) is not None))
-            console.print(f"[red]product {product!r} is not fetchable for "
-                          f"{tgt.display_name}; try one of: {keys}[/]")
-            raise typer.Exit(1)
+            raise _fail(f"product {product!r} is not fetchable for {tgt.display_name}",
+                        hint=f"try one of: {keys}")
     else:
         chosen = next((p for p in plans if p.next_action == "fetch"
                        and products.executor_for(p.product.key) is not None), None)
         if chosen is None:
-            console.print(f"[red]no executable product for {tgt.display_name}; "
-                          "see `plan` for what's ranked[/]")
-            raise typer.Exit(1)
+            raise _fail(f"no executable product for {tgt.display_name}",
+                        hint="see `plan` for what's ranked")
     settings = {"fov": fov if fov is not None else "auto", "pix": pix, "survey": survey}
     try:
         result = products.execute_product(
             tgt, chosen, settings,
             emit=None if _STATE["json"] else lambda m: console.print(f"[dim]{m}[/]"))
     except Exception as e:
-        console.print(f"[red]{type(e).__name__}: {e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     if result is None:
         _emit({"target": tgt.to_dict(), "product": chosen.product.key, "status": "empty"},
               lambda: console.print(f"[yellow]{chosen.product.label}: no records for "
@@ -272,8 +286,7 @@ def spectrum(target: str):
     """Fetch and render the first available spectrum for a target (NED)."""
     result = spectra.fetch_ned_spectrum(target)
     if result is None:
-        console.print(f"[yellow]no spectrum found for {target!r} (NED)[/]")
-        raise typer.Exit(1)
+        raise _fail(f"no spectrum found for {target!r} (NED)")
     _emit(result.to_dict(),
           lambda: console.print(f"spectrum -> [green]{result.path}[/]  "
                                 f"[dim]{result.summary}[/]"))
@@ -292,8 +305,7 @@ def cite(query: List[str] = typer.Argument(..., help="ADS query"),
     try:
         docs = ads.search(query_text, rows=rows)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     t = RichTable("bibcode", "year", "title", title=f"ADS: {query_text}")
     for d in docs:
         t.add_row(d["bibcode"], str(d.get("year", "")), packets.title_of(d)[:60])
@@ -302,8 +314,7 @@ def cite(query: List[str] = typer.Argument(..., help="ADS query"),
         try:
             n = ads.add_to_refs([d["bibcode"] for d in docs])
         except Exception as e:
-            console.print(f"[red]{e}[/]")
-            raise typer.Exit(1)
+            raise _fail(e)
         console.print(f"[green]+{n} new entries -> refs.bib[/]")
 
 
@@ -321,8 +332,7 @@ def papers(query: List[str] = typer.Argument(..., help="ADS query"),
     try:
         ps = packets.build_paper_set(query_text, rows=rows)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     docs = ps.docs
 
     def render():
@@ -336,8 +346,7 @@ def papers(query: List[str] = typer.Argument(..., help="ADS query"),
         try:
             n = ads.add_to_refs([d["bibcode"] for d in docs])
         except Exception as e:
-            console.print(f"[red]{e}[/]")
-            raise typer.Exit(1)
+            raise _fail(e)
         console.print(f"[green]+{n} new entries -> refs.bib[/]")
     if report:
         path = _write_report("papers", query_text, ps.to_markdown())
@@ -356,13 +365,11 @@ def query(archive: str, adql: str,
     source = registry.resolve_query_source(key, QUERY_ARCHIVES)
     if source is None:
         supported = ", ".join(sorted(QUERY_ARCHIVES))
-        console.print(f"[red]unknown archive {archive!r}; supported: {supported}[/]")
-        raise typer.Exit(1)
+        raise _fail(f"unknown archive {archive!r}", hint=f"supported: {supported}")
     try:
         tab = cache.cached_query(key, adql, lambda: source.query(adql), refresh=refresh)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     _print_astropy_table(tab, f"{key}: {len(tab)} rows", limit=show)
 
 
@@ -379,15 +386,13 @@ def sample(recipe: str,
         return
     rec = SAMPLE_RECIPES.get(recipe)
     if rec is None:
-        console.print(f"[red]unknown recipe {recipe!r}; run: python -m celestrium sample list[/]")
-        raise typer.Exit(1)
+        raise _fail(f"unknown recipe {recipe!r}", hint="run: python -m celestrium sample list")
     source = registry.resolve_query_source(rec.archive, QUERY_ARCHIVES)
     try:
         tab = cache.cached_query(f"sample:{recipe}", rec.adql,
                                  lambda: source.query(rec.adql), refresh=refresh)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     console.print(f"[bold]{rec.description}[/]")
     _print_astropy_table(tab, f"{recipe}: {len(tab)} rows", limit=show)
 
@@ -417,8 +422,7 @@ def match(source: str, catalog: str,
         else:
             local = cache.load_cached(source)
     except Exception as e:
-        console.print(f"[red]could not load local table {source!r}: {e}[/]")
-        raise typer.Exit(1)
+        raise _fail(f"could not load local table {source!r}: {e}")
     qtag = f"{source}|{catalog}|r{radius}"
     try:
         out = cache.cached_query(
@@ -426,8 +430,7 @@ def match(source: str, catalog: str,
             lambda: xmatch.match(local, cat2=catalog, ra=ra, dec=dec, radius_arcsec=radius),
             refresh=refresh)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     _print_astropy_table(out, f"xmatch {source} x {catalog}: {len(out)} rows", limit=show)
     if save:
         path = candidates.save(save, out, origin=f"xmatch {source} x {catalog}",
@@ -457,8 +460,7 @@ def candidates_cmd(
         try:
             tab = candidates.load(name)
         except Exception as e:
-            console.print(f"[red]{e}[/]")
-            raise typer.Exit(1)
+            raise _fail(e)
         rec = candidates.find_record(name) or {}
         _emit({"name": name, "nrows": len(tab), **rec},
               lambda: _print_astropy_table(tab, f"candidates {name}: {len(tab)} rows", limit=show))
@@ -484,19 +486,16 @@ def log(limit: int = typer.Option(20, help="manifest rows to show"),
         try:
             tab = cache.load_cached(open)
         except Exception as e:
-            console.print(f"[red]{e}[/]")
-            raise typer.Exit(1)
+            raise _fail(e)
         _print_astropy_table(tab, f"cached {open}: {len(tab)} rows")
         return
     if rerun:
         rec = cache.find_record(rerun)
         if rec is None:
-            console.print(f"[red]no manifest record for hash {rerun!r}[/]")
-            raise typer.Exit(1)
+            raise _fail(f"no manifest record for hash {rerun!r}")
         src = registry.resolve_query_source(rec["archive"], QUERY_ARCHIVES)
         if src is None:
-            console.print(f"[red]archive {rec['archive']!r} not re-runnable[/]")
-            raise typer.Exit(1)
+            raise _fail(f"archive {rec['archive']!r} not re-runnable")
         tab = cache.cached_query(rec["archive"], rec["query"],
                                  lambda: src.query(rec["query"]), refresh=True)
         _print_astropy_table(tab, f"re-ran {rerun}: {len(tab)} rows")
@@ -528,8 +527,7 @@ def feed(name: str,
     executor = registry.GLOBAL_FEED_EXECUTORS.get(key)
     if executor is None:
         supported = ", ".join(sorted(registry.GLOBAL_FEED_EXECUTORS))
-        console.print(f"[red]unknown feed {name!r}; supported: {supported}[/]")
-        raise typer.Exit(1)
+        raise _fail(f"unknown feed {name!r}", hint=f"supported: {supported}")
     module_name, func_name = executor
     func = getattr(importlib.import_module(module_name), func_name)
 
@@ -541,8 +539,7 @@ def feed(name: str,
     try:
         tab = cache.cached_query(f"global-{key}", query, _fetch, refresh=refresh)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     if len(tab) == 0:
         _emit({"feed": key, "status": "empty"},
               lambda: console.print(f"[yellow]{key}: no rows returned "
@@ -561,8 +558,7 @@ def export(ref: str,
     try:
         tab, note = tables.load_table_ref(ref, QUERY_ARCHIVES)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     if out is None:
         paths.EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
         out = paths.EXPORTS_DIR / f"{_slug(ref)}.csv"
@@ -588,8 +584,7 @@ def dossier(target: str,
             target, rows=rows, fov=fov, images=images, ned=ned,
             on_error=lambda m: console.print(f"[yellow]{m}[/]"))
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     path = _write_report("dossier", pkt.name, pkt.to_markdown())
     _emit({**pkt.to_dict(), "report": str(path)},
           lambda: console.print(f"dossier -> [green]{path}[/]"))
@@ -638,16 +633,13 @@ def poster(target: str,
            fov: Optional[float] = typer.Option(None, help="field of view in arcmin")):
     """Render a desktop-wallpaper style astronomy poster."""
     if resolution not in RESOLUTIONS:
-        console.print(f"[red]unknown resolution {resolution!r}; choose 1080p, 2k, or 4k[/]")
-        raise typer.Exit(1)
+        raise _fail(f"unknown resolution {resolution!r}", hint="choose 1080p, 2k, or 4k")
     if style not in {"clean", "label", "science"}:
-        console.print(f"[red]unknown style {style!r}; choose clean, label, or science[/]")
-        raise typer.Exit(1)
+        raise _fail(f"unknown style {style!r}", hint="choose clean, label, or science")
     try:
         obj = packets.resolve_target(target)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     width, height = RESOLUTIONS[resolution]
     fov_arcmin = fov or packets.default_fov(obj["otype"], 10.0, 4.0)
     POSTERS_DIR.mkdir(parents=True, exist_ok=True)
@@ -657,8 +649,7 @@ def poster(target: str,
                               width=width, height=height, out=out,
                               label=obj["name"], style=style)
     except Exception as e:
-        console.print(f"[red]{e}[/]")
-        raise typer.Exit(1)
+        raise _fail(e)
     console.print(f"poster -> [green]{path}[/]")
 
 
@@ -679,8 +670,7 @@ def runbook(name: str,
         console.print(t)
         return
     if name not in registry.RUNBOOKS:
-        console.print("[red]unknown runbook; run: python -m celestrium runbook list[/]")
-        raise typer.Exit(1)
+        raise _fail("unknown runbook", hint="run: python -m celestrium runbook list")
     result = packets.run_runbook(
         name, reports_dir=REPORTS_DIR, atlas_dir=ATLAS_DIR, posters_dir=POSTERS_DIR,
         contact_sheet=_contact_sheet, limit=limit, images=images,
@@ -695,9 +685,37 @@ def runbook(name: str,
 def _print_map(filename: str):
     path = REPO / filename
     if not path.exists():
-        console.print(f"[red]{filename} not found[/]")
-        raise typer.Exit(1)
+        raise _fail(f"{filename} not found")
     console.print(Markdown(path.read_text(encoding="utf-8")))
+
+
+@app.command(rich_help_panel=WORKFLOWS)
+def doctor(ping: bool = typer.Option(True, help="live-ping each archive's availability endpoint"),
+           timeout: float = typer.Option(10.0, help="per-ping timeout in seconds")):
+    """Instrument health: archive reachability, ADS token, cache + manifest state.
+
+    Answers "does half my instrument currently work?" before a session — each
+    registered archive's TAP availability endpoint is pinged (no data pulled).
+    """
+    from . import doctor as doctor_mod
+    report = doctor_mod.run_checks(ping=ping, timeout=timeout)
+
+    def render():
+        local = report["local"]
+        token = "[green]ok[/]" if local["ads_token"] else "[yellow]missing[/]"
+        console.print(f"ADS token: {token}   cache: {local['cache_files']} files "
+                      f"({local['cache_mb']} MB)   manifest: {local['manifest_rows']} rows   "
+                      f"candidates: {local['candidate_lists']} lists")
+        if report["archives"]:
+            t = RichTable("archive", "status", "ms", "note", title="archive availability")
+            for a in report["archives"]:
+                colour = {"up": "green", "down": "red"}.get(a["status"], "yellow")
+                t.add_row(a["archive"], f"[{colour}]{a['status']}[/]",
+                          str(a.get("ms", "—")), str(a.get("note", ""))[:60])
+            console.print(t)
+            s = report["summary"]
+            console.print(f"[dim]{s['archives_up']}/{s['archives_checked']} archives up[/]")
+    _emit(report, render)
 
 
 @app.command(rich_help_panel=WORKFLOWS)
@@ -718,8 +736,7 @@ def tui():
     try:
         from .tui.app import main
     except ImportError:
-        console.print("[red]Textual not installed. Run: pip install textual[/]")
-        raise typer.Exit(1)
+        raise _fail("Textual not installed", hint="run: pip install textual")
     main()
 
 

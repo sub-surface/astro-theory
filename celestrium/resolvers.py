@@ -10,6 +10,11 @@ Docs: https://astroquery.readthedocs.io/en/latest/simbad/simbad.html
 from astroquery.simbad import Simbad
 from astroquery.ipac.ned import Ned
 
+from .net import set_timeout, SLOW_TIMEOUT
+
+set_timeout(Simbad)
+set_timeout(Ned, SLOW_TIMEOUT)  # NED is a known-slow server (see README)
+
 
 def identify(name: str):
     """SIMBAD: name -> coords, object type, basic data (astropy Table)."""

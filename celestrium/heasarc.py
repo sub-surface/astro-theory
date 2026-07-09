@@ -11,6 +11,10 @@ from astroquery.heasarc import Heasarc
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
+from .net import set_timeout
+
+set_timeout(Heasarc)
+
 
 def query_region(ra_deg, dec_deg, catalog="chanmaster", radius_deg=1.0):
     pos = SkyCoord(ra_deg, dec_deg, unit=u.deg)

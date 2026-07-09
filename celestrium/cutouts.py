@@ -22,6 +22,12 @@ from astroquery.skyview import SkyView
 from astroquery.hips2fits import hips2fits
 from astroquery.simbad import Simbad
 
+from .net import set_timeout
+
+set_timeout(SkyView, 60)   # SkyView renders cutouts server-side; allow longer
+set_timeout(hips2fits, 60)
+set_timeout(Simbad)
+
 OUT = Path(__file__).resolve().parent.parent / "data" / "cutouts"
 
 # Deep optical colour HiPS by declination footprint, best first. The whole point:
