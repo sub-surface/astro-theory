@@ -33,8 +33,8 @@ from astropy.table import Table
 from rich.markup import escape
 from rich.text import Text
 
-from .. import (cache, candidates, cutouts, packets, paths, planner, products,
-                 registry, xmatch)
+from .. import (cache, candidates, cutouts, packets, paths, planner, plots,
+                 products, registry, xmatch)
 from . import commands
 from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
 
@@ -47,6 +47,7 @@ _PROMPTS = {
     "candidates": "(Candidates load automatically — select a row to open it)",
     "runbooks": "(Runbooks load automatically — Enter runs the highlighted one)",
     "history": "(History loads automatically — no input)",
+    "sweep": "/sweep [target] — active target by default",
 }
 THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
@@ -620,6 +621,8 @@ class CelestriumApp(App):
         elif mode == "global":
             # Trail restore is a revisit — serve the cached pull, don't re-hit the feed.
             self.do_global_feed(data["key"], refresh=False)
+        elif mode == "sweep":
+            self.trigger_sweep(data["target"])
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id == "trail-list":
@@ -704,6 +707,10 @@ class CelestriumApp(App):
             self.trigger_field(args.get("position"))
         elif intent.kind == "poster":
             self.trigger_poster(args.get("target"))
+        elif intent.kind == "plot":
+            self.trigger_plot(args.get("x"), args.get("y"), args.get("kind", "scatter"))
+        elif intent.kind == "sweep":
+            self.trigger_sweep(args.get("target"))
 
     def _show_egg(self, word: str, markup: str) -> None:
         self.query_one("#side", Vertical).display = True
@@ -1364,7 +1371,99 @@ class CelestriumApp(App):
         )
         self.add_trail(f"feed:{key}", "global", {"key": key})
 
+    def _accept_plot_result(self, path: Path, x: str | None, y: str | None,
+                            kind: str, seq: int) -> None:
+        if not self._current("plot", seq):
+            return
+        self.last_image = path
+        label = f"{kind}: {x or 'ra'}" + ("" if kind == "hist" else f" vs {y or 'dec'}")
+        self._feedback("plot", f"{label} -> {path}", "green")
+        self._set_detail(f"[b green]plot ready[/] {escape(label)}\n"
+                         f"[dim]{escape(str(path))}[/]\n[b]Ctrl+O[/] open")
+
+    def _render_sweep_detail(self, entry: dict) -> str:
+        rows = "n/a" if entry.get("rows") is None else str(entry["rows"])
+        return (f"[b]{escape(str(entry.get('label', entry.get('key', '?'))))}[/]\n"
+                f"status {escape(str(entry.get('status', '?')))}  rows {escape(rows)}\n"
+                f"{escape(str(entry.get('note', '')))}")
+
+    def _accept_sweep_result(self, pkt: packets.SweepPacket, seq: int) -> None:
+        if not self._current("sweep", seq):
+            return
+        self.switch_to_mode("sweep")
+        rows = []
+        for entry in pkt.entries:
+            count = "" if entry.get("rows") is None else str(entry["rows"])
+            rows.append((entry.get("label", entry.get("key", "?")),
+                         entry.get("status", ""), count,
+                         str(entry.get("note", ""))[:80]))
+        self._fill_table(["archive", "status", "rows", "note"], rows,
+                         pkt.entries, self._render_sweep_detail)
+        name = str(pkt.target.get("display_name", "?"))
+        self._set_detail(escape(pkt.to_markdown()))
+        self._feedback("sweep", f"{name}: {pkt.hits}/{len(pkt.entries)} hits", "green")
+        self.add_trail(f"sweep:{name[:12]}", "sweep", {"target": name})
+
     # ----- workers (threaded; blocking calls off the UI loop) --------------- #
+    def trigger_plot(self, x: str | None, y: str | None, kind: str = "scatter") -> None:
+        if self.last_table is None or len(self.last_table) == 0:
+            self._log("[yellow]no retained table — run a query, feed, product, or candidate first[/]")
+            return
+        if kind not in plots.KINDS:
+            self._log(f"[yellow]unknown plot kind {escape(kind)}[/]")
+            return
+        if kind != "sky" and not x:
+            self._log("[yellow]usage: /plot <x> [y] [scatter|hist|sky|cmd][/]")
+            return
+        if kind not in ("hist", "sky") and not y:
+            self._log(f"[yellow]{escape(kind)} plot needs X and Y columns[/]")
+            return
+        self._feedback("plot", f"queued {kind} plot")
+        self.do_plot(x, y, kind)
+
+    def do_plot(self, x: str | None, y: str | None, kind: str) -> None:
+        self._run_plot_worker(self.last_table, x, y, kind, self._bump("plot"))
+
+    @work(thread=True, exclusive=True)
+    def _run_plot_worker(self, tab: Table, x: str | None, y: str | None,
+                         kind: str, seq: int) -> None:
+        try:
+            path = plots.plot_table(tab, x=x, y=y, kind=kind)
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"plot failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_plot_result, path, x, y, kind, seq)
+
+    def trigger_sweep(self, target: str | None) -> None:
+        text = (target or "").strip()
+        target_arg = text or self.context.target
+        if target_arg is None:
+            self._log("[yellow]no target — /sweep <target>, or resolve one first[/]")
+            return
+        label = text or self.context.target.display_name
+        self.switch_to_mode("sweep")
+        self._feedback("sweep", f"queued archive sweep for {label}")
+        self.do_sweep(target_arg)
+
+    def do_sweep(self, target) -> None:
+        self._run_sweep_worker(target, self._bump("sweep"))
+
+    @work(thread=True, exclusive=True)
+    def _run_sweep_worker(self, target, seq: int) -> None:
+        try:
+            pkt = packets.build_sweep_packet(
+                target,
+                on_note=lambda m: self.call_from_thread(self._feedback, "sweep", m),
+            )
+        except Exception as e:
+            self.call_from_thread(
+                self._feedback, "error",
+                f"sweep failed: {type(e).__name__}: {str(e)}", "red")
+            return
+        self.call_from_thread(self._accept_sweep_result, pkt, seq)
+
     def do_resolve(self, name: str) -> None:
         """Resolve trigger on the UI thread to prevent sequence race."""
         seq = self._bump("resolve")

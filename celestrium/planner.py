@@ -529,15 +529,37 @@ def _unknown_modality_fallback(
 
 
 def _parse_coordinates(target_text: str) -> tuple[float, float] | None:
+    """Parse a position: bare decimal degrees fast path, then anything
+    astropy's SkyCoord understands (sexagesimal '12:30:49.4 +12:23:28',
+    '12h30m49s +12d23m28s', …). Most papers quote sexagesimal — accepting it
+    here fixes the paper cut once, for every surface."""
     parts = target_text.split()
-    if len(parts) != 2:
-        return None
+    if len(parts) == 2:
+        try:
+            ra, dec = (float(part) for part in parts)
+        except ValueError:
+            pass
+        else:
+            if 0 <= ra <= 360 and -90 <= dec <= 90:
+                return (ra, dec)
+            return None
 
+    return _parse_skycoord(target_text)
+
+
+def _parse_skycoord(target_text: str) -> tuple[float, float] | None:
+    # Cheap pre-filter: SkyCoord parsing is expensive and would happily eat
+    # plain object names; require digits plus a separator that looks positional.
+    if not any(ch.isdigit() for ch in target_text):
+        return None
+    lowered = target_text.lower()
+    if not (":" in target_text
+            or any(u in lowered for u in ("h", "d")) and any(u in lowered for u in ("m", "s"))):
+        return None
     try:
-        ra, dec = (float(part) for part in parts)
-    except ValueError:
+        from astropy import units as u
+        from astropy.coordinates import SkyCoord
+        coord = SkyCoord(target_text, unit=(u.hourangle, u.deg))
+        return (float(coord.ra.deg), float(coord.dec.deg))
+    except Exception:
         return None
-
-    if 0 <= ra <= 360 and -90 <= dec <= 90:
-        return (ra, dec)
-    return None

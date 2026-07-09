@@ -13,7 +13,13 @@ SLOW_TIMEOUT = 60      # for services the docs already flag as slow (NED)
 
 def set_timeout(client, seconds: int = DEFAULT_TIMEOUT) -> None:
     """Set an astroquery-style class/instance TIMEOUT if the client has one."""
-    if hasattr(client, "TIMEOUT"):
-        client.TIMEOUT = seconds
-    elif hasattr(client, "timeout"):
-        client.timeout = seconds
+    try:
+        if hasattr(client, "TIMEOUT"):
+            client.TIMEOUT = seconds
+        elif hasattr(client, "timeout"):
+            client.timeout = seconds
+    except Exception:
+        # Some astroquery property setters inspect live TAP capabilities. Timeout
+        # policy must never make imports network-dependent; call sites still pass
+        # explicit timeouts where the underlying API supports them.
+        pass

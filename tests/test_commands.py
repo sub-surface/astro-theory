@@ -175,13 +175,24 @@ def test_poster_idiom_slash_and_bare():
     assert parse("poster").args == {"target": None}     # highlighted row / target
 
 
+def test_plot_idiom_parses_columns_and_kind():
+    assert parse("/plot ra dec").args == {"x": "ra", "y": "dec", "kind": "scatter"}
+    assert parse("plot mag hist").args == {"x": "mag", "y": None, "kind": "hist"}
+    assert parse("plot sky").args == {"x": None, "y": None, "kind": "sky"}
+
+
+def test_sweep_idiom_defaults_to_active_target():
+    assert parse("/sweep M87").args == {"target": "M87"}
+    assert parse("sweep").args == {"target": None}
+
+
 # ----- table-driven surfaces ----------------------------------------------- #
 def test_suggestions_are_slash_commands():
     sugg = commands.suggestions()
     assert "/resolve" in sugg and "/query" in sugg
     # the once-hidden idioms are now discoverable from the prompt
     for name in ("/match", "/run", "/feed", "/papers",
-                 "/dossier", "/field", "/poster"):
+                 "/dossier", "/field", "/poster", "/plot", "/sweep"):
         assert name in sugg
     assert all(s.startswith("/") for s in sugg)
 

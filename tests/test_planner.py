@@ -23,6 +23,22 @@ def test_parse_request_accepts_coordinates():
     assert req.coordinates == (187.7059, 12.3911)
 
 
+def test_parse_request_accepts_colon_sexagesimal_coordinates():
+    req = planner.parse_request("12:30:49.4 +12:23:28")
+    assert req.coordinates is not None
+    ra, dec = req.coordinates
+    assert abs(ra - 187.70583333333335) < 1e-6
+    assert abs(dec - 12.391111111111112) < 1e-6
+
+
+def test_parse_request_accepts_unit_sexagesimal_coordinates():
+    req = planner.parse_request("12h30m49s +12d23m28s")
+    assert req.coordinates is not None
+    ra, dec = req.coordinates
+    assert abs(ra - 187.70416666666668) < 1e-6
+    assert abs(dec - 12.391111111111112) < 1e-6
+
+
 def test_classify_object_type_groups_agn_and_blank():
     assert planner.classify_otype("QSO") == "galaxy_agn"
     assert planner.classify_otype("Rad") == "galaxy_agn"

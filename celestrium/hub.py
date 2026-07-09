@@ -38,8 +38,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
 
-from . import (cache, candidates, cutouts, packets, planner, products, registry,
-               resolvers, spectra, tables)
+from . import (cache, candidates, census as census_mod, cutouts, packets, planner,
+               plots, products, registry, resolvers, spectra, tables)
 # Re-exported so the test suite (and any importer) can patch these on `hub`.
 from .registry import QUERY_ARCHIVES, SAMPLE_RECIPES, SampleRecipe, ATLAS_TARGETS  # noqa: F401
 
@@ -113,6 +113,7 @@ def _rich_table_from_rows(title, columns, rows) -> RichTable:
 
 def _print_astropy_table(tab, title: str, limit: int = 12):
     columns = list(tab.colnames)[:8]
+    console.print(f"[bold]{title}[/]")
     console.print(_rich_table_from_rows(title, columns, tab[:limit]))
     if len(tab) > limit:
         console.print(f"[dim]showing {limit} of {len(tab)} rows[/]")
@@ -128,6 +129,22 @@ def _contact_sheet(paths, out: Path, title: str):
     # Thin re-export so the test suite can still patch hub._contact_sheet; the
     # implementation lives in cutouts so the TUI runbook runner shares it.
     return cutouts.contact_sheet(paths, out, title)
+
+
+def _open_path(path: Path) -> None:
+    """Best-effort OS opener used only for explicit --open requests."""
+    import os
+    import platform
+    import subprocess
+
+    path_str = str(path)
+    system = platform.system()
+    if system == "Windows":
+        os.startfile(path_str)
+    elif system == "Darwin":
+        subprocess.Popen(["open", path_str])
+    else:
+        subprocess.Popen(["xdg-open", path_str])
 
 
 # --------------------------------------------------------------------------- #
@@ -413,14 +430,8 @@ def match(source: str, catalog: str,
     rows are persisted as a candidate list (see `candidates`).
     """
     from . import xmatch
-    rec = SAMPLE_RECIPES.get(source)
     try:
-        if rec is not None:
-            src = registry.resolve_query_source(rec.archive, QUERY_ARCHIVES)
-            local = cache.cached_query(f"sample:{source}", rec.adql,
-                                       lambda: src.query(rec.adql))
-        else:
-            local = cache.load_cached(source)
+        local, source_note = tables.load_table_ref(source, QUERY_ARCHIVES)
     except Exception as e:
         raise _fail(f"could not load local table {source!r}: {e}")
     qtag = f"{source}|{catalog}|r{radius}"
@@ -431,7 +442,7 @@ def match(source: str, catalog: str,
             refresh=refresh)
     except Exception as e:
         raise _fail(e)
-    _print_astropy_table(out, f"xmatch {source} x {catalog}: {len(out)} rows", limit=show)
+    _print_astropy_table(out, f"xmatch {source_note} x {catalog}: {len(out)} rows", limit=show)
     if save:
         path = candidates.save(save, out, origin=f"xmatch {source} x {catalog}",
                                note=f"radius {radius}\"")
@@ -567,6 +578,104 @@ def export(ref: str,
     tab.write(out, format="ascii.csv", overwrite=True)
     _emit({"ref": ref, "source": note, "nrows": len(tab), "path": str(out)},
           lambda: console.print(f"exported {len(tab)} rows ({note}) -> [green]{out}[/]"))
+
+
+@app.command(rich_help_panel=VALIDATION)
+def plot(ref: str,
+         x: Optional[str] = typer.Argument(None, help="X column"),
+         y: Optional[str] = typer.Argument(None, help="Y column"),
+         kind: str = typer.Option("scatter", help="scatter, hist, sky, or cmd"),
+         out: Optional[Path] = typer.Option(None, help="output PNG path"),
+         open_file: bool = typer.Option(False, "--open", help="open the PNG after rendering")):
+    """Render a quick-look PNG from any table reference."""
+    if kind not in plots.KINDS:
+        raise _fail(f"unknown plot kind {kind!r}", hint=f"choose: {', '.join(plots.KINDS)}")
+    try:
+        tab, note = tables.load_table_ref(ref, QUERY_ARCHIVES)
+        path = plots.plot_table(tab, x=x, y=y, kind=kind, title=f"{ref} ({note})", out=out)
+    except Exception as e:
+        raise _fail(e)
+    payload = {"ref": ref, "source": note, "kind": kind, "x": x, "y": y,
+               "nrows": len(tab), "path": str(path)}
+
+    def render():
+        console.print(f"plot -> [green]{path}[/]  [dim]{kind}; {note}; {len(tab)} rows[/]")
+        if open_file:
+            try:
+                _open_path(path)
+            except Exception as e:
+                console.print(f"[yellow]open failed ({type(e).__name__})[/]")
+
+    _emit(payload, render)
+
+
+@app.command(rich_help_panel=VALIDATION)
+def sweep(target: str,
+          report: bool = typer.Option(False, help="write a Markdown sweep report")):
+    """Ask every table-capable archive product what it knows about a target."""
+    try:
+        pkt = packets.build_sweep_packet(
+            target,
+            on_note=None if _STATE["json"] else lambda m: console.print(f"[dim]{m}[/]"),
+        )
+    except Exception as e:
+        raise _fail(e)
+    report_path = None
+    if report:
+        report_path = _write_report("sweep", target, pkt.to_markdown())
+    payload = pkt.to_dict()
+    if report_path:
+        payload["report"] = str(report_path)
+
+    def render():
+        t = RichTable("archive", "status", "rows", "note", title=f"sweep: {target}")
+        for entry in pkt.entries:
+            rows = "" if entry.get("rows") is None else str(entry["rows"])
+            t.add_row(str(entry["label"]), str(entry["status"]), rows,
+                      str(entry.get("note", ""))[:80])
+        console.print(t)
+        console.print(f"[dim]{pkt.hits}/{len(pkt.entries)} archives reported data[/]")
+        if report_path:
+            console.print(f"report -> [green]{report_path}[/]")
+
+    _emit(payload, render)
+
+
+def _markdown_table(tab, title: str) -> str:
+    lines = [f"# {title}", ""]
+    cols = list(tab.colnames)
+    lines.append("| " + " | ".join(cols) + " |")
+    lines.append("|" + "|".join("---" for _ in cols) + "|")
+    for row in tab:
+        lines.append("| " + " | ".join(str(row[c]) for c in cols) + " |")
+    return "\n".join(lines)
+
+
+@app.command(rich_help_panel=THEORY)
+def census(report: bool = typer.Option(False, help="write a Markdown census report"),
+           out: Optional[Path] = typer.Option(None, help="output CSV path")):
+    """Count recent arXiv effort by Celestrium topic and write the CSV."""
+    try:
+        tab = census_mod.tally(
+            on_note=None if _STATE["json"] else lambda m: console.print(f"[dim]{m}[/]"))
+        csv_path = census_mod.write_csv(tab, out)
+    except Exception as e:
+        raise _fail(e)
+    report_path = None
+    if report:
+        report_path = _write_report("census", "topic-trajectories",
+                                    _markdown_table(tab, "Field-Effort Census"))
+    payload = {**_table_payload(tab), "csv": str(csv_path)}
+    if report_path:
+        payload["report"] = str(report_path)
+
+    def render():
+        _print_astropy_table(tab, f"field-effort census: {len(tab)} topics", limit=len(tab))
+        console.print(f"csv -> [green]{csv_path}[/]")
+        if report_path:
+            console.print(f"report -> [green]{report_path}[/]")
+
+    _emit(payload, render)
 
 
 # --------------------------------------------------------------------------- #

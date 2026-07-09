@@ -45,6 +45,10 @@ COMMANDS: tuple[CommandSpec, ...] = (
                 "Field packet for a sky position (defaults to the active target)."),
     CommandSpec("/poster", "/poster [target]",
                 "Wallpaper poster of a target, the highlighted row, or the active target."),
+    CommandSpec("/plot", "/plot <x> [y] [scatter|hist|sky|cmd]",
+                "Quick-look plot of the retained table; Ctrl+O opens the PNG."),
+    CommandSpec("/sweep", "/sweep [target]",
+                "Ask archive products what they know about the active target."),
     CommandSpec("/global", "/global [feed]",
                 "Browse live sky/event feeds (NEOs, satellites, transients)."),
     CommandSpec("/history", "/history", "Browse the provenance manifest."),
@@ -72,6 +76,7 @@ feed_key = registry.feed_key
 
 _LITERATURE_FIELDS = ("abs:", "author:", "year:", "title:", "bibcode:")
 _PRODUCT_WORDS = ("image", "cutout", "panel", "spectrum")
+_PLOT_KINDS = ("scatter", "hist", "sky", "cmd")
 
 
 @dataclass(frozen=True)
@@ -80,7 +85,7 @@ class Intent:
 
     kinds: empty · clear · help · mode · resolve · query · crossmatch ·
     runbook · feed · literature · papers_context · product · dossier ·
-    field · poster · egg · unknown
+    field · poster · plot · sweep · egg · unknown
     """
     kind: str
     args: dict[str, Any] = field(default_factory=dict)
@@ -147,6 +152,22 @@ def parse(text: str, mode: str = "resolve") -> Intent:
     if lower.startswith("/poster") or lower == "poster" or lower.startswith("poster "):
         target = text.removeprefix("/poster").removeprefix("poster").strip()
         return Intent("poster", {"target": target or None})
+
+    if lower.startswith("/plot") or lower == "plot" or lower.startswith("plot "):
+        rest = text.removeprefix("/plot").removeprefix("plot").strip()
+        parts = rest.split()
+        kind = "scatter"
+        if len(parts) == 1 and parts[0].lower() in _PLOT_KINDS:
+            kind = parts.pop().lower()
+        elif parts and parts[-1].lower() in _PLOT_KINDS:
+            kind = parts.pop().lower()
+        x = parts[0] if parts else None
+        y = parts[1] if len(parts) > 1 else None
+        return Intent("plot", {"x": x, "y": y, "kind": kind})
+
+    if lower.startswith("/sweep") or lower == "sweep" or lower.startswith("sweep "):
+        target = text.removeprefix("/sweep").removeprefix("sweep").strip()
+        return Intent("sweep", {"target": target or None})
 
     if lower.startswith("/papers"):
         q = text.removeprefix("/papers").strip()

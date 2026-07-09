@@ -236,6 +236,42 @@ def test_enter_in_prompt_runs_current_text_without_panel_focus():
     asyncio.run(scenario())
 
 
+def test_plot_and_sweep_prompt_dispatch_network_free():
+    from astropy.table import Table
+    from celestrium import planner
+
+    target = planner.ResolvedTarget(
+        display_name="Demo", aliases=(), ra=10.0, dec=-5.0, otype="G",
+        object_class="galaxy_agn", confidence=1.0, match_kind="exact")
+
+    async def scenario():
+        app = CelestriumApp(active_line="test-line")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            app.last_table = Table({"ra": [1.0], "dec": [2.0]})
+            seen = {}
+
+            def fake_plot(x, y, kind):
+                seen["plot"] = (x, y, kind)
+
+            def fake_sweep(target_arg):
+                seen["sweep"] = target_arg
+
+            app.do_plot = fake_plot
+            app.do_sweep = fake_sweep
+            app.context.target = target
+
+            app._handle_command("/plot ra dec")
+            app._handle_command("/sweep")
+            await pilot.pause()
+
+            assert seen["plot"] == ("ra", "dec", "scatter")
+            assert seen["sweep"] is target
+            assert app.mode == "sweep"
+
+    asyncio.run(scenario())
+
+
 def test_resolve_row_selection_runs_current_product():
     async def scenario():
         app = CelestriumApp(active_line="test-line")

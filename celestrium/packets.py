@@ -248,6 +248,97 @@ def build_field_packet(ra: float, dec: float, fov: float = 5.0, images: bool = T
 
 
 # --------------------------------------------------------------------------- #
+# Sweep packet — "what does every archive know about this target/position?"
+# --------------------------------------------------------------------------- #
+# Table-returning product keys interrogated by a sweep, regardless of the
+# target's object class: a sweep asks everyone, that's the point.
+SWEEP_PRODUCT_KEYS = ("vizier", "heasarc", "sdss", "mast", "lightcurve",
+                      "exoplanet-archive")
+
+
+@dataclass
+class SweepPacket:
+    target: dict          # planner.ResolvedTarget.to_dict()
+    entries: list         # per-archive dicts: key/label/status/rows/kind/note
+
+    @property
+    def hits(self) -> int:
+        return sum(1 for e in self.entries if e["status"] == "hit")
+
+    def to_dict(self) -> dict:
+        return {"target": self.target, "entries": self.entries, "hits": self.hits}
+
+    def to_markdown(self) -> str:
+        name = self.target.get("display_name", "?")
+        lines = [
+            f"# Sweep: {name}",
+            "",
+            f"RA={self.target.get('ra'):.5f}  Dec={self.target.get('dec'):+.5f}  "
+            f"class={self.target.get('object_class', '?')}",
+            "",
+            f"{self.hits}/{len(self.entries)} archives report data here.",
+            "",
+            "| archive | status | rows | note |",
+            "|---|---|---|---|",
+        ]
+        for e in self.entries:
+            rows = "" if e.get("rows") is None else str(e["rows"])
+            lines.append(f"| {e['label']} | {e['status']} | {rows} | {e.get('note', '')} |")
+        return "\n".join(lines)
+
+
+def build_sweep_packet(target, on_note: Optional[Callable[[str], None]] = None,
+                       execute: Optional[Callable] = None,
+                       keys: tuple = SWEEP_PRODUCT_KEYS) -> SweepPacket:
+    """Run every table-kind product executor against a resolved target.
+
+    `target` may be raw target text or a planner.ResolvedTarget.
+    `execute` defaults to products.execute_product (injectable for tests).
+    Failures and empties are entries, not exceptions — a sweep's nulls are data.
+    """
+    from . import planner, products   # local: products imports packets
+    if isinstance(target, str):
+        resolved = planner.resolve_target(target)
+        if resolved is None:
+            raise RuntimeError(f"could not resolve {target!r}")
+        target = resolved
+    execute = execute or products.execute_product
+    caps = {c.key: c for c in planner.SOURCE_CAPABILITIES}
+    entries: list = []
+    for key in keys:
+        cap = caps.get(key)
+        if cap is None:
+            continue
+        plan = planner.ObservationPlan(
+            target=target, product=cap,
+            parameters={"ra": target.ra, "dec": target.dec},
+            recommendation=f"sweep {key}")
+        try:
+            result = execute(target, plan, {"table_only": True}, None)
+        except Exception as e:
+            entries.append({"key": key, "label": cap.label, "status": "error",
+                            "rows": None, "kind": None,
+                            "note": f"{type(e).__name__}: {e}"})
+            if on_note:
+                on_note(f"{key}: error ({type(e).__name__})")
+            continue
+        if result is None or (result.kind == "table"
+                              and (result.table is None or len(result.table) == 0)):
+            entries.append({"key": key, "label": cap.label, "status": "empty",
+                            "rows": 0, "kind": "table", "note": ""})
+            if on_note:
+                on_note(f"{key}: no records")
+        else:
+            rows = result.rows if result.kind == "table" else None
+            entries.append({"key": key, "label": cap.label, "status": "hit",
+                            "rows": rows, "kind": result.kind,
+                            "note": result.summary or ""})
+            if on_note:
+                on_note(f"{key}: {rows if rows is not None else result.kind}")
+    return SweepPacket(target.to_dict(), entries)
+
+
+# --------------------------------------------------------------------------- #
 # Runbook (data-driven, multi-step). Caller owns disk: pass dirs + contact_sheet.
 # --------------------------------------------------------------------------- #
 @dataclass

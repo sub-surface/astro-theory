@@ -55,7 +55,7 @@ class Archive:
 # Non-uniform archives use a _LazyAdaptor so the registry stays import-safe.
 ARCHIVES = {
     "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "celestrium.gaia",
-                    "https://gea.esac.esa.int/tap-server/tap/availability"),
+                    "https://gea.esac.esa.int/tap-server/tap/availability?archive=gaia"),
     "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "celestrium.irsa",
                     "https://irsa.ipac.caltech.edu/TAP/availability"),
     "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "celestrium.euclid",
@@ -130,6 +130,32 @@ def feed_key(text: str) -> str:
     """Normalise user feed spellings ('neos', 'tles', …) to canonical keys."""
     key = text.strip().lower()
     return FEED_ALIASES.get(key, key)
+
+
+# --------------------------------------------------------------------------- #
+# Field-effort census topics (theory-wing effort map)
+# --------------------------------------------------------------------------- #
+# topic -> arXiv search phrase. Kept as registry data so the CLI, scripts, and
+# future TUI views share the same living census rather than cloning a script dict.
+CENSUS_TOPICS = {
+    # --- project micro-topics (where we'd actually fish) ---
+    "wide binary gravity": 'all:"wide binary" AND (all:MOND OR all:gravity)',
+    "MOND / Milgromian": "all:MOND OR all:Milgromian",
+    "Dyson sphere": 'all:"Dyson sphere"',
+    "technosignature": "all:technosignature OR all:technosignatures",
+    "Hubble tension": 'all:"Hubble tension"',
+    "S8 / sigma8 tension": 'all:"S8 tension" OR all:"sigma8 tension"',
+    "primordial black hole": 'all:"primordial black hole"',
+    "reheating (inflation)": "all:reheating AND all:inflation",
+    "preheating": "all:preheating",
+    "oscillon": "all:oscillon OR all:oscillons",
+    "inflationary grav. waves": 'all:"inflationary gravitational waves"',
+    # --- crowded frontiers (calibration / avoid markers) ---
+    "JWST high-z galaxies": 'all:JWST AND all:"high redshift" AND all:galaxies',
+    "early dark energy": 'all:"early dark energy"',
+    "21 cm cosmology": 'all:"21 cm" AND all:cosmology',
+    "fast radio burst": 'all:"fast radio burst"',
+}
 
 
 # --------------------------------------------------------------------------- #

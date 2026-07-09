@@ -137,6 +137,11 @@ def _ned_spectrum(target, plan, settings, emit):
 
 def _sdss_package(target, plan, settings, emit):
     fov = _fov(target, settings, point_default=3.0, extended_default=6.0)
+    if settings.get("table_only"):
+        _emit(emit, "SDSS sweep mode: photometry table only")
+        return _table_result(
+            target, plan, "celestrium.sdss", "fetch_photometry",
+            (target.ra, target.dec), emit)
     _emit(emit, f"SDSS search {target.display_name}; spectra -> optical image -> photometry fallback")
     result = sdss.fetch_spectrum(target.display_name, target.ra, target.dec)
     if result is not None:
