@@ -25,18 +25,21 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.css.query import NoMatches
 from textual.screen import ModalScreen
 from textual.suggester import SuggestFromList
 from textual.widgets import (Button, DataTable, Footer, Input, Label,
                              ListItem, ListView, RichLog, Select, Static)
+from textual.widgets.data_table import RowDoesNotExist
 from astropy.table import Table
 from rich.markup import escape
 from rich.text import Text
 
-from .. import (cache, candidates, cutouts, packets, paths, planner, plots,
-                 products, registry, tables, xmatch)
+from .. import (cache, candidates, config, cutouts, packets, paths, planner,
+                 plots, products, registry, tables, xmatch)
 from . import commands
-from .wireframe import Wireframe, PlatonicScene, TransitScene, SkyScatterScene
+from .wireframe import (Wireframe, PlatonicScene, TransitScene, OrbitScene,
+                        SkyMarkScene, SkyScatterScene)
 
 _PROMPTS = {
     "resolve": "object / 'RA Dec' — plan first, Enter a product row to fetch",
@@ -432,7 +435,8 @@ class CelestriumApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.theme = "ansi-dark"  # the requested default
+        saved_theme = config.get("theme")
+        self.theme = saved_theme if saved_theme in THEME_RING else "ansi-dark"
         self._ads_ok = _ads_token_ok()
         self.query_one("#results", DataTable).cursor_type = "row"
         self._refresh_subtitle()
@@ -481,19 +485,22 @@ class CelestriumApp(App):
             parts.append(f"table [b]{len(self.last_table)}r × "
                          f"{len(self.last_table.colnames)}c[/]")
         parts.append(f"archive [b]{escape(self.archive)}[/]")
+        spark = cache.hit_sparkline()
+        if spark:
+            parts.append(f"cache [dim]{escape(spark)}[/]")
         parts.append("[green]ADS ✓[/]" if self._ads_ok else "[yellow]ADS –[/]")
         if self.debug_mode:
             parts.append("[magenta]DBG[/]")
         try:
             self.query_one("#context-bar", Static).update(
                 "  [dim]·[/]  ".join(parts))
-        except Exception:
+        except NoMatches:
             pass
 
     def _log(self, msg: str) -> None:
         try:
             self.query_one("#status", RichLog).write(msg)
-        except Exception:
+        except NoMatches:
             pass
 
     def _feedback(self, stage: str, msg: str, style: str = "cyan") -> None:
@@ -507,7 +514,7 @@ class CelestriumApp(App):
         """The one detail sink: everything renders in the side panel."""
         try:
             self.query_one("#detail", Static).update(text)
-        except Exception:
+        except NoMatches:
             pass
 
     def _fill_table(self, columns, rows, payloads=None, render=None) -> None:
@@ -536,6 +543,17 @@ class CelestriumApp(App):
             lines.append(f"[cyan]{escape(str(k))}[/] {escape(str(v))}")
         return "\n".join(lines)
 
+    def _resolve_ambient_scene(self, target: planner.ResolvedTarget | None):
+        """The default Resolve-mode scene: a sky-position mini-map centred on
+        the target's real coordinates (the roadmap's 'ASCII sky-position
+        mini-map', zero network) — or a plain solid when there's no valid
+        position yet (no target, or a NaN-RA/Dec special case like the Sun).
+        A subsequent transit/ephemeris product fetch overrides this with the
+        real TransitScene/OrbitScene once there's actual data to show."""
+        if target is not None and target.ra == target.ra and target.dec == target.dec:
+            return SkyMarkScene(target.ra, target.dec)
+        return PlatonicScene("dodecahedron")
+
     # ----- mode switching --------------------------------------------------- #
     def switch_to_mode(self, mode: str) -> None:
         self.mode = mode
@@ -558,10 +576,7 @@ class CelestriumApp(App):
         if mode == "query":
             orrery.scene = SkyScatterScene()
         elif mode == "resolve":
-            if self.context.target and self.context.target.match_kind == "exoplanet":
-                orrery.scene = TransitScene()
-            else:
-                orrery.scene = PlatonicScene("dodecahedron")
+            orrery.scene = self._resolve_ambient_scene(self.context.target)
         else:
             orrery.scene = PlatonicScene("icosahedron")
 
@@ -598,7 +613,7 @@ class CelestriumApp(App):
     def _rebuild_trail_ui(self) -> None:
         try:
             trail_list = self.query_one("#trail-list", ListView)
-        except Exception:
+        except NoMatches:
             return  # in case the app is shutting down during deferred call
         trail_list.clear()
         for idx, item in enumerate(self.context.trail):
@@ -717,16 +732,22 @@ class CelestriumApp(App):
         elif intent.kind == "watch":
             self.trigger_watch(args.get("arg"))
 
+    def _for_each_orrery(self, fn) -> None:
+        """Apply fn(widget) to both Wireframe widgets in one guarded place —
+        replaces the historical pattern of a direct call on #orrery plus a
+        hand-wrapped try/except mirroring it onto #orrery-idle at every
+        call site (F2/F3/easter-egg all did this independently)."""
+        for widget_id in ("#orrery", "#orrery-idle"):
+            try:
+                fn(self.query_one(widget_id, Wireframe))
+            except NoMatches:
+                pass
+
     def _show_egg(self, word: str, markup: str) -> None:
         self.query_one("#side", Vertical).display = True
         self._set_detail(markup)
         if word in ("elite", "thargoid"):
-            # Engage the right solid in both the mini and the idle orrery
-            self.query_one("#orrery", Wireframe).set_solid("icosahedron")
-            try:
-                self.query_one("#orrery-idle", Wireframe).set_solid("icosahedron")
-            except Exception:
-                pass
+            self._for_each_orrery(lambda w: w.set_solid("icosahedron"))
 
     def _fetch_product_word(self, word: str) -> None:
         """'image' / 'cutout' / 'panel' / 'spectrum' fetch that product for the
@@ -815,24 +836,21 @@ class CelestriumApp(App):
 
     def action_next_solid(self) -> None:
         name = self.query_one("#orrery", Wireframe).next_solid()
-        try:
-            self.query_one("#orrery-idle", Wireframe).set_solid(name)
-        except Exception:
-            pass
+        self._for_each_orrery(lambda w: w.set_solid(name))
         self._dbg(f"orrery → {name}")
 
     def action_toggle_spin(self) -> None:
         spinning = self.query_one("#orrery", Wireframe).toggle()
-        try:
-            self.query_one("#orrery-idle", Wireframe).toggle()
-        except Exception:
-            pass
+        # Set both to the SAME final value rather than toggling the idle
+        # widget independently — correct even if the two had drifted apart.
+        self._for_each_orrery(lambda w: setattr(w, "spinning", spinning))
         self._dbg(f"orrery spin {'on' if spinning else 'off'}")
 
     def action_cycle_theme(self) -> None:
         cur = self.theme if self.theme in THEME_RING else THEME_RING[0]
         nxt = THEME_RING[(THEME_RING.index(cur) + 1) % len(THEME_RING)]
         self.theme = nxt
+        config.set("theme", nxt)
         self._log(f"theme → [b]{nxt}[/]")
 
     def action_toggle_debug(self) -> None:
@@ -841,7 +859,7 @@ class CelestriumApp(App):
         try:
             self.query_one("#status", RichLog).styles.height = (
                 10 if self.debug_mode else 3)
-        except Exception:
+        except NoMatches:
             pass
         self._refresh_subtitle()
         self._log(f"debug [b]{'ON' if self.debug_mode else 'off'}[/]")
@@ -1166,8 +1184,8 @@ class CelestriumApp(App):
         """Contextual detail: the highlighted row expands in the side panel."""
         try:
             i = self.query_one("#results", DataTable).get_row_index(event.row_key)
-        except Exception:
-            return
+        except (NoMatches, RowDoesNotExist):
+            return  # widget unmounted, or the grid moved on before we got here
         if self._row_render and 0 <= i < len(self._row_payloads):
             self._set_detail(self._row_render(self._row_payloads[i]))
 
@@ -1181,7 +1199,7 @@ class CelestriumApp(App):
         if points:
             try:
                 self.query_one("#orrery", Wireframe).scene = SkyScatterScene(points)
-            except Exception:
+            except NoMatches:
                 pass
 
     def _target_key(self, target: planner.ResolvedTarget | None) -> str | None:
@@ -1221,12 +1239,8 @@ class CelestriumApp(App):
         self._set_detail(self._identity_card(target))
         self.add_trail(target.display_name, "resolve", {"name": target.display_name})
 
-        # Update ambient scene if we just resolved an exoplanet
         orrery = self.query_one("#orrery", Wireframe)
-        if target.match_kind == "exoplanet":
-            orrery.scene = TransitScene()
-        else:
-            orrery.scene = PlatonicScene("dodecahedron")
+        orrery.scene = self._resolve_ambient_scene(target)
 
         self.last_plans = plans
         self._feedback(
@@ -1312,13 +1326,49 @@ class CelestriumApp(App):
             f"in {escape(plan_label)}.[/]"
         )
 
+    def _apply_transit_scene(self, tab: Table) -> None:
+        """Parametrize TransitScene from the first row's real predicted depth
+        and duration (exoplanet.predict_transits); silently no-ops (keeps
+        whatever scene was already showing) if the values are unavailable —
+        e.g. 'Unknown'/'No ephemeris' rows for a system with no light-curve fit."""
+        try:
+            depth_pct = float(str(tab["Depth"][0]).split()[0])
+            duration_h = float(str(tab["Duration"][0]).split()[0])
+        except (KeyError, IndexError, ValueError):
+            return
+        try:
+            self.query_one("#orrery", Wireframe).scene = TransitScene(
+                depth_pct=depth_pct, duration_hours=duration_h)
+        except NoMatches:
+            pass
+
+    def _apply_orbit_scene(self, tab: Table) -> None:
+        """Draw the real 30-day Horizons RA/Dec track instead of a placeholder."""
+        try:
+            ra_col, dec_col = tables.find_coord_columns(tab)
+            points = [(float(tab[ra_col][i]), float(tab[dec_col][i]))
+                     for i in range(len(tab))]
+        except (KeyError, TypeError, ValueError):
+            return
+        if len(points) < 2:
+            return
+        try:
+            self.query_one("#orrery", Wireframe).scene = OrbitScene(points)
+        except NoMatches:
+            pass
+
     def _accept_tabular_product_result(self, tab: Table, target_name: str,
                                        plan_label: str, detail: str, seq: int,
-                                       target_key: str | None = None) -> None:
+                                       target_key: str | None = None,
+                                       product_key: str | None = None) -> None:
         if not self._fetch_is_current(seq, target_key):
             return
         self.switch_to_mode("query")
         self._accept_table_result(tab)
+        if product_key == "transit":
+            self._apply_transit_scene(tab)
+        elif product_key == "ephemeris":
+            self._apply_orbit_scene(tab)
         self._feedback("product", f"{plan_label}: loaded {len(tab)} rows for {target_name}", "green")
         self._set_detail(
             f"{detail}\n\n[green]Loaded {len(tab)} rows into Query view from "
@@ -1327,7 +1377,8 @@ class CelestriumApp(App):
 
     def _accept_product_result(self, result: products.ProductResult | None,
                                plan_label: str, detail: str, seq: int,
-                               target_key: str | None = None) -> None:
+                               target_key: str | None = None,
+                               product_key: str | None = None) -> None:
         if not self._fetch_is_current(seq, target_key):
             return
         target_name = self.last_target.display_name if self.last_target else ""
@@ -1352,7 +1403,7 @@ class CelestriumApp(App):
             else:
                 self._accept_tabular_product_result(
                     result.table, result.target_name, plan_label, detail,
-                    seq, target_key)
+                    seq, target_key, product_key)
         else:
             self._accept_plan_no_records(target_name, plan_label, detail, seq, target_key)
 
@@ -1660,7 +1711,8 @@ class CelestriumApp(App):
             return
 
         self.call_from_thread(
-            self._accept_product_result, result, plan.product.label, card, seq, target_key)
+            self._accept_product_result, result, plan.product.label, card, seq,
+            target_key, plan.product.key)
 
     def do_literature(self, query_text: str) -> None:
         self._run_literature_worker(query_text, self._bump("literature"))

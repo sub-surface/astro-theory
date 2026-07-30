@@ -249,20 +249,98 @@ class PlatonicScene(Scene):
 
 
 class TransitScene(Scene):
-    """Ambient visualization of a transiting exoplanet."""
+    """Ambient visualization of a transiting exoplanet.
+
+    depth_pct/duration_hours, when given, come from a real
+    exoplanet.predict_transits() row: depth sets the transiting disk's size
+    (flux drop ~ (R_planet/R_star)^2, so radius fraction ~ sqrt(depth)),
+    duration sets how slowly it crosses. With neither, falls back to the
+    original generic placeholder star+planet animation.
+    """
+    def __init__(self, depth_pct: float | None = None,
+                duration_hours: float | None = None):
+        self.depth_pct = depth_pct
+        self.duration_hours = duration_hours
+
     def render(self, canvas: BrailleCanvas, frame: int) -> None:
         cx, cy = canvas.px // 2, canvas.py // 2
         star_r = min(canvas.px, canvas.py) // 3
-        # Draw host star
         canvas.circle(cx, cy, star_r, filled=False)
 
-        # Calculate planet position (simple looping phase for now)
-        phase = (frame % 200) / 200.0
+        if self.depth_pct and self.depth_pct > 0:
+            frac = min(0.6, (self.depth_pct / 100.0) ** 0.5 * 6.0)
+            planet_r = max(1, int(star_r * frac))
+        else:
+            planet_r = max(1, star_r // 4)
+
+        loop_frames = 200
+        if self.duration_hours and self.duration_hours > 0:
+            # Longer transits sweep more slowly; clamped so it stays lively.
+            loop_frames = max(80, min(400, int(self.duration_hours * 60)))
+
+        phase = (frame % loop_frames) / loop_frames
         px = int(cx - star_r * 2 + phase * star_r * 4)
         py = int(cy + star_r * 0.15)
+        canvas.circle(px, py, planet_r, filled=True)
 
-        # Draw transiting planet
-        canvas.circle(px, py, max(1, star_r // 4), filled=True)
+
+class OrbitScene(Scene):
+    """Ambient visualization of a real ephemeris track (JPL Horizons 30-day
+    RA/Dec path): the actual predicted sky path, not a placeholder — a
+    marker sweeps along the drawn line in step with the frame counter."""
+    def __init__(self, points=None):
+        self.pts = list(points or [])  # chronological (ra_deg, dec_deg)
+
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        if len(self.pts) < 2:
+            return
+        ras = [p[0] for p in self.pts]
+        decs = [p[1] for p in self.pts]
+        ra_min, ra_max = min(ras), max(ras)
+        dec_min, dec_max = min(decs), max(decs)
+        ra_span = max(ra_max - ra_min, 1e-6)
+        dec_span = max(dec_max - dec_min, 1e-6)
+        margin = 0.12
+
+        def to_px(ra, dec):
+            nx = margin + (1 - 2 * margin) * (ra - ra_min) / ra_span
+            ny = margin + (1 - 2 * margin) * (dec - dec_min) / dec_span
+            return nx * (canvas.px - 1), (1 - ny) * (canvas.py - 1)
+
+        prev = None
+        for ra, dec in self.pts:
+            x, y = to_px(ra, dec)
+            if prev is not None:
+                canvas.line(prev[0], prev[1], x, y)
+            prev = (x, y)
+
+        idx = int((frame * 0.5) % len(self.pts))
+        mx, my = to_px(*self.pts[idx])
+        canvas.circle(mx, my, 1, filled=True)
+
+
+class SkyMarkScene(Scene):
+    """An equirectangular RA/Dec mini-map with a pulsing crosshair at one
+    position — the roadmap's 'ASCII sky-position mini-map', zero network:
+    the default Resolve-mode scene once a target has real coordinates."""
+    def __init__(self, ra: float | None = None, dec: float | None = None):
+        self.ra = ra
+        self.dec = dec
+
+    def render(self, canvas: BrailleCanvas, frame: int) -> None:
+        cy0 = canvas.py // 2  # celestial equator (dec = 0)
+        canvas.line(0, cy0, canvas.px - 1, cy0)
+        for frac in (0.0, 0.25, 0.5, 0.75, 1.0):
+            x = int(frac * (canvas.px - 1))
+            canvas.line(x, 0, x, canvas.py - 1)
+
+        if self.ra is None or self.dec is None or self.ra != self.ra or self.dec != self.dec:
+            return
+        ra = self.ra % 360.0
+        px = int((1 - ra / 360.0) * (canvas.px - 1))  # RA increases leftward
+        py = int((1 - (self.dec + 90.0) / 180.0) * (canvas.py - 1))
+        r = 2 + (1 if frame % 24 < 12 else 0)  # gentle pulse
+        canvas.circle(px, py, r, filled=False)
 
 
 class SkyScatterScene(Scene):

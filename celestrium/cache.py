@@ -10,6 +10,7 @@ traceable to the exact query + date that produced it. See ../docs/toolbox.md S6.
 Storage: ECSV (pure-astropy, lossless, keeps units/metadata; no pyarrow needed).
 Both cache/ and manifest live under data/ (git-ignored) — local, not committed.
 """
+import collections
 import hashlib
 import json
 import time
@@ -27,6 +28,23 @@ MANIFEST = _REPO / "data" / "manifest.jsonl"
 # place every fetch already passes through, so the policy lives here.
 RETRY_BACKOFFS = (2.0, 5.0)   # seconds between attempts
 _sleep = time.sleep           # module attr so tests can stub the waiting
+
+# Process-local (not persisted) hit/miss history for the TUI context bar's
+# cache sparkline — "is caching actually working this session", at a glance.
+_HIT_HISTORY_LEN = 40
+_hit_history: "collections.deque[bool]" = collections.deque(maxlen=_HIT_HISTORY_LEN)
+_SPARK_HIT, _SPARK_MISS = "█", "·"
+
+
+def hit_history() -> list:
+    """Recent cache outcomes, oldest first (True=hit, False=miss)."""
+    return list(_hit_history)
+
+
+def hit_sparkline(width: int = 12) -> str:
+    """Render the last `width` outcomes as a compact glyph string."""
+    recent = list(_hit_history)[-width:]
+    return "".join(_SPARK_HIT if h else _SPARK_MISS for h in recent)
 
 
 def _key(archive: str, query: str) -> str:
@@ -57,10 +75,12 @@ def cached_query(archive: str, query: str, fetch, refresh: bool = False,
     key = _key(archive, query)
     path = CACHE_DIR / f"{archive}_{key}.ecsv"
     if path.exists() and not refresh:
+        _hit_history.append(True)
         return Table.read(path)
     tab = _fetch_with_retries(fetch, retries)
     tab.write(path, format="ascii.ecsv", overwrite=True)
     _log(archive, query, key, path, len(tab))
+    _hit_history.append(False)
     return tab
 
 
