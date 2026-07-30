@@ -317,7 +317,13 @@ def classify_otype(otype: str | None) -> str:
         "galaxy_agn": {"QSO", "AGN", "Rad", "G", "GiG", "BLL"},
         "cluster": {"Cl", "ClG", "Cluster"},
         "nebula": {"Neb", "SNR"},
-        "star": {"*", "Star", "PM", "exoplanet"},
+        "star": {"*", "Star", "PM"},
+        # SIMBAD's real planet code is "Pl" — the literal string "exoplanet"
+        # here previously never matched anything (no SIMBAD otype is spelled
+        # that way), so a resolved exoplanet fell through to "unknown" and
+        # missed the exoplanet-archive/lightcurve/transit capabilities that
+        # explicitly list object_classes=("star", "exoplanet").
+        "exoplanet": {"Pl"},
     }
     for label, values in groups.items():
         if otype in values:
