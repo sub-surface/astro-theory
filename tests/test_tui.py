@@ -32,10 +32,16 @@ def test_tui_mounts_and_history_runs():
     asyncio.run(scenario())
 
 
-def test_cockpit_polish_network_free():
+def test_cockpit_polish_network_free(monkeypatch):
     """Theme default, wireframe panel, debug + theme + image-settings controls."""
+    from celestrium import config
     from celestrium.tui.app import AboutScreen, ImageSettingsScreen
     from celestrium.tui.wireframe import Wireframe
+
+    # The app persists the theme via config, so without isolation this test
+    # reads whichever theme the developer last cycled to on this machine and
+    # fails on a preference, not a regression.
+    monkeypatch.setattr(config, "get", lambda key, default=None: default)
 
     async def scenario():
         app = CelestriumApp(active_line="test-line")

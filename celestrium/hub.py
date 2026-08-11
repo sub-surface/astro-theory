@@ -913,5 +913,13 @@ def tui():
     main()
 
 
+# The kernel-era commands (`caps`, `run`, `ledger`, `repro`, `methods`, plus the
+# `study` and `vault` groups) are *generated from the capability registry* rather
+# than written here — so a new capability appears in `--help` with no CLI edit.
+# See celestrium/cli_kernel.py and celestrium/core/capability.py.
+from . import cli_kernel as _cli_kernel  # noqa: E402
+_cli_kernel.register(app, _STATE)
+
+
 if __name__ == "__main__":
     app()
