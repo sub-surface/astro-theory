@@ -7,18 +7,28 @@ For images/cutouts, run on ESA Datalabs instead of downloading locally.
 Docs: https://astroquery.readthedocs.io/en/latest/esa/euclid/euclid.html
 Tutorials: https://github.com/ESA-Datalabs/Euclid-Q1
 """
-from astroquery.esa.euclid import Euclid
+from . import vo_generic
+
+client = vo_generic.TAPClient(vo_generic.ENDPOINTS["euclid"])
 
 
-def query(adql: str, async_=False):
-    """Run ADQL, return an astropy Table. Use async_=True for >2k rows."""
-    job = Euclid.launch_job_async(adql) if async_ else Euclid.launch_job(adql)
-    return job.get_results()
+def query(adql: str, async_: bool = False):
+    """Run ADQL against ESA Euclid TAP."""
+    try:
+        from astroquery.esa.euclid import Euclid
+        job = Euclid.launch_job_async(adql) if async_ else Euclid.launch_job(adql)
+        return job.get_results()
+    except Exception:
+        return client.query(adql)
 
 
 def discover():
     """List available tables (schema names drift between Q1/Q2/DR1 — check live)."""
-    return [t.name for t in Euclid.load_tables(only_names=True)]
+    try:
+        from astroquery.esa.euclid import Euclid
+        return [t.name for t in Euclid.load_tables(only_names=True)]
+    except Exception:
+        return client.discover()
 
 
 if __name__ == "__main__":

@@ -1,39 +1,56 @@
 #!/usr/bin/env python
-"""Generic IVOA TAP via pyvo — the escape hatch for any VO service.
+"""Generic IVOA TAP via pyvo — the unified client for all TAP services.
 
 When an archive has no astroquery wrapper, point pyvo at its TAP endpoint and send
 ADQL. Examples: CASDA (ASKAP/RACS), LOFAR/LoTSS, VizieR TAP, Gaia mirrors.
-The radio dipole legs (RACS, LoTSS) live here.
-Docs: https://pyvo.readthedocs.io/en/latest/dal/
 """
+from __future__ import annotations
+
+from typing import Optional
 import pyvo
 
-# A few useful endpoints (verify URLs — services move):
+# Canonical TAP Endpoints across astronomy archives
 ENDPOINTS = {
-    "casda":  "https://casda.csiro.au/casda_vo_tools/tap",   # ASKAP / RACS
-    "vizier": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
-    "gaia":   "https://gea.esac.esa.int/tap-server/tap",
+    "gaia":       "https://gea.esac.esa.int/tap-server/tap",
+    "irsa":       "https://irsa.ipac.caltech.edu/TAP",
+    "euclid":     "https://eas.esac.esa.int/tap-server/tap",
+    "heasarc":    "https://heasarc.gsfc.nasa.gov/xamin/vo/tap",
+    "casda":      "https://casda.csiro.au/casda_vo_tools/tap",   # ASKAP / RACS
+    "vizier":     "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+    "desi":       "https://datalab.noirlab.edu/tap",
 }
+
+
+class TAPClient:
+    """A clean, reusable client for any IVOA TAP service."""
+
+    def __init__(self, endpoint_url: str):
+        self.endpoint_url = endpoint_url
+        self._service: Optional[pyvo.dal.TAPService] = None
+
+    @property
+    def service(self) -> pyvo.dal.TAPService:
+        if self._service is None:
+            self._service = pyvo.dal.TAPService(self.endpoint_url)
+        return self._service
+
+    def query(self, adql: str):
+        """Submit an ADQL query and return an astropy Table."""
+        return self.service.search(adql).to_table()
+
+    def discover(self, substr: str = "") -> list[str]:
+        """List table names matching an optional substring filter."""
+        tables = [t.name for t in self.service.tables]
+        if not substr:
+            return tables
+        sub = substr.lower()
+        return [t for t in tables if sub in t.lower()]
 
 
 def query(endpoint_url: str, adql: str):
     """Send ADQL to any TAP service; returns astropy Table via .to_table()."""
-    service = pyvo.dal.TAPService(endpoint_url)
-    return service.search(adql).to_table()
+    return TAPClient(endpoint_url).query(adql)
 
 
 def list_tables(endpoint_url: str, substr: str = ""):
-    service = pyvo.dal.TAPService(endpoint_url)
-    return [t.name for t in service.tables if substr.lower() in t.name.lower()]
-
-
-if __name__ == "__main__":
-    # VizieR-over-TAP smoke test: 5 NVSS rows via generic TAP.
-    tab = query(
-        ENDPOINTS["vizier"],
-        'SELECT TOP 5 "RAJ2000", "DEJ2000", "S1.4" FROM "VIII/65/nvss" '
-        'WHERE "S1.4" > 2000',
-    )
-    print(tab)
-    # RACS via CASDA (uncomment; confirm current table name, e.g. 'AS110.racs_...'):
-    # print(list_tables(ENDPOINTS["casda"], substr="racs"))
+    return TAPClient(endpoint_url).discover(substr)

@@ -6,19 +6,29 @@ SPHEREx (all-sky NIR spectro-photometry, releasing through 2026 — our all-sky
 dipole sibling probe). CatWISE2020 already underpins the G dipole work.
 Docs: https://astroquery.readthedocs.io/en/latest/ipac/irsa/irsa.html
 """
-from astroquery.ipac.irsa import Irsa
+from . import vo_generic
+
+client = vo_generic.TAPClient(vo_generic.ENDPOINTS["irsa"])
 
 
 def query(adql: str):
-    """Run ADQL; query_tap returns a PyVO result -> .to_table() for astropy."""
-    return Irsa.query_tap(adql).to_table()
+    """Run ADQL against NASA/IPAC IRSA TAP."""
+    try:
+        from astroquery.ipac.irsa import Irsa
+        return Irsa.query_tap(adql).to_table()
+    except Exception:
+        return client.query(adql)
 
 
 def discover(substr: str = ""):
     """List catalogue (table) names, optionally filtered by substring."""
-    cats = Irsa.list_catalogs()
-    names = cats.keys() if hasattr(cats, "keys") else cats
-    return [n for n in names if substr.lower() in str(n).lower()]
+    try:
+        from astroquery.ipac.irsa import Irsa
+        cats = Irsa.list_catalogs()
+        names = cats.keys() if hasattr(cats, "keys") else cats
+        return [n for n in names if substr.lower() in str(n).lower()]
+    except Exception:
+        return client.discover(substr)
 
 
 if __name__ == "__main__":

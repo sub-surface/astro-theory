@@ -5,18 +5,28 @@ Anonymous access works; query results are auto-purged after 72h (fine for us —
 we keep the *output* locally). DR3 is live; DR4 expected ~late 2026.
 Docs: https://astroquery.readthedocs.io/en/latest/gaia/gaia.html
 """
-from astroquery.gaia import Gaia
+from . import vo_generic
+
+client = vo_generic.TAPClient(vo_generic.ENDPOINTS["gaia"])
 
 
 def query(adql: str):
-    """Run ADQL, return an astropy Table. Async handles large results cleanly."""
-    job = Gaia.launch_job_async(adql)
-    return job.get_results()
+    """Run ADQL against ESA Gaia TAP."""
+    try:
+        from astroquery.gaia import Gaia
+        job = Gaia.launch_job_async(adql)
+        return job.get_results()
+    except Exception:
+        return client.query(adql)
 
 
 def discover():
     """List available tables (run once when exploring a new analysis)."""
-    return [t.name for t in Gaia.load_tables(only_names=True)]
+    try:
+        from astroquery.gaia import Gaia
+        return [t.name for t in Gaia.load_tables(only_names=True)]
+    except Exception:
+        return client.discover()
 
 
 if __name__ == "__main__":
