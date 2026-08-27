@@ -40,14 +40,16 @@ def load_table_ref(ref: str, archives: Optional[dict] = None) -> Tuple[Table, st
 
     recipe = config.SAMPLE_RECIPES.get(ref)
     if recipe is not None:
-        source = config.resolve_query_source(recipe.archive, archives)
-        tab = cache.cached_query(f"sample:{ref}", recipe.adql,
-                                 lambda: source.query(recipe.adql))
-        return tab, f"sample recipe {ref!r} ({recipe.archive})"
+        from .core.kernel import Kernel
+        k = Kernel()
+        art = k.run("archive.sample", {"recipe": ref})
+        return k.load(art.id), f"sample recipe {ref!r} ({recipe.archive})"
 
     try:
-        return cache.load_cached(ref), f"cached pull {ref}"
-    except KeyError:
+        from .core.kernel import Kernel
+        k = Kernel()
+        return k.load(ref), f"cached pull {ref}"
+    except Exception:
         raise KeyError(
             f"unknown table ref {ref!r} — not a candidate list, sample recipe, "
             "or manifest hash (see `candidates`, `sample list`, `log`)")

@@ -214,9 +214,16 @@ def register(app: typer.Typer, state: Optional[dict] = None) -> None:
         from . import config
         from .core.artifact import Artifact, artifact_id, now_utc
 
-        store = _kernel().ledger
-        imported = skipped = 0
-        for record in cache.manifest():
+        manifest_path = paths.DATA / "manifest.jsonl"
+        records = []
+        if manifest_path.exists():
+            for line in manifest_path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    try:
+                        records.append(_json.loads(line))
+                    except Exception:
+                        pass
+        for record in records:
             archive = str(record.get("archive", ""))
             adql = str(record.get("query", ""))
             cache_file = record.get("cache_file")

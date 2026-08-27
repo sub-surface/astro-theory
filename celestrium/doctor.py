@@ -53,13 +53,16 @@ def check_local() -> dict[str, Any]:
         ads_ok = True
     except Exception:
         ads_ok = False
-    cache_files = list(cache.CACHE_DIR.glob("*.ecsv")) if cache.CACHE_DIR.exists() else []
-    cache_bytes = sum(f.stat().st_size for f in cache_files)
+    from . import paths
+    artifact_files = list(paths.ARTIFACTS.glob("*.*")) if paths.ARTIFACTS.exists() else []
+    artifact_bytes = sum(f.stat().st_size for f in artifact_files)
+    manifest_file = paths.DATA / "manifest.jsonl"
+    manifest_rows = sum(1 for _ in manifest_file.open(encoding="utf-8")) if manifest_file.exists() else 0
     return {
         "ads_token": ads_ok,
-        "cache_files": len(cache_files),
-        "cache_mb": round(cache_bytes / 1e6, 2),
-        "manifest_rows": len(cache.manifest()),
+        "cache_files": len(artifact_files),
+        "cache_mb": round(artifact_bytes / 1e6, 2),
+        "manifest_rows": manifest_rows,
         "candidate_lists": len(candidates.latest()),
     }
 

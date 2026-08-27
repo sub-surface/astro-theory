@@ -142,7 +142,7 @@ def open_path(path: str | os.PathLike) -> None:
 
 @dataclass
 class SessionContext:
-    target: planner.ResolvedTarget | None = None
+    target: resolvers.ResolvedTarget | None = None
     dataset: Table | None = None
     trail: list[dict] = field(default_factory=list)
 
@@ -223,7 +223,7 @@ class ImageSettingsScreen(ModalScreen):
         ("Time-domain", "time-domain"),
     ]
 
-    def __init__(self, settings: dict, target: planner.ResolvedTarget | None = None):
+    def __init__(self, settings: dict, target: resolvers.ResolvedTarget | None = None):
         super().__init__()
         self._s = dict(settings)
         self._target = target
@@ -234,7 +234,7 @@ class ImageSettingsScreen(ModalScreen):
         survey = str(self._s.get("survey", "auto"))
         if survey not in cutouts.COLOR_SURVEYS:
             survey = "auto"
-        note = planner.image_coverage_note(self._target.dec, survey)
+        note = resolvers.image_coverage_note(self._target.dec, survey)
         return (
             f"[b]{escape(self._target.display_name)}[/]  "
             f"{escape(self._target.object_class)}  "
@@ -380,7 +380,7 @@ class CelestriumApp(App):
         self.last_table = None          # astropy Table from the last query/crossmatch
         self.last_image = None          # Path of the last rendered colour preview
         self.last_report = None         # Path of the last runbook index report
-        self.last_target = None         # planner.ResolvedTarget from the last Resolve
+        self.last_target = None         # resolvers.ResolvedTarget from the last Resolve
         self.last_plans = []            # ranked ObservationPlans for last_target
         # Named request sequences guard EVERY worker against stale commits:
         # @work(exclusive=True) cancels *future* calls, but an in-flight thread
@@ -542,7 +542,7 @@ class CelestriumApp(App):
             lines.append(f"[cyan]{escape(str(k))}[/] {escape(str(v))}")
         return "\n".join(lines)
 
-    def _resolve_ambient_scene(self, target: planner.ResolvedTarget | None):
+    def _resolve_ambient_scene(self, target: resolvers.ResolvedTarget | None):
         """The default Resolve-mode scene: a sky-position mini-map centred on
         the target's real coordinates (the roadmap's 'ASCII sky-position
         mini-map', zero network) — or a plain solid when there's no valid
@@ -754,7 +754,7 @@ class CelestriumApp(App):
         if not self.context.target:
             self._log("[yellow]No active target to fetch products for[/]")
             return
-        plans = self.last_plans or planner.recommend_plans(self.context.target)
+        plans = self.last_plans or resolvers.recommend_plans(self.context.target)
         self.last_plans = plans
 
         wanted = {"spectrum": "spectrum", "panel": "multi_panel",
@@ -1006,19 +1006,20 @@ class CelestriumApp(App):
                 "[dim]Enter[/] open · [dim]F5[/] re-run")
 
     def action_global(self) -> None:
-        feeds = [cap for cap in planner.SOURCE_CAPABILITIES if cap.scope == "global"]
-        if not feeds:
-            self._fill_table(["(none)"], [])
-            self._set_detail("No global feeds registered.")
-            return
+        feeds = [
+            {"key": "neo", "label": "JPL CNEOS close approaches", "status": "executable",
+             "description": "Near-Earth asteroids and close approaches (JPL Horizons/CNEOS)"},
+            {"key": "satellite", "label": "Celestrak visible satellites (TLEs)", "status": "executable",
+             "description": "Earth orbiters with active two-line elements"},
+            {"key": "transient", "label": "ALeRCE/ZTF transient alerts", "status": "executable",
+             "description": "Recent optical transient events from Zwicky Transient Facility"},
+        ]
         rows = []
         payloads = []
         for cap in feeds:
-            action = "[b green]Run[/]" if cap.status == "executable" else "[dim]Planned[/]"
-            rows.append((action, cap.label, cap.status, cap.coverage_hint))
-            payloads.append({"key": cap.key, "label": cap.label,
-                             "status": cap.status, "scope": cap.scope,
-                             "description": cap.coverage_hint})
+            action = "[b green]Run[/]" if cap["status"] == "executable" else "[dim]Planned[/]"
+            rows.append((action, cap["label"], cap["status"], cap["description"]))
+            payloads.append(cap)
         self._fill_table(["action", "global feed", "status", "description"],
                          rows, payloads, self._render_global_detail)
         self._set_detail("[b]Global Feeds[/]\n"
@@ -1201,7 +1202,7 @@ class CelestriumApp(App):
             except NoMatches:
                 pass
 
-    def _target_key(self, target: planner.ResolvedTarget | None) -> str | None:
+    def _target_key(self, target: resolvers.ResolvedTarget | None) -> str | None:
         if target is None:
             return None
         return (
@@ -1214,7 +1215,7 @@ class CelestriumApp(App):
             return False
         return target_key is None or target_key == self._target_key(self.last_target)
 
-    def _accept_resolve_result(self, seq: int, target: planner.ResolvedTarget | None, plans: list) -> None:
+    def _accept_resolve_result(self, seq: int, target: resolvers.ResolvedTarget | None, plans: list) -> None:
         """Apply state changes and update UI on the main thread."""
         if not self._current("resolve", seq):
             return
@@ -1590,7 +1591,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "resolve",
                 f"querying identity services for {name}")
-            target = planner.resolve_target(name)
+            target = resolvers.resolve_target(name)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
@@ -1606,7 +1607,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "resolve",
                 f"ranking product capabilities for {target.display_name}")
-            plans = planner.recommend_plans(target)
+            plans = resolvers.recommend_plans(target)
 
         self.call_from_thread(self._accept_resolve_result, seq, target, plans)
 
@@ -1622,10 +1623,10 @@ class CelestriumApp(App):
             alts = ", ".join(escape(str(a.get("name", "?"))) for a in target.alternatives[:4])
             head.append(f"[dim]also matched: {alts}[/]")
         lines = head + ["", "[b]recommended products[/]  [dim](Enter a row to fetch)[/]"]
-        for plan in planner.recommend_plans(target):
+        for plan in resolvers.recommend_plans(target):
             mark = "▶" if plan.next_action == "fetch" else "·"
             lines.append(f"{mark} {escape(plan.product.label)} [{escape(plan.product.status)}]")
-        lines += ["", planner.image_coverage_note(
+        lines += ["", resolvers.image_coverage_note(
             target.dec, self.image_cfg.get("survey", "auto"))]
         return "\n".join(lines)
 
@@ -1686,7 +1687,7 @@ class CelestriumApp(App):
         self.call_from_thread(self._set_detail, loading_msg)
 
         try:
-            result = products.execute_product(
+            result = resolvers.execute_product(
                 target,
                 plan,
                 self.image_cfg,
@@ -1749,61 +1750,39 @@ class CelestriumApp(App):
 
     @work(thread=True, exclusive=True)
     def _run_global_feed_worker(self, key: str, refresh: bool, seq: int) -> None:
-        key = commands.feed_key(key)
+        feed_key = commands.feed_key(key)
         self.call_from_thread(
             self._feedback, "global",
-            f"feed request {key}; refresh={refresh}")
-        caps = {cap.key: cap for cap in planner.SOURCE_CAPABILITIES
-                if cap.scope == "global"}
-        cap = caps.get(key)
-        if cap is None:
+            f"feed request {feed_key}; refresh={refresh}")
+        if feed_key not in config.GLOBAL_FEED_EXECUTORS:
             self.call_from_thread(
                 self._feedback, "error",
                 f"unknown global feed {key!r}", "red")
             return
-        if cap.status != "executable":
-            self.call_from_thread(
-                self._feedback, "global",
-                f"{cap.label} is planned, not executable", "yellow")
-            self.call_from_thread(
-                self._set_detail,
-                f"[b cyan]{escape(cap.label)}[/]\n"
-                "[yellow]This global feed is planned, not executable yet.[/]"
-            )
-            return
 
-        module_name, func_name = GLOBAL_FEED_EXECUTORS.get(key, (None, None))
-        if module_name is None:
-            self.call_from_thread(
-                self._feedback, "error",
-                f"no executor for global feed {key}", "red")
-            return
+        labels = {
+            "neo": "JPL CNEOS close approaches",
+            "satellite": "Celestrak visible satellites (TLEs)",
+            "transient": "ALeRCE/ZTF transient alerts",
+        }
+        label = labels.get(feed_key, feed_key)
 
         try:
-            import importlib
-            mod = importlib.import_module(module_name)
-            func = getattr(mod, func_name)
-            self.call_from_thread(
-                self._feedback, "global",
-                f"{cap.label}; executor={module_name}.{func_name}")
-
-            def _fetch():
-                result = func()
-                return result if result is not None else Table()
-
-            query = f"global-feed:{key}|executor={module_name}.{func_name}"
-            tab = __import__("celestrium.core.kernel", fromlist=["Kernel"]).Kernel().load(Kernel().run(f"feed.{key}").id)
+            from ..core.kernel import Kernel
+            k = Kernel()
+            art = k.run(f"feed.{feed_key}", refresh=refresh)
+            tab = k.load(art.id)
             if len(tab) == 0:
                 self.call_from_thread(
                     self._feedback, "global",
-                    f"{cap.label}: no rows returned", "yellow")
+                    f"{label}: no rows returned", "yellow")
                 self.call_from_thread(
                     self._set_detail,
-                    f"[b cyan]{escape(cap.label)}[/]\n[yellow]No rows returned.[/]\n"
-                    "[dim]The feed may be unavailable or not wired yet.[/]"
+                    f"[b cyan]{escape(label)}[/]\n[yellow]No rows returned.[/]\n"
+                    "[dim]The feed may be unavailable or returned 0 entries.[/]"
                 )
                 return
-            self.call_from_thread(self._accept_global_feed_result, tab, key, cap.label, seq)
+            self.call_from_thread(self._accept_global_feed_result, tab, feed_key, label, seq)
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
@@ -1875,16 +1854,13 @@ class CelestriumApp(App):
 
             self.call_from_thread(
                 self._feedback, "crossmatch",
-                f"columns={ra}/{dec}; radius=5 arcsec; key={fingerprint}")
-            out = cache.cached_query(
-                "xmatch", tag,
-                lambda: xmatch.match(local, cat2=catalog, ra=ra, dec=dec, radius_arcsec=5.0),
-                refresh=refresh)
+                f"columns={ra}/{dec}; radius=5 arcsec; matching {catalog}")
+            out = xmatch.match(local, cat2=catalog, ra=ra, dec=dec, radius_arcsec=5.0)
             self.call_from_thread(
                 self._feedback, "crossmatch",
                 f"{catalog} returned {len(out)} matches", "green")
 
-            # Extract key for precise trail recovery
+            # Extract key for trail recovery
             key = hashlib.sha1(f"xmatch\n{tag}".encode()).hexdigest()[:16]
             self.call_from_thread(self._accept_crossmatch_result, out, catalog, key, seq)
         except Exception as e:
@@ -1989,7 +1965,7 @@ class CelestriumApp(App):
     def trigger_field(self, position: str | None) -> None:
         coords = None
         if position:
-            coords = planner.parse_request(position).coordinates
+            coords = resolvers.parse_request(position).coordinates
             if coords is None:
                 self._log(f"[yellow]could not parse a position from "
                           f"{escape(position)} — try '/field 187.70 12.39'[/]")
