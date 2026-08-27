@@ -70,9 +70,52 @@ def object_products(ctx, target):
     tags=("target",),
 )
 def object_dossier(ctx, target, rows, fov, images, ned):
-    ctx.progress(f"building dossier for {target}")
-    return ctx.document(f"# Dossier: {target}\n(mocked)", label=f"dossier {target}",
-                        target=target)
+    found = resolve(ctx, target)
+    ctx.progress(f"building dossier for {found.display_name}")
+    lines = [
+        f"# Dossier: {found.display_name}",
+        "",
+        f"- **Type:** {found.otype or 'Unknown'} (`{found.object_class}`)",
+        f"- **Coordinates:** RA = {found.ra:.5f}°, Dec = {found.dec:+.5f}°",
+        f"- **Resolution Match:** {found.match_kind} (confidence {found.confidence:.2f})",
+    ]
+    if found.alternatives:
+        alts = ", ".join(str(a.get("name", "?")) for a in found.alternatives[:4])
+        lines.append(f"- **Aliases / Near Matches:** {alts}")
+
+    if ned and found.object_class in ("galaxy_agn", "cluster"):
+        try:
+            from .. import resolvers
+            ned_tab = resolvers.extragalactic(found.display_name)
+            if ned_tab is not None and len(ned_tab) > 0:
+                lines.append(f"- **NED Cross-ID:** {len(ned_tab)} records found")
+        except Exception:
+            pass
+
+    try:
+        bib_art = ctx.child("lit.bibliography", target=found.display_name, rows=rows)
+        bib_data = ctx.load(bib_art.id)
+        docs = bib_data.get("docs", [])
+        if docs:
+            lines += ["", f"## Recent Literature ({len(docs)} papers)", ""]
+            for d in docs:
+                bcode = d.get("bibcode", "")
+                year = d.get("year", "")
+                title = d.get("title", [""])[0] if isinstance(d.get("title"), list) else d.get("title", "")
+                lines.append(f"- **{bcode}** ({year}): {title}")
+    except Exception as exc:
+        lines.append(f"\n*Bibliography lookup: {exc}*")
+
+    if images:
+        try:
+            img_art = ctx.child("imaging.cutout", target=f"{found.ra} {found.dec}", fov=fov or 8.0)
+            if img_art.path:
+                lines += ["", f"## Image Cutout\n![Cutout]({img_art.path})"]
+        except Exception as exc:
+            lines.append(f"\n*Image rendering: {exc}*")
+
+    return ctx.document("\n".join(lines), label=f"dossier {found.display_name}",
+                        target=found.display_name)
 
 
 @capability(
@@ -83,9 +126,37 @@ def object_dossier(ctx, target, rows, fov, images, ned):
     tags=("target",),
 )
 def object_field(ctx, target, fov, images):
+    from .. import cutouts, resolvers
     found = resolve(ctx, target)
-    return ctx.document(f"# Field: {found.ra} {found.dec}\n(mocked)",
-                        label=f"field {found.ra:.4f} {found.dec:+.4f}",
+    ctx.progress(f"inspecting field at {found.ra:.4f}, {found.dec:+.4f}")
+
+    obj = cutouts.identify_field(found.ra, found.dec)
+    hips, label = cutouts.best_color_hips(found.dec)
+    coverage = resolvers.image_coverage_note(found.dec)
+
+    lines = [
+        f"# Field Packet: {found.ra:.5f}°, {found.dec:+.5f}° (FOV {fov}')",
+        "",
+    ]
+    if obj:
+        lines.append(f"- **Nearest Catalogued Object:** {obj[0]} ({obj[1]}), {obj[2]:.1f}\" separation")
+    else:
+        lines.append("- **Nearest Object:** None catalogued in SIMBAD within 2'")
+
+    lines += [
+        f"- **Best Colour Survey:** {label} (`{hips}`)",
+        f"- **Survey Footprint Note:** {coverage}",
+    ]
+
+    if images:
+        try:
+            img_art = ctx.child("imaging.cutout", target=f"{found.ra} {found.dec}", fov=fov)
+            if img_art.path:
+                lines += ["", f"## Field Preview\n![Field]({img_art.path})"]
+        except Exception as exc:
+            lines.append(f"\n*Field image cutout: {exc}*")
+
+    return ctx.document("\n".join(lines), label=f"field {found.ra:.4f} {found.dec:+.4f}",
                         ra=found.ra, dec=found.dec, fov=fov)
 
 
@@ -96,12 +167,46 @@ def object_field(ctx, target, fov, images):
     tags=("target",),
 )
 def object_sweep(ctx, target):
+    from astropy.table import Table
     found = resolve(ctx, target)
     ctx.progress(f"sweeping archives for {found.display_name}")
+
     entries = []
-    from astropy.table import Table
-    table = Table(rows=[[e.get("product", ""), e.get("status", ""),
-                         e.get("rows", 0), e.get("detail", "")] for e in entries] or None,
+
+    # 1. Gaia DR3 cone search
+    try:
+        cat_art = ctx.child("object.catalogue", target=found.display_name,
+                            catalog="I/355/gaiadr3", radius_arcmin=1.0)
+        tab = ctx.load(cat_art.id)
+        entries.append({"product": "Gaia DR3 (VizieR)", "status": "ok",
+                        "rows": len(tab), "detail": "1.0' cone search"})
+    except Exception as exc:
+        entries.append({"product": "Gaia DR3 (VizieR)", "status": "empty/err",
+                        "rows": 0, "detail": str(exc)[:40]})
+
+    # 2. HEASARC high-energy
+    try:
+        he_art = ctx.child("object.highenergy", target=found.display_name,
+                           catalog="chanmaster", radius_deg=0.2)
+        tab = ctx.load(he_art.id)
+        entries.append({"product": "HEASARC Chandra", "status": "ok",
+                        "rows": len(tab), "detail": "0.2 deg cone search"})
+    except Exception as exc:
+        entries.append({"product": "HEASARC Chandra", "status": "empty/err",
+                        "rows": 0, "detail": str(exc)[:40]})
+
+    # 3. Literature references
+    try:
+        bib_art = ctx.child("lit.bibliography", target=found.display_name, rows=10)
+        bib_data = ctx.load(bib_art.id)
+        docs = bib_data.get("docs", [])
+        entries.append({"product": "SIMBAD/ADS Literature", "status": "ok" if docs else "empty",
+                        "rows": len(docs), "detail": "recent papers"})
+    except Exception as exc:
+        entries.append({"product": "SIMBAD/ADS Literature", "status": "err",
+                        "rows": 0, "detail": str(exc)[:40]})
+
+    table = Table(rows=[[e["product"], e["status"], e["rows"], e["detail"]] for e in entries],
                   names=("product", "status", "rows", "detail"))
     return ctx.table(table, label=f"sweep {found.display_name}",
                      target=found.display_name)
@@ -223,12 +328,38 @@ def object_catalogue(ctx, target, catalog, radius_arcmin):
     tags=("target",),
 )
 def object_watch(ctx, target, candidate_list, radius_arcmin, days, row_limit):
-    from astropy.table import Table
+    from astropy.table import Table, vstack
+    from .. import transients
+
     if not target and not candidate_list:
         raise ValueError("object.watch needs a target or a candidate_list")
-    entries = []
-    rows = [[e.get("name", ""), e.get("ra", float("nan")), e.get("dec", float("nan")),
-             e.get("alerts", 0), e.get("detail", "")] for e in entries]
-    table = Table(rows=rows or None, names=("name", "ra", "dec", "alerts", "detail"))
-    return ctx.table(table, label=f"watch {target or candidate_list}",
-                     days=days, radius_arcmin=radius_arcmin)
+
+    if target:
+        found = resolve(ctx, target)
+        ctx.progress(f"checking ALeRCE transients near {found.display_name}")
+        tab = transients.fetch_transients_near(found.ra, found.dec,
+                                               radius_arcmin=radius_arcmin, days=days)
+        if tab is None or len(tab) == 0:
+            tab = Table(names=("main_id", "ra", "dec", "class", "probability"),
+                        dtype=("U32", "f8", "f8", "U32", "f8"))
+        return ctx.table(tab, label=f"watch {found.display_name}",
+                         target=found.display_name, days=days, radius_arcmin=radius_arcmin)
+
+    from .. import candidates, tables
+    cand_tab = candidates.load(candidate_list)
+    ra_col, dec_col = tables.find_coord_columns(cand_tab)
+
+    tabs = []
+    for i, row in enumerate(cand_tab[:row_limit]):
+        try:
+            ra, dec = float(row[ra_col]), float(row[dec_col])
+            t = transients.fetch_transients_near(ra, dec, radius_arcmin=radius_arcmin, days=days)
+            if t is not None and len(t) > 0:
+                tabs.append(t)
+        except Exception:
+            pass
+
+    combined = vstack(tabs) if tabs else Table(names=("main_id", "ra", "dec", "class", "probability"),
+                                                dtype=("U32", "f8", "f8", "U32", "f8"))
+    return ctx.table(combined, label=f"watch list {candidate_list}",
+                     candidate_list=candidate_list, days=days, radius_arcmin=radius_arcmin)

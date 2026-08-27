@@ -1949,18 +1949,16 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def do_dossier(self, name: str) -> None:
         try:
-            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
-                name,
-                on_error=lambda m: self.call_from_thread(
-                    self._feedback, "dossier", m, "yellow"))
-            path = (lambda *args, **kwargs: paths.REPORTS_DIR / "dummy.md")(paths.REPORTS_DIR, "dossier",
-                                        pkt.name, pkt.to_markdown())
+            from ..core.kernel import Kernel
+            k = Kernel()
+            art = k.run("object.dossier", {"target": name})
+            path = art.full_path
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
                 f"dossier failed: {type(e).__name__}: {str(e)}", "red")
             return
-        self.call_from_thread(self._accept_report_result, "dossier", pkt.name, path)
+        self.call_from_thread(self._accept_report_result, "dossier", name, path)
 
     def trigger_field(self, position: str | None) -> None:
         coords = None
@@ -1984,12 +1982,10 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def do_field(self, ra: float, dec: float) -> None:
         try:
-            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
-                ra, dec,
-                on_error=lambda m: self.call_from_thread(
-                    self._feedback, "field", m, "yellow"))
-            path = (lambda *args, **kwargs: paths.REPORTS_DIR / "dummy.md")(paths.REPORTS_DIR, "field",
-                                        f"{ra:.5f}_{dec:+.5f}", pkt.to_markdown())
+            from ..core.kernel import Kernel
+            k = Kernel()
+            art = k.run("object.field", {"target": f"{ra:.5f} {dec:+.5f}"})
+            path = art.full_path
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
@@ -2028,44 +2024,43 @@ class CelestriumApp(App):
     def do_poster(self, target: str | None, name: str | None,
                   ra: float | None, dec: float | None, otype: str = "") -> None:
         try:
-            if target:
-                obj = candidates.resolve(target)
-                name, ra, dec = obj["name"], obj["ra"], obj["dec"]
-                otype = str(obj.get("otype", ""))
-            fov = self.image_cfg.get("fov", "auto")
+            from ..core.kernel import Kernel
+            k = Kernel()
+            tgt_name = target or name or f"{ra} {dec}"
+            fov = self.image_cfg.get("fov", 8.0)
             if not isinstance(fov, (int, float)):
-                fov = (lambda *args: 8.0)(otype or "", 10.0, 4.0)
-            self.call_from_thread(
-                self._feedback, "poster",
-                f"rendering {name}; fov={fov}' 1920x1080 style=label")
-            paths.POSTERS_DIR.mkdir(parents=True, exist_ok=True)
-            out = paths.POSTERS_DIR / f"{candidates.slug(str(name))}-1080p-label.jpg"
-            path = cutouts.poster(ra, dec, fov_arcmin=fov, width=1920, height=1080,
-                                  out=out, label=str(name), style="label")
+                fov = 8.0
+            art = k.run("imaging.poster", {"target": tgt_name, "fov": fov, "width": 1920, "height": 1080})
+            path = art.full_path
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
                 f"poster failed: {type(e).__name__}: {str(e)}", "red")
             return
-        self.call_from_thread(self._accept_report_result, "poster", str(name), path)
+        self.call_from_thread(self._accept_report_result, "poster", str(tgt_name), path)
 
     @work(thread=True, exclusive=True)
     def do_runbook(self, name: str) -> None:
-        """Run a configured runbook with live per-step progress, then save its index."""
-        def on_step(note: str) -> None:
-            self.call_from_thread(self._log, note)
+        """Run a configured study/runbook with live per-step progress, then save its index."""
         try:
             self.call_from_thread(
                 self._feedback, "runbook",
-                f"starting {name}; report dir={paths.REPORTS_DIR}")
-            result = (lambda *args, **kwargs: {})(
-                name, reports_dir=paths.REPORTS_DIR, atlas_dir=paths.ATLAS_DIR,
-                posters_dir=paths.POSTERS_DIR, contact_sheet=cutouts.contact_sheet,
-                on_step=on_step)
+                f"starting study {name}")
+            from ..core.kernel import Kernel
+            k = Kernel()
+            art = k.run("study.run", {"study": name})
             paths.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
             index = paths.REPORTS_DIR / f"runbook-{name}.md"
-            index.write_text(result.to_markdown() + "\n", encoding="utf-8")
-            self.call_from_thread(self._accept_runbook_result, index, name, len(result.notes), len(result.created))
+            meta = art.meta
+            summary = (
+                f"# Study Run: {name}\n\n"
+                f"- **Status:** {meta.get('succeeded', 0)}/{meta.get('combinations', 0)} succeeded\n"
+                f"- **Metric:** {meta.get('metric', 'N/A')}\n"
+                f"- **Preregistration Hash:** `{meta.get('prereg', 'N/A')}`\n"
+                f"- **Artifact ID:** `{art.id}`\n"
+            )
+            index.write_text(summary, encoding="utf-8")
+            self.call_from_thread(self._accept_runbook_result, index, name, 1, meta.get("succeeded", 0))
         except Exception as e:
             self.call_from_thread(
                 self._feedback, "error",
