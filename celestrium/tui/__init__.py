@@ -1,6 +1,6 @@
 """celestrium.tui — the Celestrium Textual cockpit.
 
-A thin presenter over the same brain the CLI uses (registry + packets + cache).
+A thin presenter over the same brain the CLI uses (config + core/kernel).
 Async so the UI never blocks: Resolve · Literature · Query · Crossmatch · Candidates
 · History, plus the interactive desk loop (crossmatch → candidate lists) and a
 care-and-attention pass — recolouring themes (ansi-dark default), a rotating-

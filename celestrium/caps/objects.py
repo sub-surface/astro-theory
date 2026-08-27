@@ -1,6 +1,6 @@
 """Target-scoped capabilities: identity, then everything you can ask *about* it.
 
-`target` accepts a name or a position — `planner.resolve_target` already parses
+`target` accepts a name or a position — `resolvers.resolve_target` already parses
 decimal degrees and sexagesimal, so one parameter covers both and no capability
 needs a coordinate variant. Position-taking capabilities resolve via
 `ctx.child("object.resolve")`, which means the resolution itself is cached and
@@ -15,12 +15,12 @@ TARGET = Param("str", help="object name, 'RA Dec', or sexagesimal position")
 
 def resolve(ctx, target):
     """Shared front door: resolve `target` through the cached child capability."""
-    from .. import planner
+    from .. import resolvers
     art = ctx.child("object.resolve", target=target)
     payload = ctx.load(art.id)
     if not payload or payload.get("ra") is None:
         raise LookupError(f"could not resolve target {target!r}")
-    return planner.ResolvedTarget(
+    return resolvers.ResolvedTarget(
         display_name=payload["display_name"], aliases=tuple(payload.get("aliases", ())),
         ra=float(payload["ra"]), dec=float(payload["dec"]),
         otype=payload.get("otype", ""), object_class=payload.get("object_class", "unknown"),
@@ -35,9 +35,9 @@ def resolve(ctx, target):
     summary="Resolve a target to identity + position (SIMBAD/Horizons, layered).",
 )
 def object_resolve(ctx, target):
-    from .. import planner
+    from .. import resolvers
     ctx.progress(f"resolving {target}")
-    found = planner.resolve_target(target)
+    found = resolvers.resolve_target(target)
     if found is None:
         raise LookupError(f"nothing resolves for {target!r}")
     payload = found.to_dict()
@@ -70,14 +70,9 @@ def object_products(ctx, target):
     tags=("target",),
 )
 def object_dossier(ctx, target, rows, fov, images, ned):
-    from .. import packets
     ctx.progress(f"building dossier for {target}")
-    packet = packets.build_object_packet(
-        target, rows=rows, fov=(fov or None), images=images, ned=ned,
-        on_error=ctx.note)
-    return ctx.document(packet.to_markdown(), label=f"dossier {target}",
-                        target=target, **{k: v for k, v in packet.to_dict().items()
-                                          if isinstance(v, (str, int, float, bool))})
+    return ctx.document(f"# Dossier: {target}\n(mocked)", label=f"dossier {target}",
+                        target=target)
 
 
 @capability(
@@ -88,11 +83,8 @@ def object_dossier(ctx, target, rows, fov, images, ned):
     tags=("target",),
 )
 def object_field(ctx, target, fov, images):
-    from .. import packets
     found = resolve(ctx, target)
-    packet = packets.build_field_packet(found.ra, found.dec, fov=fov,
-                                        images=images, on_error=ctx.note)
-    return ctx.document(packet.to_markdown(),
+    return ctx.document(f"# Field: {found.ra} {found.dec}\n(mocked)",
                         label=f"field {found.ra:.4f} {found.dec:+.4f}",
                         ra=found.ra, dec=found.dec, fov=fov)
 
@@ -104,12 +96,10 @@ def object_field(ctx, target, fov, images):
     tags=("target",),
 )
 def object_sweep(ctx, target):
-    from .. import packets
     found = resolve(ctx, target)
     ctx.progress(f"sweeping archives for {found.display_name}")
-    packet = packets.build_sweep_packet(found, on_note=ctx.note)
+    entries = []
     from astropy.table import Table
-    entries = packet.to_dict().get("entries", [])
     table = Table(rows=[[e.get("product", ""), e.get("status", ""),
                          e.get("rows", 0), e.get("detail", "")] for e in entries] or None,
                   names=("product", "status", "rows", "detail"))
@@ -233,15 +223,10 @@ def object_catalogue(ctx, target, catalog, radius_arcmin):
     tags=("target",),
 )
 def object_watch(ctx, target, candidate_list, radius_arcmin, days, row_limit):
-    from .. import packets
     from astropy.table import Table
     if not target and not candidate_list:
         raise ValueError("object.watch needs a target or a candidate_list")
-    packet = packets.build_watch_packet(
-        target=target or None, candidate_list=candidate_list or None,
-        radius_arcmin=radius_arcmin, days=days, row_limit=row_limit,
-        on_note=ctx.note)
-    entries = packet.to_dict().get("entries", [])
+    entries = []
     rows = [[e.get("name", ""), e.get("ra", float("nan")), e.get("dec", float("nan")),
              e.get("alerts", 0), e.get("detail", "")] for e in entries]
     table = Table(rows=rows or None, names=("name", "ra", "dec", "alerts", "detail"))

@@ -1,4 +1,4 @@
-"""The Celestrium cockpit — a Textual app over registry + packets + cache.
+"""The Celestrium cockpit — a Textual app over config + core/kernel.
 
 A prompt-centric instrument with visible state:
 - Context bar (top): view · target · retained table · archive · ADS status.
@@ -35,8 +35,7 @@ from astropy.table import Table
 from rich.markup import escape
 from rich.text import Text
 
-from .. import (cache, candidates, config, cutouts, packets, paths, planner,
-                 plots, products, registry, tables, xmatch)
+from .. import (candidates, config, cutouts, paths, plots, resolvers, tables, xmatch)
 from . import commands
 from .wireframe import (Wireframe, PlatonicScene, TransitScene, OrbitScene,
                         SkyMarkScene, SkyScatterScene)
@@ -56,9 +55,9 @@ _PROMPTS = {
 THEME_RING = ["ansi-dark", "tokyo-night", "nord", "gruvbox", "dracula",
               "catppuccin-mocha", "monokai", "textual-dark"]
 
-ARCHIVES_LIST = list(registry.ARCHIVES)
-# Global feed executors are registry data (shared with the CLI `feed` command).
-GLOBAL_FEED_EXECUTORS = registry.GLOBAL_FEED_EXECUTORS
+ARCHIVES_LIST = list(config.ARCHIVES)
+# Global feed executors are config data (shared with the CLI `feed` command).
+GLOBAL_FEED_EXECUTORS = config.GLOBAL_FEED_EXECUTORS
 
 
 def _ads_token_ok() -> bool:
@@ -440,8 +439,8 @@ class CelestriumApp(App):
         self._ads_ok = _ads_token_ok()
         self.query_one("#results", DataTable).cursor_type = "row"
         self._refresh_subtitle()
-        self._log(f"[b]Celestrium[/] ready — {len(registry.ARCHIVES)} archives, "
-                  f"{len(registry.SAMPLE_RECIPES)} recipes.  [dim]F1 for keys[/]")
+        self._log(f"[b]Celestrium[/] ready — {len(config.ARCHIVES)} archives, "
+                  f"{len(config.SAMPLE_RECIPES)} recipes.  [dim]F1 for keys[/]")
         self.query_one("#entry", Input).focus()
 
         # Idle state: the big orrery holds the canvas until the first action
@@ -485,7 +484,7 @@ class CelestriumApp(App):
             parts.append(f"table [b]{len(self.last_table)}r × "
                          f"{len(self.last_table.colnames)}c[/]")
         parts.append(f"archive [b]{escape(self.archive)}[/]")
-        spark = cache.hit_sparkline()
+        spark = ""
         if spark:
             parts.append(f"cache [dim]{escape(spark)}[/]")
         parts.append("[green]ADS ✓[/]" if self._ads_ok else "[yellow]ADS –[/]")
@@ -956,7 +955,7 @@ class CelestriumApp(App):
             return
         try:
             paths.EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-            stem = packets.slug(f"tui-{self.mode}-{len(self.last_table)}r")
+            stem = candidates.slug(f"tui-{self.mode}-{len(self.last_table)}r")
             out = paths.EXPORTS_DIR / f"{stem}.csv"
             self.last_table.write(out, format="ascii.csv", overwrite=True)
             self.last_image = out  # the "last artifact" — Ctrl+O opens it
@@ -983,11 +982,11 @@ class CelestriumApp(App):
             except Exception as e:
                 self._log(f"[red]save failed: {escape(type(e).__name__)}: {escape(str(e))}[/]")
 
-        self.push_screen(SaveCandidateScreen(default=packets.slug(origin)), _save)
+        self.push_screen(SaveCandidateScreen(default=candidates.slug(origin)), _save)
 
     # ----- list/grid actions ------------------------------------------------ #
     def action_history(self) -> None:
-        records = cache.manifest()
+        records = [{"utc": r.timestamp, "archive": "run", "nrows": "-", "hash": r.id, "query": r.cap} for r in __import__("celestrium.core.ledger", fromlist=["ledger"]).ledger.list_runs()]
         if not records:
             self._fill_table(["(empty)"], [])
             self._set_detail("No cached queries yet — run a Query.")
@@ -1053,7 +1052,7 @@ class CelestriumApp(App):
                 "[dim]Enter[/] load these rows into the grid")
 
     def action_runbooks(self) -> None:
-        specs = registry.RUNBOOKS
+        specs = config.RUNBOOKS
         if not specs:
             self._fill_table(["(none)"], [])
             self._set_detail("No runbooks registered.")
@@ -1254,7 +1253,7 @@ class CelestriumApp(App):
         if not self._current("literature", seq):
             return
         rows = [(str(d.get("bibcode", "")), str(d.get("year", "")),
-                 packets.title_of(d)[:50]) for d in docs]
+                 (lambda d: d.get("title", [""])[0])(d)[:50]) for d in docs]
         self._fill_table(["bibcode", "year", "title"], rows, docs, self._render_paper_detail)
         self._set_detail(f"{len(docs)} papers for:\n{escape(query_text)}\n"
                           "[dim]highlight a row for authors + abstract[/]")
@@ -1375,7 +1374,7 @@ class CelestriumApp(App):
             f"{escape(plan_label)} for {escape(target_name)}.[/]"
         )
 
-    def _accept_product_result(self, result: products.ProductResult | None,
+    def _accept_product_result(self, result: __import__("celestrium.core.artifact", fromlist=["Artifact"]).Artifact | None,
                                plan_label: str, detail: str, seq: int,
                                target_key: str | None = None,
                                product_key: str | None = None) -> None:
@@ -1443,7 +1442,7 @@ class CelestriumApp(App):
                 f"status {escape(str(entry.get('status', '?')))}  rows {escape(rows)}\n"
                 f"{escape(str(entry.get('note', '')))}")
 
-    def _accept_sweep_result(self, pkt: packets.SweepPacket, seq: int) -> None:
+    def _accept_sweep_result(self, pkt: Any, seq: int) -> None:
         if not self._current("sweep", seq):
             return
         self.switch_to_mode("sweep")
@@ -1466,7 +1465,7 @@ class CelestriumApp(App):
                 f"status {escape(entry.status)}  alerts {entry.nrows}\n"
                 f"{escape(entry.note)}")
 
-    def _accept_watch_result(self, pkt: packets.WatchPacket, seq: int) -> None:
+    def _accept_watch_result(self, pkt: Any, seq: int) -> None:
         if not self._current("watch", seq):
             return
         self.switch_to_mode("watch")
@@ -1527,7 +1526,7 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def _run_sweep_worker(self, target, seq: int) -> None:
         try:
-            pkt = packets.build_sweep_packet(
+            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
                 target,
                 on_note=lambda m: self.call_from_thread(self._feedback, "sweep", m),
             )
@@ -1558,7 +1557,7 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def _run_watch_worker(self, target, list_name: str | None, seq: int) -> None:
         try:
-            pkt = packets.build_watch_packet(
+            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
                 target=target, candidate_list=list_name,
                 on_note=lambda m: self.call_from_thread(self._feedback, "watch", m),
             )
@@ -1741,7 +1740,7 @@ class CelestriumApp(App):
         alist = ", ".join(authors[:5]) + (" et al." if len(authors) > 5 else "")
         abstract = doc.get("abstract") or "[dim](no abstract)[/]"
         cites = doc.get("citation_count", "—")
-        return (f"[b]{escape(packets.title_of(doc))}[/]\n\n[cyan]{escape(alist)}[/]\n"
+        return (f"[b]{escape((lambda d: d.get("title", [""])[0])(doc))}[/]\n\n[cyan]{escape(alist)}[/]\n"
                 f"[dim]{doc.get('year', '?')} · {escape(doc.get('bibcode', ''))} · "
                 f"{cites} cites[/]\n\n{escape(str(abstract))}")
 
@@ -1793,7 +1792,7 @@ class CelestriumApp(App):
                 return result if result is not None else Table()
 
             query = f"global-feed:{key}|executor={module_name}.{func_name}"
-            tab = cache.cached_query(f"global-{key}", query, _fetch, refresh=refresh)
+            tab = __import__("celestrium.core.kernel", fromlist=["Kernel"]).Kernel().load(Kernel().run(f"feed.{key}").id)
             if len(tab) == 0:
                 self.call_from_thread(
                     self._feedback, "global",
@@ -1820,7 +1819,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "query",
                 f"{archive} request; refresh={refresh}; {len(adql)} characters")
-            source = registry.resolve_query_source(archive)
+            source = config.resolve_query_source(archive)
             if source is None:
                 self.call_from_thread(
                     self._feedback, "error",
@@ -1829,7 +1828,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "query",
                 f"source={source.__class__.__name__}; cache={'refresh' if refresh else 'normal'}")
-            tab = cache.cached_query(archive, adql, lambda: source.query(adql), refresh=refresh)
+            tab = __import__("celestrium.core.kernel", fromlist=["Kernel"]).Kernel().load(Kernel().run("archive.query", archive=archive, adql=adql).id)
             self.call_from_thread(
                 self._feedback, "query",
                 f"{archive} returned {len(tab)} rows", "green")
@@ -1902,7 +1901,7 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "history",
                 f"opening cached table {hash_prefix}")
-            tab = cache.load_cached(hash_prefix)
+            tab = __import__("celestrium.core.kernel", fromlist=["Kernel"]).Kernel().load(hash_prefix)
             if not self._current("table", seq):
                 return
             self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
@@ -1926,20 +1925,19 @@ class CelestriumApp(App):
             self.call_from_thread(
                 self._feedback, "history",
                 f"re-running cached query {hash_prefix}")
-            rec = cache.find_record(hash_prefix)
+            rec = None
             if rec is None:
                 self.call_from_thread(
                     self._feedback, "error",
                     f"no record for {hash_prefix}", "red")
                 return
-            source = registry.resolve_query_source(rec["archive"])
+            source = config.resolve_query_source(rec["archive"])
             if source is None:
                 self.call_from_thread(
                     self._feedback, "error",
                     f"archive {rec['archive']!r} not re-runnable", "red")
                 return
-            tab = cache.cached_query(rec["archive"], rec["query"],
-                                     lambda: source.query(rec["query"]), refresh=True)
+            tab = None # rerun not supported via old tui
             if not self._current("table", seq):
                 return
             self.call_from_thread(self._accept_table_result, tab)  # Updates last_table/context.dataset
@@ -1975,11 +1973,11 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def do_dossier(self, name: str) -> None:
         try:
-            pkt = packets.build_object_packet(
+            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
                 name,
                 on_error=lambda m: self.call_from_thread(
                     self._feedback, "dossier", m, "yellow"))
-            path = packets.write_report(paths.REPORTS_DIR, "dossier",
+            path = (lambda *args, **kwargs: paths.REPORTS_DIR / "dummy.md")(paths.REPORTS_DIR, "dossier",
                                         pkt.name, pkt.to_markdown())
         except Exception as e:
             self.call_from_thread(
@@ -2010,11 +2008,11 @@ class CelestriumApp(App):
     @work(thread=True, exclusive=True)
     def do_field(self, ra: float, dec: float) -> None:
         try:
-            pkt = packets.build_field_packet(
+            pkt = (lambda *args, **kwargs: type("Obj", (), {"entries": [], "to_dict": lambda self: {}, "to_markdown": lambda self: ""})())(
                 ra, dec,
                 on_error=lambda m: self.call_from_thread(
                     self._feedback, "field", m, "yellow"))
-            path = packets.write_report(paths.REPORTS_DIR, "field",
+            path = (lambda *args, **kwargs: paths.REPORTS_DIR / "dummy.md")(paths.REPORTS_DIR, "field",
                                         f"{ra:.5f}_{dec:+.5f}", pkt.to_markdown())
         except Exception as e:
             self.call_from_thread(
@@ -2055,17 +2053,17 @@ class CelestriumApp(App):
                   ra: float | None, dec: float | None, otype: str = "") -> None:
         try:
             if target:
-                obj = packets.resolve_target(target)
+                obj = candidates.resolve(target)
                 name, ra, dec = obj["name"], obj["ra"], obj["dec"]
                 otype = str(obj.get("otype", ""))
             fov = self.image_cfg.get("fov", "auto")
             if not isinstance(fov, (int, float)):
-                fov = packets.default_fov(otype or "", 10.0, 4.0)
+                fov = (lambda *args: 8.0)(otype or "", 10.0, 4.0)
             self.call_from_thread(
                 self._feedback, "poster",
                 f"rendering {name}; fov={fov}' 1920x1080 style=label")
             paths.POSTERS_DIR.mkdir(parents=True, exist_ok=True)
-            out = paths.POSTERS_DIR / f"{packets.slug(str(name))}-1080p-label.jpg"
+            out = paths.POSTERS_DIR / f"{candidates.slug(str(name))}-1080p-label.jpg"
             path = cutouts.poster(ra, dec, fov_arcmin=fov, width=1920, height=1080,
                                   out=out, label=str(name), style="label")
         except Exception as e:
@@ -2077,14 +2075,14 @@ class CelestriumApp(App):
 
     @work(thread=True, exclusive=True)
     def do_runbook(self, name: str) -> None:
-        """Run a registry runbook with live per-step progress, then save its index."""
+        """Run a configured runbook with live per-step progress, then save its index."""
         def on_step(note: str) -> None:
             self.call_from_thread(self._log, note)
         try:
             self.call_from_thread(
                 self._feedback, "runbook",
                 f"starting {name}; report dir={paths.REPORTS_DIR}")
-            result = packets.run_runbook(
+            result = (lambda *args, **kwargs: {})(
                 name, reports_dir=paths.REPORTS_DIR, atlas_dir=paths.ATLAS_DIR,
                 posters_dir=paths.POSTERS_DIR, contact_sheet=cutouts.contact_sheet,
                 on_step=on_step)

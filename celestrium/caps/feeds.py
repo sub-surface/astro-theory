@@ -1,6 +1,6 @@
 """Live sky/event feeds — global, not target-scoped.
 
-Generated from `registry.GLOBAL_FEED_EXECUTORS` so adding a broker is still a
+Generated from `config.GLOBAL_FEED_EXECUTORS` so adding a broker is still a
 one-line registry edit, but each feed lands in the registry as a real
 capability with its own content address and cache entry.
 """
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import importlib
 
-from .. import registry
+from .. import config
 from ..core.capability import Param, capability
 
 LABELS = {
@@ -36,7 +36,7 @@ def _make(key: str, module_path: str, func_name: str):
     return _feed
 
 
-for _key, (_module, _func) in registry.GLOBAL_FEED_EXECUTORS.items():
+for _key, (_module, _func) in config.GLOBAL_FEED_EXECUTORS.items():
     _make(_key, _module, _func)
 
 

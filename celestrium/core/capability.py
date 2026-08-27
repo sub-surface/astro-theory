@@ -1,7 +1,7 @@
 """`@capability` — one declaration per thing the instrument can do.
 
 This is the consolidation that matters. Before, a single product was declared
-in `planner.SOURCE_CAPABILITIES`, implemented in `products.PRODUCT_EXECUTORS`,
+in `resolvers.SOURCE_CAPABILITIES`, implemented in `products.PRODUCT_EXECUTORS`,
 routed in `tui/commands.COMMANDS`, dispatched in `app._handle_command`, and
 exposed again as a hand-written `hub.py` command. Now it is one object, and
 every surface *enumerates the registry* instead of hardcoding a list:
@@ -185,7 +185,7 @@ def all_caps(wing: Optional[str] = None, kind: Optional[str] = None) -> list:
 
 def for_target(target: Any, *, cost: Optional[str] = None) -> list:
     """Capabilities that apply to a resolved target — replaces the hand-kept
-    `planner.SOURCE_CAPABILITIES` ranking table."""
+    `resolvers.SOURCE_CAPABILITIES` ranking table."""
     out = [c for c in all_caps() if "target" in c.tags and c.matches(target)]
     if cost:
         out = [c for c in out if c.cost == cost]

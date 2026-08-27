@@ -72,13 +72,12 @@ python -m celestrium vault sync <study>     # results → the Observables note
 ## The older surfaces (`hub.py`, `tui/`)
 
 **One brain, two surfaces:** all real logic lives in `celestrium/`; the CLI and TUI
-only present. These predate the kernel and still run on `cache.py`/`packets.py`/`products.py`;
-they work, and the TUI rebuild onto the kernel is the next phase (`docs/rebuild-2026-07.md`).
+only present. The kernel rebuild (`docs/rebuild-2026-07.md`) moved analysis into
+`core/`; the older surfaces (`hub.py`, `tui/`) still wrap the primitive layer directly
+for some commands (query, resolve, image) — migrating them to capabilities is ongoing.
 
-- `registry.py` — data: `ARCHIVES` (gaia/irsa/euclid/heasarc native ADQL + lazy adaptors for
+- `config.py` — data: `ARCHIVES` (gaia/irsa/euclid/heasarc native ADQL + lazy adaptors for
   desi/casda/vizier-tap), `SAMPLE_RECIPES`, `ATLAS_TARGETS`, `RUNBOOKS`.
-- `packets.py` — builders returning dataclasses with `.to_dict()` (JSON/TUI) + `.to_markdown()` (reports).
-- `cache.py` — `cached_query` + `data/manifest.jsonl` provenance + `load_cached`/`find_record` (by hash).
 - `cutouts.py` · `resolvers.py` · `ads.py` · `xmatch.py` · `<archive>.py` — thin primitives.
 - `hub.py` — Typer CLI, a thin presenter; commands grouped by wing in `--help`. Global `--json`.
 - `tui/` — Textual cockpit (`python -m celestrium.tui`), **prompt-centric** (Phase 5): one REPL
@@ -94,10 +93,10 @@ they work, and the TUI rebuild onto the kernel is the next phase (`docs/rebuild-
   Ctrl+S save candidates · Ctrl+B cite highlighted paper → refs.bib · Ctrl+E export table → CSV.
 
 **Rule:** `hub.py` and `tui/` import `celestrium/*`, never each other. New behaviour goes in
-`registry.py`/`packets.py` so both surfaces get it. The CLI tests monkeypatch names ON the
-`hub` module (`hub.QUERY_ARCHIVES`, `hub.cutouts`, `hub._contact_sheet`, `hub.REPORTS_DIR`…);
-`hub.py` re-exports registry objects and packets call modules by attribute so patches flow —
-keep that (don't bind functions by value at import). Tests must stay hermetic (no network).
+`config.py` (data) or `caps/` (logic) so both surfaces get it. The CLI tests monkeypatch names
+ON the `hub` module (`hub.QUERY_ARCHIVES`, `hub.cutouts`, `hub._contact_sheet`,
+`hub.REPORTS_DIR`…); `hub.py` re-exports config objects and calls modules by attribute so patches
+flow — keep that (don't bind functions by value at import). Tests must stay hermetic (no network).
 
 ```bash
 python -m pytest tests/ -q          # hermetic (no network); 257 tests as of 2026-07-30

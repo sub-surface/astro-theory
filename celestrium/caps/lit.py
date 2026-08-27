@@ -10,10 +10,10 @@ from ..core.capability import Param, capability
     summary="Literature search via ADS/SciX.",
 )
 def lit_papers(ctx, query, rows):
-    from .. import packets
+    from .. import ads
     ctx.progress(f"ADS: {query}")
-    packet = packets.build_paper_set(query, rows=rows)
-    payload = packet.to_dict()
+    docs = ads.search(query, rows=rows)
+    payload = {"query": query, "docs": docs}
     docs = payload.get("docs", payload.get("papers", []))
     return ctx.data(payload, label=f"papers: {query}", nrows=len(docs), query=query)
 

@@ -36,35 +36,35 @@ all-sky DSS. Diagrams for a paper; desktop backgrounds for the soul.
 ## Quickstart
 
 ```bash
-pip install -r celestrium/requirements.txt
-python -m celestrium --help                  # grouped by the three wings
-python -m celestrium resolve M87             # identity + recent papers
-python -m celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
-python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # cross-catalogue audit
-python -m celestrium poster M87 --resolution 4k --style label       # a wallpaper
-python -m celestrium --json dossier M87      # machine-readable for agents
+pip install -e .                             # install editable package with CLI console script
+celestrium --help                            # grouped by the three wings
+celestrium resolve M87                       # identity + recent papers
+celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
+celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # cross-catalogue audit
+celestrium poster M87 --resolution 4k --style label       # a wallpaper
+celestrium --json dossier M87                # machine-readable for agents
 ```
 
 A free [ADS/SciX token](https://ui.adsabs.harvard.edu/user/settings/token) (in `~/.ads/dev_key`
-or `$ADS_DEV_KEY`) unlocks the literature commands. Pulls are cached under `data/` (git-ignored)
-with a provenance manifest, so every figure traces back to the exact query that made it.
+or `$ADS_DEV_KEY`) unlocks the literature commands. Pulls are cached in SQLite ledger (`data/celestrium.db`)
+with content-addressed `blake2b` hashes, so every figure traces back to the exact query that made it.
 
 ## How it's built
 
 ```
 celestrium/   the instrument (Python package)
-  registry.py · packets.py   service layer: data + builders (one brain)
-  hub.py · tui/               the CLI + the Textual cockpit (python -m celestrium.tui)
-  cache · cutouts · xmatch · resolvers · ads · <archive>.py   thin primitives
+  core/       kernel · ledger · capability · artifact · events (execution spine)
+  config.py   single source of truth for archives, recipes, targets, runbooks, feeds
+  hub.py · tui/  the thin CLI + Textual cockpit presenters
+  caps/       capabilities (archives, objects, imaging, lit, feeds, tabular, analysis)
+  cutouts · resolvers · ads · xmatch · <archive>.py   boring, direct primitives
 docs/         data-atlas · toolbox · imaging-guide · roadmap · research/
-scripts/      arxiv_tally · fetch_papers   (field-cartography utilities)
-tests/        hermetic CLI + service-layer tests   (python -m pytest tests/ -q)
-Archive/      shelved, completed research lines
+tests/        hermetic unit test suite (pytest tests/)
 ```
 
 The architecture rule — *all logic in `celestrium/`; the CLI and TUI only present* — is what
-lets a human and an AI agent drive the exact same tool. Full design + the Textual-TUI roadmap:
-[`docs/roadmap.md`](./docs/roadmap.md).
+lets a human and an AI agent drive the exact same tool. Full design + the function-first specification:
+[`docs/Celestrium_ Rewrite the Astronomy Research Instrument.md`](./docs/Celestrium_%20Rewrite%20the%20Astronomy%20Research%20Instrument.md).
 
 ## Roles
 - **Leon** — physical judgment: what's worth predicting, which cuts are defensible.

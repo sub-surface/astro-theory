@@ -3,7 +3,7 @@
 The theory wing's "living census" (CLAUDE.md), promoted from a standalone
 script to instrument machinery: counts papers per topic phrase per year across
 astro-ph + gr-qc via the arXiv API's opensearch:totalResults (max_results=1,
-no payload). Topics live in registry.CENSUS_TOPICS; the fetcher is injectable
+no payload). Topics live in config.CENSUS_TOPICS; the fetcher is injectable
 so tests stay hermetic. Output: astropy Table + optional CSV under data/.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from typing import Callable, Iterable, Optional
 
 from astropy.table import Table
 
-from . import paths, registry
+from . import paths, config
 from .net import DEFAULT_TIMEOUT
 
 API = "https://export.arxiv.org/api/query"
@@ -62,7 +62,7 @@ def tally(topics: Optional[dict] = None, years: Iterable[int] = YEARS,
     trend = percent change of the last year vs the first (rounded), or ''
     when either endpoint is missing.
     """
-    topics = topics if topics is not None else registry.CENSUS_TOPICS
+    topics = topics if topics is not None else config.CENSUS_TOPICS
     years = list(years)
     rows = []
     for topic, phrase in topics.items():

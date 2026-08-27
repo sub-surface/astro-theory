@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from .. import registry
+from .. import config
 
 # --------------------------------------------------------------------------- #
 # The command table — one row per prompt idiom (drives parse + suggest + help)
@@ -72,9 +72,9 @@ EGGS = {
     "cake": "[yellow]The cake is a lie.[/]",
 }
 
-# Canonical feed-alias table lives in registry (shared with the CLI `feed`).
-FEED_ALIASES = registry.FEED_ALIASES
-feed_key = registry.feed_key
+# Canonical feed-alias table lives in config (shared with the CLI `feed`).
+FEED_ALIASES = config.FEED_ALIASES
+feed_key = config.feed_key
 
 _LITERATURE_FIELDS = ("abs:", "author:", "year:", "title:", "bibcode:")
 _PRODUCT_WORDS = ("image", "cutout", "panel", "spectrum")
@@ -99,7 +99,7 @@ def _mode(mode: str, **extra) -> Intent:
 
 def _split_archive_prefix(text: str) -> tuple[str | None, str]:
     """'irsa: SELECT …' -> ('irsa', 'SELECT …'); no known prefix -> (None, text)."""
-    for arch in registry.ARCHIVES:
+    for arch in config.ARCHIVES:
         prefix = f"{arch}:"
         if text.startswith(prefix):
             return arch, text[len(prefix):].strip()

@@ -16,12 +16,12 @@ UV_OPTICAL_COLLECTIONS = ("GALEX", "HST", "HLA", "SWIFTUVOT")
 LIGHTCURVE_COLLECTIONS = ("TESS", "Kepler", "K2")
 
 
-def _filter_table(tab, *, collections=None, products=None):
+def _filter_table(tab, *, collections=None, dataproduct_type=None):
     if tab is None or len(tab) == 0:
         return tab
     keep = []
     collections_l = {c.lower() for c in collections or ()}
-    products_l = {p.lower() for p in products or ()}
+    products_l = {p.lower() for p in dataproduct_type or ()}
     for row in tab:
         ok = True
         if collections_l and "obs_collection" in tab.colnames:
@@ -51,8 +51,7 @@ def fetch_uv_optical_observations(ra_deg: float, dec_deg: float,
             return None
         return _filter_table(
             obs_table,
-            collections=UV_OPTICAL_COLLECTIONS,
-            products=("image", "spectrum"),
+            collections=UV_OPTICAL_COLLECTIONS, dataproduct_type=("image", "spectrum"),
         )
     except Exception as e:
         raise RuntimeError(f"MAST UV/optical observation fetch failed: {e}")
@@ -67,7 +66,7 @@ def fetch_lightcurves(target_name: str, missions=LIGHTCURVE_COLLECTIONS):
         )
         if obs_table is None or len(obs_table) == 0:
             return None
-        return _filter_table(obs_table, collections=missions, products=("timeseries",))
+        return _filter_table(obs_table, collections=missions, dataproduct_type=("timeseries",))
     except Exception as e:
         raise RuntimeError(f"MAST lightcurve fetch failed: {e}")
 

@@ -128,14 +128,236 @@ def dynamic(name: str):
     return None
 
 
+# --------------------------------------------------------------------------- #
+# Target Data Models & Layered Resolution
+# --------------------------------------------------------------------------- #
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
-if __name__ == "__main__":
-    print("--- SIMBAD identify(M87) ---")
-    print(identify("M87"))
-    print("--- SIMBAD bibliography(M  87) ---")  # note SIMBAD's canonical spacing
-    print(bibliography("M  87", 3)["bibcode"])
-    print("--- NED extragalactic(3C 273) ---")  # the original quasar
-    try:  # NED's server can be slow/unreachable; don't let it break the demo
-        print(extragalactic("3C 273")["Object Name", "RA", "DEC", "Redshift"])
-    except Exception as e:
-        print(f"NED unavailable ({type(e).__name__}); retry later.")
+
+@dataclass(frozen=True)
+class ParsedRequest:
+    raw: str
+    target_text: str
+    modality_hint: str | None = None
+    parameter_hints: dict[str, Any] = field(default_factory=dict)
+    coordinates: tuple[float, float] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ResolvedTarget:
+    display_name: str
+    aliases: tuple[str, ...]
+    ra: float
+    dec: float
+    otype: str
+    object_class: str
+    confidence: float
+    match_kind: str
+    alternatives: tuple[dict[str, Any], ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+_MATCH_CONFIDENCE = {
+    "exact": 1.0,
+    "ephemeris": 0.95,
+    "coordinate": 0.9,
+    "nearby": 0.8,
+    "relaxed": 0.5,
+    "ambiguous": 0.4,
+    "blank": 0.3,
+}
+
+_OTYPE_CLASS_MAP = {
+    "G": "galaxy_agn", "Gal": "galaxy_agn", "AGN": "galaxy_agn", "QSO": "galaxy_agn",
+    "Sy1": "galaxy_agn", "Sy2": "galaxy_agn", "Blaz": "galaxy_agn", "BLL": "galaxy_agn",
+    "ClG": "cluster", "Group": "cluster", "SubG": "cluster",
+    "Star": "star", "*": "star", "PM*": "star", "V*": "star", "WD*": "star",
+    "X": "high_energy", "gamma": "high_energy", "pulsar": "high_energy", "PSR": "high_energy",
+    "SNR": "nebula", "PN": "nebula", "HII": "nebula",
+    "Solar System": "solar", "Sun": "solar", "Planet": "solar", "Asteroid": "solar",
+}
+
+
+def classify_otype(otype: str) -> str:
+    if not otype:
+        return "unknown"
+    for key, cls in _OTYPE_CLASS_MAP.items():
+        if key.lower() in otype.lower():
+            return cls
+    return "unknown"
+
+
+def parse_request(raw_text: str) -> ParsedRequest:
+    text = raw_text.strip()
+    coords = parse_coordinates(text)
+    return ParsedRequest(raw=raw_text, target_text=text, coordinates=coords)
+
+
+def parse_coordinates(target_text: str) -> tuple[float, float] | None:
+    parts = target_text.split()
+    if len(parts) == 2:
+        try:
+            ra, dec = (float(part) for part in parts)
+        except ValueError:
+            pass
+        else:
+            if 0 <= ra <= 360 and -90 <= dec <= 90:
+                return (ra, dec)
+            return None
+
+    return _parse_skycoord(target_text)
+
+
+def _parse_skycoord(target_text: str) -> tuple[float, float] | None:
+    try:
+        from astropy.coordinates import SkyCoord
+        from astropy import units as u
+        coord = SkyCoord(target_text, unit=(u.hourangle, u.deg))
+        return (float(coord.ra.deg), float(coord.dec.deg))
+    except Exception:
+        pass
+
+    try:
+        from astropy.coordinates import SkyCoord
+        coord = SkyCoord(target_text)
+        return (float(coord.ra.deg), float(coord.dec.deg))
+    except Exception:
+        pass
+
+    return None
+
+
+def resolve_target(
+    text: str,
+    *,
+    identify_fn=None,
+    dynamic_fn=None,
+    search_fn=None,
+    nearby_fn=None,
+) -> ResolvedTarget | None:
+    identify_fn = identify_fn or identify
+    dynamic_fn = dynamic_fn if dynamic_fn is not None else dynamic
+    search_fn = search_fn if search_fn is not None else search
+    nearby_fn = nearby_fn if nearby_fn is not None else nearby
+
+    req = parse_request(text)
+    if req.coordinates is not None:
+        return _resolve_coordinates(req.coordinates, nearby_fn)
+
+    if req.target_text.lower() in ("sun", "sol"):
+        return ResolvedTarget(
+            display_name="The Sun", aliases=(), ra=float("nan"), dec=float("nan"),
+            otype="Sun", object_class="solar", confidence=1.0, match_kind="exact"
+        )
+
+    rows = _safe(identify_fn, req.target_text)
+    if rows is not None and len(rows) >= 1:
+        return _target_from_row(rows[0], "exact", alternatives=_alternatives(rows[1:]))
+
+    if dynamic_fn is not None:
+        dyn = _safe(dynamic_fn, req.target_text)
+        if dyn is not None and len(dyn) >= 1:
+            if str(dyn[0].get("ra")) == "nan":
+                return _target_from_row(dyn[0], "ambiguous", alternatives=_alternatives(dyn[1:]))
+            return _target_from_row(dyn[0], "ephemeris", alternatives=_alternatives(dyn[1:]))
+
+    if search_fn is not None:
+        hits = _safe(search_fn, req.target_text)
+        if hits is not None and len(hits) >= 1:
+            kind = "ambiguous" if len(hits) > 1 else "relaxed"
+            return _target_from_row(hits[0], kind, alternatives=_alternatives(hits[1:]))
+
+    return None
+
+
+def _resolve_coordinates(coords, nearby_fn) -> ResolvedTarget:
+    ra, dec = coords
+    if nearby_fn is not None:
+        res = _safe(nearby_fn, ra, dec)
+        if res is not None and len(res) >= 1:
+            return _target_from_row(res[0], "nearby", ra=ra, dec=dec,
+                                    alternatives=_alternatives(res[1:]))
+    return ResolvedTarget(
+        display_name=f"field {ra:.4f} {dec:+.4f}", aliases=(), ra=ra, dec=dec,
+        otype="", object_class="unknown",
+        confidence=_MATCH_CONFIDENCE["blank"], match_kind="blank",
+    )
+
+
+def _target_from_row(row, match_kind, *, ra=None, dec=None,
+                     alternatives=()) -> ResolvedTarget:
+    name, otype, row_ra, row_dec = _row_fields(row)
+    return ResolvedTarget(
+        display_name=name, aliases=(),
+        ra=ra if ra is not None else row_ra,
+        dec=dec if dec is not None else row_dec,
+        otype=otype, object_class=classify_otype(otype),
+        confidence=_MATCH_CONFIDENCE.get(match_kind, 0.5), match_kind=match_kind,
+        alternatives=alternatives,
+    )
+
+
+def _row_fields(row):
+    if isinstance(row, dict):
+        name = str(row.get("main_id", "?"))
+        otype = str(row.get("otype", ""))
+        ra = float(row.get("ra", float("nan")))
+        dec = float(row.get("dec", float("nan")))
+        return name, otype, ra, dec
+
+    colnames = getattr(row, "colnames", ())
+    name = str(row["main_id"]) if "main_id" in colnames else "?"
+    otype = str(row["otype"]) if "otype" in colnames else ""
+    try:
+        ra = float(row["ra"]) if "ra" in colnames else float("nan")
+        dec = float(row["dec"]) if "dec" in colnames else float("nan")
+    except (TypeError, ValueError):
+        ra = dec = float("nan")
+    return name, otype, ra, dec
+
+
+def _alternatives(rows) -> tuple[dict[str, Any], ...]:
+    out = []
+    for row in (rows or [])[:6]:
+        name, otype, ra, dec = _row_fields(row)
+        out.append({"name": name, "otype": otype, "ra": ra, "dec": dec})
+    return tuple(out)
+
+
+def _safe(fn, *args):
+    try:
+        return fn(*args)
+    except Exception:
+        return None
+
+
+def image_coverage_note(dec: float, survey: str = "auto") -> str:
+    from celestrium import cutouts
+    auto_meta = cutouts.color_survey_metadata(dec)
+    auto_labels = [meta["label"] for meta in auto_meta]
+
+    if survey != "auto":
+        selected = cutouts.COLOR_SURVEYS.get(survey)
+        if selected is None:
+            return (
+                f"Requested colour survey '{survey}' is unknown or unavailable. "
+                f"Image fetch will use auto candidates with fallback: "
+                f"{', '.join(auto_labels)}."
+            )
+        label = selected[1]
+        return (
+            f"Selected colour survey: {label}. If that frame is blank or outside "
+            f"coverage, image fetch falls back through auto candidates: "
+            f"{', '.join(auto_labels)}."
+        )
+
+    return (
+        "Auto colour coverage tries "
+        f"{', '.join(auto_labels)} in order; DSS2 is the all-sky fallback."
+    )

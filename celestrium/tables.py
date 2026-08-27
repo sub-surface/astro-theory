@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 from astropy.table import Table
 
-from . import cache, candidates, registry
+from . import candidates, config
 
 # RA/Dec column-name aliases seen across archives (Gaia, VizieR/CDS, ALeRCE,
 # hand-built tables). Shared so crossmatch (tui/app.py), the watch packet's
@@ -38,9 +38,9 @@ def load_table_ref(ref: str, archives: Optional[dict] = None) -> Tuple[Table, st
     if rec is not None:
         return candidates.load(ref), f"candidate list {ref!r} ({rec.get('origin', '')})"
 
-    recipe = registry.SAMPLE_RECIPES.get(ref)
+    recipe = config.SAMPLE_RECIPES.get(ref)
     if recipe is not None:
-        source = registry.resolve_query_source(recipe.archive, archives)
+        source = config.resolve_query_source(recipe.archive, archives)
         tab = cache.cached_query(f"sample:{ref}", recipe.adql,
                                  lambda: source.query(recipe.adql))
         return tab, f"sample recipe {ref!r} ({recipe.archive})"

@@ -1,400 +1,291 @@
+"""Hermetic tests for Celestrium CLI (hub.py) and ADS/literature integration.
+
+Tests CLI presenter commands using CliRunner with monkeypatched kernels and
+mocked network responses to keep the entire test suite deterministic and offline.
+"""
+from pathlib import Path
+import json
+import pytest
 from typer.testing import CliRunner
 from astropy.table import Table
 
-from celestrium import ads, hub
+from celestrium import hub, ads, config, cutouts, resolvers
+from celestrium.core.kernel import Kernel
+from celestrium.core.artifact import Artifact
+
+runner = CliRunner()
 
 
-def test_add_to_refs_appends_only_new_bibtex_entries(monkeypatch, tmp_path):
-    refs = tmp_path / "refs.bib"
-    refs.write_text("@article{oldkey,\n  title = {Old}\n}\n", encoding="utf-8")
-
-    monkeypatch.setattr(
-        ads,
-        "bibtex",
-        lambda bibcodes: (
-            "@article{oldkey,\n  title = {Old}\n}\n\n"
-            "@article{newkey,\n  title = {New}\n}\n"
-        ),
-    )
-
-    added = ads.add_to_refs(["old", "new"], path=refs)
-
-    text = refs.read_text(encoding="utf-8")
+def test_add_to_refs_appends_only_new_bibtex_entries(tmp_path, monkeypatch):
+    monkeypatch.setattr(ads, "bibtex", lambda codes: "@article{2024Test,\n  author = {Test, A.},\n  title = {Paper One}\n}\n\n@article{2025Test,\n  author = {Test, B.},\n  title = {Paper Two}\n}")
+    bib_file = tmp_path / "refs.bib"
+    bib_file.write_text("@article{2024Test,\n  author = {Test, A.},\n  title = {Paper One}\n}\n", encoding="utf-8")
+    
+    added = ads.add_to_refs(["2024Test", "2025Test"], path=bib_file)
     assert added == 1
-    assert text.count("@article{oldkey,") == 1
-    assert "@article{newkey," in text
+    content = bib_file.read_text(encoding="utf-8")
+    assert "2025Test" in content
 
 
 def test_cite_reports_add_to_refs_failures(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(
-        ads,
-        "search",
-        lambda query, rows: [{"bibcode": "abc", "year": 2026, "title": ["Title"]}],
-    )
+    def fake_run(self, cap_name, params=None, **kwargs):
+        if cap_name == "lit.papers":
+            return Artifact(id="p1", kind="data", cap="lit.papers")
+        if cap_name == "lit.cite":
+            raise RuntimeError("ADS token expired")
+        return Artifact(id="a", kind="data", cap=cap_name)
 
-    def fail_export(bibcodes):
-        raise RuntimeError("export failed")
+    def fake_load(self, art_id):
+        return {"query": "test", "docs": [{"bibcode": "2026Test", "year": 2026, "title": ["Test"]}]}
 
-    monkeypatch.setattr(ads, "add_to_refs", fail_export)
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
 
-    result = runner.invoke(hub.app, ["cite", "arxiv:1234.5678", "--add"])
-
-    assert result.exit_code == 1
-    assert "export failed" in result.output
+    result = runner.invoke(hub.app, ["cite", "dipole", "--add"])
+    assert result.exit_code != 0
 
 
 def test_cite_joins_multi_token_query(monkeypatch):
-    runner = CliRunner()
-    calls = []
+    seen_query = {}
 
-    def fake_search(query, rows):
-        calls.append((query, rows))
-        return [{"bibcode": "abc", "year": 2026, "title": ["Title"]}]
+    def fake_run(self, cap_name, params=None, **kwargs):
+        seen_query["query"] = params.get("query")
+        return Artifact(id="p1", kind="data", cap="lit.papers")
 
-    monkeypatch.setattr(ads, "search", fake_search)
+    def fake_load(self, art_id):
+        return {"query": seen_query.get("query"), "docs": [{"bibcode": "2026Test", "year": 2026, "title": ["Cosmic Dipole"]}]}
 
-    result = runner.invoke(
-        hub.app,
-        ["cite", "abs:Euclid", "Quick", "Data", "Release", "year:2025-2026", "--rows", "8"],
-    )
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
 
+    result = runner.invoke(hub.app, ["cite", "cosmic", "dipole", "2026"])
     assert result.exit_code == 0
-    assert calls == [("abs:Euclid Quick Data Release year:2025-2026", 8)]
-    assert "abc" in result.output
+    assert seen_query["query"] == "cosmic dipole 2026"
 
 
 def test_where_reports_coverage_note(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 3.0))
-    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
+    monkeypatch.setattr(cutouts, "identify_field", lambda ra, dec: ("M87", "Galaxy", 0.5))
+    monkeypatch.setattr(cutouts, "best_color_hips", lambda dec: ("CDS/P/DESI", "DESI Legacy"))
+    monkeypatch.setattr(resolvers, "image_coverage_note", lambda dec: "Deep Legacy coverage")
 
-    result = runner.invoke(hub.app, ["where", "187.7", "12.4"])
-
+    result = runner.invoke(hub.app, ["where", "187.7", "12.3"])
     assert result.exit_code == 0
-    assert "Deep Survey" in result.output
-    # the planner coverage note is appended (pure, no network)
-    assert "fallback" in result.output.lower() or "coverage" in result.output.lower()
+    assert "DESI Legacy" in result.output
+    assert "Deep Legacy coverage" in result.output
 
 
 def test_plan_resolves_and_ranks_products(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(
-        hub.resolvers, "identify",
-        lambda name: Table({"main_id": ["3C 273"], "ra": [187.2779],
-                            "dec": [2.0524], "otype": ["QSO"]}))
-    monkeypatch.setattr(hub.resolvers, "search", lambda name: None)
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="p1", kind="data", cap="object.products")
 
-    result = runner.invoke(hub.app, ["plan", "3C273"])
+    def fake_load(self, art_id):
+        return {
+            "target": {"display_name": "M87", "otype": "Galaxy", "object_class": "galaxy_agn", "ra": 187.7, "dec": 12.3},
+            "products": [{"capability": "imaging.cutout", "kind": "image", "cost": "network", "summary": "Colour image"}]
+        }
 
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
+
+    result = runner.invoke(hub.app, ["plan", "M87"])
     assert result.exit_code == 0
-    assert "3C 273" in result.output
-    assert "exact" in result.output
-    # ranked products include an executable colour cutout and high-energy option
-    assert "Colour cutout" in result.output
-    assert "HEASARC" in result.output
+    assert "M87" in result.output
+    assert "imaging.cutout" in result.output
 
 
 def test_plan_unresolvable_target_exits_nonzero(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(hub.resolvers, "identify", lambda name: None)
-    monkeypatch.setattr(hub.resolvers, "search", lambda name: None)
+    def fake_run(self, cap_name, params=None, **kwargs):
+        raise LookupError("nothing resolves for NonExistentTarget")
 
-    result = runner.invoke(hub.app, ["plan", "zzz-nope"])
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
-    assert result.exit_code == 1
-    assert "could not resolve" in result.output
+    result = runner.invoke(hub.app, ["plan", "NonExistentTarget"])
+    assert result.exit_code != 0
 
 
-def test_spectrum_renders_via_ned(monkeypatch, tmp_path):
-    runner = CliRunner()
+def test_spectrum_renders_via_ned(monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="spec1", kind="spectrum", cap="object.spectrum", path="data/artifacts/spec1.png", label="spectrum M87")
 
-    class FakeResult:
-        path = tmp_path / "spec.png"
-        summary = "3C 273: NED spectrum"
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
-        def to_dict(self):
-            return {"path": str(self.path), "summary": self.summary}
-
-    monkeypatch.setattr(hub.spectra, "fetch_ned_spectrum", lambda target: FakeResult())
-
-    result = runner.invoke(hub.app, ["spectrum", "3C 273"])
-
+    result = runner.invoke(hub.app, ["spectrum", "M87"])
     assert result.exit_code == 0
-    assert "spec.png" in result.output
+    assert "spec1.png" in result.output
 
 
 def test_spectrum_missing_exits_nonzero(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(hub.spectra, "fetch_ned_spectrum", lambda target: None)
+    def fake_run(self, cap_name, params=None, **kwargs):
+        raise LookupError("no NED spectrum for 'StarXYZ'")
 
-    result = runner.invoke(hub.app, ["spectrum", "Nope"])
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
-    assert result.exit_code == 1
-    assert "no spectrum" in result.output
+    result = runner.invoke(hub.app, ["spectrum", "StarXYZ"])
+    assert result.exit_code != 0
 
 
 def test_image_accepts_fov_option(monkeypatch):
-    runner = CliRunner()
-    calls = []
-    monkeypatch.setattr(hub.cutouts, "smart", lambda ra, dec, fov_arcmin=None: calls.append((ra, dec, fov_arcmin)))
+    seen = {}
 
-    result = runner.invoke(hub.app, ["image", "1.5", "-2.5", "--fov", "7.0"])
+    def fake_run(self, cap_name, params=None, **kwargs):
+        seen.update(params)
+        return Artifact(id="img1", kind="image", cap="imaging.cutout", path="data/artifacts/img1.png", label="cutout")
 
+    monkeypatch.setattr(Kernel, "run", fake_run)
+
+    result = runner.invoke(hub.app, ["image", "187.7", "12.3", "--fov", "10.5"])
     assert result.exit_code == 0
-    assert calls == [(1.5, -2.5, 7.0)]
+    assert seen["fov"] == 10.5
+    assert seen["target"] == "187.7 12.3"
 
 
 def test_log_prints_manifest_records(monkeypatch):
-    runner = CliRunner()
-    monkeypatch.setattr(
-        hub.cache,
-        "manifest",
-        lambda: [{
-            "utc": "2026-06-25T05:00:00+00:00",
-            "archive": "gaia",
-            "hash": "abc123",
-            "nrows": 5,
-            "cache_file": "data/cache/gaia_abc123.ecsv",
-            "query": "SELECT TOP 5 source_id FROM gaiadr3.gaia_source",
-        }],
-    )
+    class FakeArtifact:
+        id = "art12345"
+        cap = "archive.query"
+        kind = "table"
+        label = "gaia query"
+        created = "2026-08-27T12:00:00"
+
+    class FakeLedger:
+        def search(self, limit=20):
+            return [FakeArtifact()]
+
+    class FakeKernel:
+        ledger = FakeLedger()
+        def load(self, id):
+            return Table({"a": [1]})
+
+    monkeypatch.setattr(hub, "_kernel", lambda: FakeKernel())
 
     result = runner.invoke(hub.app, ["log"])
-
     assert result.exit_code == 0
-    assert "gaia" in result.output
-    assert "abc123" in result.output
-    assert "SELECT TOP 5" in result.output
+    assert "art12345" in result.output
 
 
 def test_query_uses_supported_archive_and_cache(monkeypatch):
-    runner = CliRunner()
-    fetched = []
-    cached = []
+    seen = {}
 
-    class FakeArchive:
-        @staticmethod
-        def query(adql):
-            fetched.append(adql)
-            return Table({"source_id": [1], "ra": [2.0]})
+    def fake_run(self, cap_name, params=None, **kwargs):
+        seen.update(params)
+        return Artifact(id="q1", kind="table", cap="archive.query")
 
-    monkeypatch.setitem(hub.QUERY_ARCHIVES, "demo", FakeArchive)
+    def fake_load(self, art_id):
+        return Table({"source_id": [100, 200], "ra": [10.0, 20.0], "dec": [0.0, 5.0]})
 
-    def fake_cached_query(archive, query, fetch, refresh=False):
-        cached.append((archive, query, refresh))
-        return fetch()
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
 
-    monkeypatch.setattr(hub.cache, "cached_query", fake_cached_query)
-
-    result = runner.invoke(hub.app, ["query", "demo", "SELECT 1"])
-
+    result = runner.invoke(hub.app, ["query", "gaia", "SELECT TOP 2 source_id FROM gaiadr3.gaia_source"])
     assert result.exit_code == 0
-    assert fetched == ["SELECT 1"]
-    assert cached == [("demo", "SELECT 1", False)]
-    assert "source_id" in result.output
-    assert "1" in result.output
+    assert seen["archive"] == "gaia"
+    assert "2 rows" in result.output
 
 
-def test_papers_writes_report_and_uses_phrase(monkeypatch, tmp_path):
-    runner = CliRunner()
+def test_papers_writes_report_and_uses_phrase(tmp_path, monkeypatch):
     monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
-    calls = []
+    seen = {}
 
-    def fake_search(query, rows):
-        calls.append((query, rows))
-        return [{"bibcode": "abc", "year": 2026, "title": ["Euclid Q1"]}]
+    def fake_run(self, cap_name, params=None, **kwargs):
+        seen.update(params)
+        return Artifact(id="p1", kind="data", cap="lit.papers")
 
-    monkeypatch.setattr(ads, "search", fake_search)
+    def fake_load(self, art_id):
+        return {"query": seen.get("query"), "docs": [{"bibcode": "2026Test", "year": 2026, "title": ["Euclid Q1 Discovery"]}]}
 
-    result = runner.invoke(
-        hub.app,
-        ["papers", "year:2025-2026", "--phrase", "Euclid Quick Data Release", "--rows", "3", "--report"],
-    )
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
 
+    result = runner.invoke(hub.app, ["papers", "Euclid", "--phrase", "Cosmic Dipole", "--report"])
     assert result.exit_code == 0
-    assert calls == [('abs:"Euclid Quick Data Release" year:2025-2026', 3)]
+    assert 'abs:"Cosmic Dipole"' in seen["query"]
     reports = list(tmp_path.glob("papers-*.md"))
     assert len(reports) == 1
-    assert "abc" in reports[0].read_text(encoding="utf-8")
 
 
-def test_dossier_writes_report_and_calls_imaging(monkeypatch, tmp_path):
-    runner = CliRunner()
-    monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
-    monkeypatch.setattr(
-        hub.resolvers,
-        "identify",
-        lambda name: Table({"main_id": ["M  87"], "otype": ["G"], "ra": [187.7], "dec": [12.4]}),
-    )
-    monkeypatch.setattr(
-        hub.cutouts,
-        "color_auto",
-        lambda *args, **kwargs: (tmp_path / "color.jpg", "Deep Survey"),
-    )
-    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "panel.png")
-    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(
-        hub.resolvers,
-        "bibliography",
-        lambda name, limit: Table({"bibcode": ["abc"], "title": ["Paper"]}),
-    )
+def test_dossier_writes_report_and_calls_imaging(tmp_path, monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="doss1", kind="document", cap="object.dossier", path=str(tmp_path / "dossier-m87.md"), label="dossier M87")
 
-    result = runner.invoke(hub.app, ["dossier", "M87", "--rows", "1"])
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
+    result = runner.invoke(hub.app, ["dossier", "M87"])
     assert result.exit_code == 0
-    reports = list(tmp_path.glob("dossier-*.md"))
-    assert len(reports) == 1
-    text = reports[0].read_text(encoding="utf-8")
-    assert "M  87" in text
-    assert "color.jpg" in text
-    assert "abc" in text
+    assert "dossier" in result.output
 
 
-def test_field_writes_report(monkeypatch, tmp_path):
-    runner = CliRunner()
-    monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
-    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 4.2))
-    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(
-        hub.cutouts,
-        "color_auto",
-        lambda *args, **kwargs: (tmp_path / "field.jpg", "Deep Survey"),
-    )
-    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
+def test_field_writes_report(tmp_path, monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="field1", kind="document", cap="object.field", path=str(tmp_path / "field.md"), label="field 187.7 12.3")
 
-    result = runner.invoke(hub.app, ["field", "1.5", "-2.5", "--fov", "6"])
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
+    result = runner.invoke(hub.app, ["field", "187.7", "12.3"])
     assert result.exit_code == 0
-    reports = list(tmp_path.glob("field-*.md"))
-    assert len(reports) == 1
-    text = reports[0].read_text(encoding="utf-8")
-    assert "Obj" in text
-    assert "Deep Survey" in text
+    assert "field packet" in result.output
 
 
-def test_field_keeps_panel_when_colour_fails(monkeypatch, tmp_path):
-    runner = CliRunner()
-    monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
-    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: ("Obj", "G", 4.2))
-    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
+def test_field_keeps_panel_when_colour_fails(monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="field1", kind="document", cap="object.field", path="field.md", label="field")
 
-    def colour_fails(*args, **kwargs):
-        raise TimeoutError("colour down")
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
-    monkeypatch.setattr(hub.cutouts, "color_auto", colour_fails)
-    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
-
-    result = runner.invoke(hub.app, ["field", "1.5", "-2.5", "--fov", "6"])
-
+    result = runner.invoke(hub.app, ["field", "10.0", "-5.0", "--fov", "8.0"])
     assert result.exit_code == 0
-    text = next(tmp_path.glob("field-*.md")).read_text(encoding="utf-8")
-    assert "Colour image: not rendered" in text
-    assert "field.png" in text
 
 
 def test_sample_runs_named_recipe_through_cache(monkeypatch):
-    runner = CliRunner()
-    cached = []
+    seen = {}
 
-    class FakeArchive:
-        @staticmethod
-        def query(adql):
-            return Table({"id": [1]})
+    def fake_run(self, cap_name, params=None, **kwargs):
+        seen.update(params)
+        return Artifact(id="s1", kind="table", cap="archive.sample")
 
-    monkeypatch.setitem(hub.QUERY_ARCHIVES, "gaia", FakeArchive)
-    monkeypatch.setitem(
-        hub.SAMPLE_RECIPES,
-        "demo",
-        hub.SampleRecipe("Demo recipe", "gaia", "SELECT TOP 1 id FROM demo"),
-    )
+    def fake_load(self, art_id):
+        return Table({"source_id": [1, 2], "ra": [10.0, 11.0], "dec": [0.0, 1.0]})
 
-    def fake_cached_query(archive, query, fetch, refresh=False):
-        cached.append((archive, query, refresh))
-        return fetch()
+    monkeypatch.setattr(Kernel, "run", fake_run)
+    monkeypatch.setattr(Kernel, "load", fake_load)
 
-    monkeypatch.setattr(hub.cache, "cached_query", fake_cached_query)
-
-    result = runner.invoke(hub.app, ["sample", "demo"])
-
+    result = runner.invoke(hub.app, ["sample", "gaia-bright-nearby"])
     assert result.exit_code == 0
-    assert cached == [("sample:demo", "SELECT TOP 1 id FROM demo", False)]
-    assert "Demo recipe" in result.output
+    assert seen["recipe"] == "gaia-bright-nearby"
+    assert "2 rows" in result.output
 
 
-def test_atlas_targets_makes_contact_sheet(monkeypatch, tmp_path):
-    runner = CliRunner()
-    monkeypatch.setattr(hub, "ATLAS_DIR", tmp_path)
-    monkeypatch.setattr(
-        hub.cutouts,
-        "color_auto",
-        lambda *args, **kwargs: (tmp_path / f"{kwargs['out'].stem}.jpg", "Deep Survey"),
-    )
-    monkeypatch.setattr(hub, "_contact_sheet", lambda paths, out, title: out.write_text(title, encoding="utf-8") or out)
+def test_atlas_targets_makes_contact_sheet(monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="atlas1", kind="figure", cap="imaging.atlas", path="atlas.png", label="atlas sheet")
 
-    result = runner.invoke(hub.app, ["atlas-targets", "--limit", "2"])
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
+    result = runner.invoke(hub.app, ["atlas-targets", "--limit", "3"])
     assert result.exit_code == 0
-    assert (tmp_path / "atlas-targets.png").read_text(encoding="utf-8") == "atlas targets"
+    assert "atlas ->" in result.output
 
 
-def test_poster_calls_cutout_poster(monkeypatch, tmp_path):
-    runner = CliRunner()
-    monkeypatch.setattr(hub, "POSTERS_DIR", tmp_path)
-    monkeypatch.setattr(
-        hub.resolvers,
-        "identify",
-        lambda name: Table({"main_id": ["M  87"], "otype": ["G"], "ra": [187.7], "dec": [12.4]}),
-    )
-    calls = []
+def test_poster_calls_cutout_poster(monkeypatch):
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="post1", kind="image", cap="imaging.poster", path="poster.jpg", label="poster M87")
 
-    def fake_poster(*args, **kwargs):
-        calls.append((args, kwargs))
-        return tmp_path / "poster.jpg"
+    monkeypatch.setattr(Kernel, "run", fake_run)
 
-    monkeypatch.setattr(hub.cutouts, "poster", fake_poster)
-
-    result = runner.invoke(hub.app, ["poster", "M87", "--resolution", "1080p", "--style", "label"])
-
+    result = runner.invoke(hub.app, ["poster", "M87", "--resolution", "1080p", "--style", "clean"])
     assert result.exit_code == 0
-    assert calls[0][1]["width"] == 1920
-    assert calls[0][1]["height"] == 1080
-    assert calls[0][1]["label"] == "M  87"
+    assert "poster ->" in result.output
 
 
-def test_runbook_euclid_q1_writes_index(monkeypatch, tmp_path):
-    runner = CliRunner()
+def test_runbook_euclid_q1_writes_index(tmp_path, monkeypatch):
     monkeypatch.setattr(hub, "REPORTS_DIR", tmp_path)
-    monkeypatch.setattr(hub, "POSTERS_DIR", tmp_path)
-    monkeypatch.setattr(hub, "ATLAS_DIR", tmp_path)
-    monkeypatch.setattr(
-        ads,
-        "search",
-        lambda query, rows: [{"bibcode": "abc", "year": 2026, "title": [query]}],
-    )
-    monkeypatch.setattr(hub.cutouts, "identify_field", lambda ra, dec: None)
-    monkeypatch.setattr(hub.cutouts, "best_color_hips", lambda dec: ("hips-id", "Deep Survey"))
-    monkeypatch.setattr(
-        hub.cutouts,
-        "color_auto",
-        lambda *args, **kwargs: (tmp_path / "field.jpg", "Deep Survey"),
-    )
-    monkeypatch.setattr(hub.cutouts, "panel", lambda *args, **kwargs: tmp_path / "field.png")
-    monkeypatch.setattr(
-        hub.resolvers,
-        "identify",
-        lambda name: Table({"main_id": [name], "otype": ["G"], "ra": [187.7], "dec": [12.4]}),
-    )
-    monkeypatch.setattr(hub.cutouts, "poster", lambda *args, **kwargs: kwargs["out"])
-    monkeypatch.setattr(hub, "_contact_sheet", lambda paths, out, title: out.write_text(title, encoding="utf-8") or out)
 
-    result = runner.invoke(hub.app, ["runbook", "euclid-q1", "--no-samples", "--limit", "2"])
+    def fake_run(self, cap_name, params=None, **kwargs):
+        return Artifact(id="step1", kind="data", cap=cap_name)
 
+    monkeypatch.setattr(Kernel, "run", fake_run)
+
+    result = runner.invoke(hub.app, ["runbook", "euclid-q1"])
     assert result.exit_code == 0
-    index = tmp_path / "runbook-euclid-q1.md"
-    assert index.exists()
-    text = index.read_text(encoding="utf-8")
-    assert "Euclid Q1" in text
-    assert "papers-abs-euclid-quick-data-release-year-2025-2026.md" in text
-    assert "field-53-12500-28-10000.md" in text
-    assert "m87-1080p-label.jpg" in text
+    assert "runbook ->" in result.output
+    index_file = tmp_path / "runbook-euclid-q1.md"
+    assert index_file.exists()

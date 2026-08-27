@@ -20,3 +20,7 @@ docs/research/*.pdf
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+scratch/
+*.egg-info/
+build/
+dist/

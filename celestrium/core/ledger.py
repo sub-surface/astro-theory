@@ -1,4 +1,4 @@
-"""The ledger — one SQLite file that is cache, manifest and lineage graph.
+"""The ledger — one SQLite file that is manifest and lineage graph.
 
 Replaces `cache.py`'s keyspace, `data/manifest.jsonl`, and
 `data/candidates/index.jsonl`. Payloads stay as files on disk; this stores

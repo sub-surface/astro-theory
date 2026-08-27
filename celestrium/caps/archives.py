@@ -1,10 +1,10 @@
 """Archive pulls — ADQL against the registered TAP services."""
 from __future__ import annotations
 
-from .. import registry
+from .. import config
 from ..core.capability import Param, capability
 
-ARCHIVE_KEYS = tuple(registry.ARCHIVES)
+ARCHIVE_KEYS = tuple(config.ARCHIVES)
 
 
 def _first_line(text: str, limit: int = 60) -> str:
@@ -22,7 +22,7 @@ def _first_line(text: str, limit: int = 60) -> str:
     tags=("archive",),
 )
 def archive_query(ctx, archive, adql):
-    source = registry.resolve_query_source(archive)
+    source = config.resolve_query_source(archive)
     if source is None:
         raise KeyError(f"unknown archive {archive!r}; "
                        f"have {', '.join(ARCHIVE_KEYS)}")
@@ -36,12 +36,12 @@ def archive_query(ctx, archive, adql):
 
 @capability(
     name="archive.sample", kind="table", wing="validation", cost="network",
-    params={"recipe": Param("enum", choices=tuple(registry.SAMPLE_RECIPES))},
+    params={"recipe": Param("enum", choices=tuple(config.SAMPLE_RECIPES))},
     summary="Run a named low-compute sample recipe.",
     tags=("archive",),
 )
 def archive_sample(ctx, recipe):
-    spec = registry.SAMPLE_RECIPES[recipe]
+    spec = config.SAMPLE_RECIPES[recipe]
     ctx.progress(f"{recipe}: {spec.description}")
     child = ctx.child("archive.query", archive=spec.archive, adql=spec.adql)
     return ctx.table(ctx.load(child.id), label=f"sample {recipe}",
@@ -60,5 +60,5 @@ def archive_health(ctx):
     rows = doctor.check_archives() if hasattr(doctor, "check_archives") else []
     if not rows:                       # doctor's shape varies; fall back to raw
         rows = [{"archive": key, "url": arch.health_url}
-                for key, arch in registry.ARCHIVES.items()]
+                for key, arch in config.ARCHIVES.items()]
     return ctx.data({"archives": rows}, label="archive health")

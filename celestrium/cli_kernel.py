@@ -1,4 +1,4 @@
-"""Kernel-era CLI commands, generated from the capability registry.
+"""Kernel-era CLI commands, generated from the capability config.
 
 `hub.py` stays the presenter it always was; this module hands it a set of
 commands that are *derived* rather than hand-written, so a new capability shows
@@ -211,7 +211,7 @@ def register(app: typer.Typer, state: Optional[dict] = None) -> None:
         `archive.query` artifacts, so their content addresses match and the old
         pulls become cache hits for the new kernel rather than dead history.
         """
-        from . import cache, registry
+        from . import config
         from .core.artifact import Artifact, artifact_id, now_utc
 
         store = _kernel().ledger
@@ -223,7 +223,7 @@ def register(app: typer.Typer, state: Optional[dict] = None) -> None:
             if not cache_file or not (paths.REPO / cache_file).exists():
                 skipped += 1
                 continue
-            if archive in registry.ARCHIVES:
+            if archive in config.ARCHIVES:
                 cap, params = "archive.query", {"archive": archive, "adql": adql}
             else:
                 cap, params = "legacy.pull", {"archive": archive, "query": adql}

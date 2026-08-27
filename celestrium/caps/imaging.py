@@ -12,10 +12,9 @@ STYLES = ("clean", "label", "science")
 
 
 def _fov(found, requested: float) -> float:
-    from .. import packets
     if requested and requested > 0:
         return float(requested)
-    return packets.default_fov(found.otype or "", 8.0, 3.0)
+    return 8.0 if "G" in (found.otype or "").upper() else 3.0
 
 
 @capability(
@@ -81,8 +80,8 @@ def imaging_poster(ctx, target, fov, width, height, style):
     summary="Contact sheet of the curated atlas targets.",
 )
 def imaging_atlas(ctx, limit, fov):
-    from .. import cutouts, registry
-    targets = registry.ATLAS_TARGETS[:max(1, limit)]
+    from .. import cutouts, config
+    targets = config.ATLAS_TARGETS[:max(1, limit)]
     rendered = []
     for entry in targets:
         ctx.check_cancel()

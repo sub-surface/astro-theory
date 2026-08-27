@@ -1,7 +1,7 @@
 """Instrument health checks — turn "· not yet run here" into an answer.
 
 `run_checks` pings every registered archive's availability endpoint (no data
-pull, just "are you up"), and reports local state: ADS token, cache size,
+pull, just "are you up"), and reports local state: ADS token size,
 manifest rows, candidate lists. Pure besides the injectable `pinger`, so the
 CLI presents it and tests stay hermetic.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any, Callable, Optional
 
-from . import cache, candidates, registry
+from . import candidates, config
 
 
 def _default_pinger(url: str, timeout: float) -> tuple[bool, str]:
@@ -26,7 +26,7 @@ def check_archives(pinger: Optional[Callable] = None,
                    timeout: float = 10.0) -> list[dict[str, Any]]:
     pinger = pinger or _default_pinger
     out = []
-    for key, archive in registry.ARCHIVES.items():
+    for key, archive in config.ARCHIVES.items():
         rec: dict[str, Any] = {"archive": key, "label": archive.label,
                                "url": archive.health_url}
         if not archive.health_url:
@@ -46,7 +46,7 @@ def check_archives(pinger: Optional[Callable] = None,
 
 
 def check_local() -> dict[str, Any]:
-    """Local instrument state: token, cache footprint, provenance, candidates."""
+    """Local instrument state: token footprint, provenance, candidates."""
     try:
         from . import ads
         ads._token()

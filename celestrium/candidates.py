@@ -29,7 +29,7 @@ INDEX = CAND_DIR / "index.jsonl"
 
 
 def slug(name: str) -> str:
-    """Filesystem-safe name (matches packets.slug so callers agree on stems)."""
+    """Filesystem-safe name for candidate lists."""
     s = re.sub(r"[^A-Za-z0-9]+", "-", name.strip()).strip("-").lower()
     return s or "candidates"
 
