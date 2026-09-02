@@ -362,6 +362,24 @@ Still open, deliberately: second-stage MAST product downloads, rendered lightcur
 figure sidecars/captions (the Phase 4.3 tail); and the standing "substance over surface" rule —
 the next cockpit feature should be earned by real use on the Euclid σ_D forecast.
 
+## Phase 6 — Cosmological Simulation Bridge: Celestrium → FILAMENT
+
+Celestrium is built to pull real astronomical slices (Gaia, DESI, Planck, Euclid, CatWISE) and test theoretical observables. `FILAMENT` in `digital-garden` is an interactive, fast Particle-Mesh + Fast Multipole Method (FMM) cosmological simulator that evolves up to 250,000 gravitating particles from recombination to the present day on a real $\Lambda\text{CDM}$ clock.
+
+Phase 6 creates an export and validation bridge between the two instruments:
+
+1. **Structured Data Bridge (`celestrium export filament <target>`):**
+   - Ingests real observational catalogues queried by Celestrium (e.g., CatWISE/DESI quasar number-count dipole candidates, Gaia DR3 stellar stream members like GD-1, or nearby galaxy surveys).
+   - Projects 3D survey coordinates $(\alpha, \delta, z \text{ or } \varpi)$ into normalized comoving simulation coordinates $[0, 1]^3$ or periodic 2D slabs.
+   - Outputs a compact JSON/binary fixture (`data/exports/filament_<target>.json`) compatible with FILAMENT's Web Worker particle buffers.
+
+2. **Cosmological Parameter Synchronization:**
+   - Matches FILAMENT's background cosmological solver ($\Omega_m, \Omega_\Lambda, H_0, \sigma_8$) to the exact survey assumptions recorded in Celestrium's query ledger (`data/celestrium.db`).
+
+3. **Diagnostic Overlays & Halo Matching:**
+   - In FILAMENT's visualizer, render observed astronomical tracer points directly on top of the simulated dark matter web.
+   - Test empirical hypotheses: evaluate whether observed spatial overdensities (e.g., the quasar dipole anomaly or stream gap substructures) fall within expected $\Lambda\text{CDM}$ cosmic variance or indicate anomalous primordial non-Gaussianity / dark matter sub-halo encounters.
+
 ## Fun polish backlog
 
 These are intentionally non-core, low-risk cockpit treats to add between heavier
