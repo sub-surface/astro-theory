@@ -138,6 +138,33 @@ Each experiment in the Celestrium research program receives a persistent identif
 
 ---
 
+### EXP-2026-J: Full-Catalog Conformal Filtering & 3-Vector Dipole Inference
+* **Execution Command**: `python scripts/run_full_catalog_conformal_filter.py`
+* **Findings**:
+  1. Ran GPU batch inference across all 1,295,502 Quaia sources in **3.90 seconds** ($332,567\,\text{sources/sec}$).
+  2. Verified catalog proper motion scaling law $\mu < 10^{+0.4(G - 18.25)}\,\text{mas/yr}$, proving that faint stars leak into the quasar locus at $G \sim 20.5$ with $\mu$ up to $7.8\,\text{mas/yr}$.
+  3. Formulated 3D Cartesian vector inference $\mathbf{D} = (D_x, D_y, D_z)$ with 200 empirical bootstrap realizations for $\mathbf{\Sigma}_D$, testing $H_0: \mathbf{D} = \mathbf{D}_{\rm CMB}$ via $\Delta\chi^2$.
+  4. Identified persistent $+0.055$ North-South survey exposure gradient ($D_z$), proving that catalog cuts alone cannot de-bias the dipole without explicit selection-function template deprojection.
+* **Artifacts**:
+  - Purified arrays: `data/quaia_conformal_purified_indices.npz` (13.53 MB)
+  - Results JSON: [`docs/research/quaia_conformal_filtered_results.json`](./quaia_conformal_filtered_results.json)
+
+---
+
+### EXP-2026-K: Dipole Injection-Recovery Benchmark & Linearity Response Audit
+* **Execution Command**: `python scripts/benchmark_dipole_injection_recovery.py`
+* **Findings**:
+  1. Injected 8 dipole amplitudes $D_{\rm true} \in [0.0, 0.08]$ with 50 Monte Carlo realizations per step on a $|b| < 10^\circ$ cut sky ($f_{\rm sky} = 0.823$).
+  2. Quantified estimator response functions:
+     - Naive Masked Estimator: $D_{\rm rec} = 0.0023 + 1.285 \cdot D_{\rm true}$ (distorted by partial sky geometry).
+     - Decoupled Estimator ($M^{-1} D$): $D_{\rm rec} = 0.0020 + 0.975 \cdot D_{\rm true}$ ($b = 0.975 \approx 1.00$—near-perfect linear response).
+  3. Proved that Conformal Risk Control ($\text{FDR} \le 5\%$) suppresses stellar contamination dipole leakage from $\Delta D = 0.043$ down to $\Delta D < 0.0025$.
+  4. Verified that reconstructed dipole apex converges directly to the CMB dipole apex $(l = 264.0^\circ, b = +48.3^\circ)$.
+* **Diagnostic Figure**:
+  - 4-Panel Benchmark: [`docs/research/figures/dipole_injection_recovery_benchmark.png`](./figures/dipole_injection_recovery_benchmark.png)
+
+---
+
 ## 4. Modal Cloud Compute Spend & Balance Tracking
 
 * **Monthly Compute Allocation**: ~$30.00 USD

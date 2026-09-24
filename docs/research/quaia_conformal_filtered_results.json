@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "catalog": "Archive\\2026-06-G-dipole\\data\\quaia\\quaia_G20.5.fits",
+    "n_total": 1295502,
+    "inference_time_sec": 3.7,
+    "throughput_src_per_sec": 349695.0,
+    "target_risk_fdr": 0.05,
+    "lambda_hat": 0.5,
+    "conformal_retained": 438242,
+    "conformal_retention_pct": 33.83
+  },
+  "cmb_benchmark": {
+    "amplitude": 0.007,
+    "l_deg": 264.021,
+    "b_deg": 48.253,
+    "d_vec": [
+      -0.000485,
+      -0.004636,
+      0.005223
+    ]
+  },
+  "measurements": [
+    {
+      "regime": "A: Raw All-Sky Unmasked (Naive)",
+      "n_sources": 1295502,
+      "d_vec": [
+        -0.046848,
+        -0.042776,
+        0.055828
+      ],
+      "d_amplitude": 0.084507,
+      "l_deg": 222.4,
+      "b_deg": 41.35,
+      "sigma_d": 0.002634,
+      "delta_chi2_vs_cmb": 2963.07,
+      "cov_matrix": [
+        [
+          1.95e-06,
+          -2.6e-07,
+          -1e-08
+        ],
+        [
+          -2.6e-07,
+          1.67e-06,
+          -1.4e-07
+        ],
+        [
+          -1e-08,
+          -1.4e-07,
+          3.32e-06
+        ]
+      ]
+    },
+    {
+      "regime": "B: Geometric Mask |b| > 10\u00b0",
+      "n_sources": 1279489,
+      "d_vec": [
+        -0.038637,
+        -0.033457,
+        0.055441
+      ],
+      "d_amplitude": 0.075404,
+      "l_deg": 220.89,
+      "b_deg": 47.33,
+      "sigma_d": 0.002627,
+      "delta_chi2_vs_cmb": 2244.96,
+      "cov_matrix": [
+        [
+          1.56e-06,
+          -2.6e-07,
+          -1.8e-07
+        ],
+        [
+          -2.6e-07,
+          1.83e-06,
+          6e-08
+        ],
+        [
+          -1.8e-07,
+          6e-08,
+          3.51e-06
+        ]
+      ]
+    },
+    {
+      "regime": "C: High-Latitude Mask |b| > 30\u00b0",
+      "n_sources": 917566,
+      "d_vec": [
+        -0.004948,
+        -0.010818,
+        0.052231
+      ],
+      "d_amplitude": 0.053568,
+      "l_deg": 245.42,
+      "b_deg": 77.17,
+      "sigma_d": 0.003141,
+      "delta_chi2_vs_cmb": 427.27,
+      "cov_matrix": [
+        [
+          1.94e-06,
+          2.1e-07,
+          -3.8e-07
+        ],
+        [
+          2.1e-07,
+          2.01e-06,
+          5.2e-07
+        ],
+        [
+          -3.8e-07,
+          5.2e-07,
+          5.92e-06
+        ]
+      ]
+    },
+    {
+      "regime": "D: Astrometric Gate (PM < 2 mas/yr & |b|>10\u00b0)",
+      "n_sources": 1248361,
+      "d_vec": [
+        -0.039092,
+        -0.032806,
+        0.05686
+      ],
+      "d_amplitude": 0.076403,
+      "l_deg": 220.0,
+      "b_deg": 48.09,
+      "sigma_d": 0.002748,
+      "delta_chi2_vs_cmb": 2205.85,
+      "cov_matrix": [
+        [
+          1.93e-06,
+          -2.5e-07,
+          1.1e-07
+        ],
+        [
+          -2.5e-07,
+          1.89e-06,
+          1e-07
+        ],
+        [
+          1.1e-07,
+          1e-07,
+          3.73e-06
+        ]
+      ]
+    },
+    {
+      "regime": "E: Conformal Purified Sample (FDR <= 5% & |b|>10\u00b0)",
+      "n_sources": 430572,
+      "d_vec": [
+        -0.031346,
+        -0.122126,
+        -0.046783
+      ],
+      "d_amplitude": 0.134484,
+      "l_deg": 255.6,
+      "b_deg": -20.36,
+      "sigma_d": 0.004811,
+      "delta_chi2_vs_cmb": 2873.1,
+      "cov_matrix": [
+        [
+          5.72e-06,
+          -7e-08,
+          3e-08
+        ],
+        [
+          -7e-08,
+          5.44e-06,
+          4.3e-07
+        ],
+        [
+          3e-08,
+          4.3e-07,
+          1.199e-05
+        ]
+      ]
+    },
+    {
+      "regime": "F: Evidential-Weighted Dipole (|b|>10\u00b0)",
+      "n_sources": 1279489,
+      "d_vec": [
+        -0.032414,
+        -0.06461,
+        0.012608
+      ],
+      "d_amplitude": 0.073377,
+      "l_deg": 243.36,
+      "b_deg": 9.89,
+      "sigma_d": 0.00305,
+      "delta_chi2_vs_cmb": 1966.49,
+      "cov_matrix": [
+        [
+          2.25e-06,
+          -2.1e-07,
+          -6e-08
+        ],
+        [
+          -2.1e-07,
+          2.65e-06,
+          -1.7e-07
+        ],
+        [
+          -6e-08,
+          -1.7e-07,
+          4.41e-06
+        ]
+      ]
+    }
+  ]
+}
