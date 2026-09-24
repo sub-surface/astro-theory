@@ -119,6 +119,25 @@ Each experiment in the Celestrium research program receives a persistent identif
 
 ---
 
+### EXP-2026-I: Mining 1.3M Survey Sources for Remarkable Astrophysical Objects
+* **Execution Command**: `python scripts/mine_remarkable_objects.py`
+* **Findings**:
+  1. Mined all 1,295,502 real sources in Quaia G20.5 (Gaia DR3 + unWISE) in 0.96s.
+  2. Identified 5 benchmark objects spanning critical observational regimes:
+     - **`OBJ-APEX-01`**: Dipole Apex Anchor (`SDSS J092724.22+120713.0`, $z=1.851$, $0.43^\circ$ from CMB apex).
+     - **`OBJ-ANTI-02`**: Dipole Anti-Apex Counterpart ($z=1.805$, $0.085^\circ$ from anti-apex).
+     - **`OBJ-HIGHZ-03`**: Cosmic Dawn Beacon (`[VV2006] J162159.1+311006`, $z=4.606$, sharp Lyman-dropout in BP band).
+     - **`OBJ-HOTDOG-04`**: Extreme Obscured Hyper-Luminous AGN ($W_1 - W_2 = 2.32$, steep IR torus rise).
+     - **`OBJ-HALO-05`**: Fast-Moving Halo Interloper ($PM = 7.6\,\text{mas/yr}$, contaminated catalog quasar flagged by astrometric gate).
+  3. Integrated CDS SIMBAD cross-identification and deep multi-survey color cutouts (Legacy Surveys DR10, Pan-STARRS DR1, DSS2).
+  4. Extracted multi-wavelength SED profiles across 5 bands (Gaia BP, G, RP and unWISE W1, W2).
+* **Diagnostic Artifacts**:
+  - Contact Sheet & SED Gallery: [`docs/research/figures/remarkable_objects_discovery_gallery.png`](./figures/remarkable_objects_discovery_gallery.png)
+  - Catalog JSON: [`docs/research/remarkable_objects_catalog.json`](./remarkable_objects_catalog.json)
+  - Scientific Prospectus: [`docs/research/scientific-publication-prospectus.md`](./scientific-publication-prospectus.md)
+
+---
+
 ## 4. Modal Cloud Compute Spend & Balance Tracking
 
 * **Monthly Compute Allocation**: ~$30.00 USD

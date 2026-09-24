@@ -210,6 +210,10 @@ def render_dashboard(console: Console, payload: Dict[str, Any]) -> None:
         "[bold green]✓ COMPLETED[/]", "70.9x calibration gain (E^2_db=0.000266); empirical FDR <= 5.0% under CRC"
     )
     t_exp.add_row(
+        "EXP-2026-I", "1.3M Remarkable Objects Mining", "Quaia (1.3M) + SIMBAD",
+        "[bold green]✓ COMPLETED[/]", "SDSS J092724.22 apex anchor, z=4.61 beacon, Hot DOG, halo star; multi-band SEDs"
+    )
+    t_exp.add_row(
         "EXP-2026-01", "Euclid DR1 Photometric Injection", "Euclid DR1 Wide (I_E, YJH)",
         "[bold yellow]⏳ TARGET: OCT 21[/]", "Definitive multi-band NIR test of Ellis-Baldwin kinematic expectation"
     )
@@ -234,6 +238,8 @@ def render_dashboard(console: Console, payload: Dict[str, Any]) -> None:
     actions_text.append("celestrium jev dipole Archive/.../quaia_G20.5.fits\n", style="bold white")
     actions_text.append("• Conformal Risk:  ", style="cyan")
     actions_text.append("celestrium jev crc --risk 0.05\n", style="bold white")
+    actions_text.append("• Mining Gallery:  ", style="cyan")
+    actions_text.append("python scripts/mine_remarkable_objects.py\n", style="bold white")
     actions_text.append("• Telescope Queue: ", style="cyan")
     actions_text.append("celestrium jev schedule --budget 360\n", style="bold white")
     actions_text.append("• View Experiments:", style="cyan")
