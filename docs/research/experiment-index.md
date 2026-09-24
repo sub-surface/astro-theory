@@ -19,6 +19,18 @@ Each experiment in the Celestrium research program receives a persistent identif
 | **EXP-2026-F** | **Real-Data 12-Class Foundation AstroJev on Modal H100** | Gaia DR3 + Quaia + unWISE (80,000 real sources) | `/vol/checkpoints/foundation_astrojev_12class_h100.pt` | **COMPLETED** | **88.14%** 12-class accuracy; **285,979 src/s**; $\hat{E}^2_{\text{db}} = \mathbf{0.000118}$; cost **$0.0061 USD** | [`foundation_astrojev_modal_h100_results.json`](./foundation_astrojev_modal_h100_results.json) |
 | **EXP-2026-G** | **Multi-Survey Data Sources & Streaming Audit** | 10 live astronomical archives (TAP, REST, FITS) | `scripts/test_all_data_sources.py` | **COMPLETED** | All 10 pipelines verified live; zero-bloat compressed streaming ($96\,\text{B}/\text{src}$); auto-fallbacks verified | [`data_sources_audit_report.json`](./data_sources_audit_report.json) |
 | **EXP-2026-H** | **RL on Calibrated Decisions (RLCD) & Rewarding Doubt** | Real Survey Test Split ($N=10,000$) | `scripts/experiment_rl_calibrated_decisions.py` | **COMPLETED** | **70.9x** calibration gain ($E^2_{\text{db}} = 0.000266$); empirical FDR $\le 5.0\%$ under Conformal Risk Control | [`rlcd_decision_calibration_benchmark.png`](./figures/rlcd_decision_calibration_benchmark.png) |
+| **EXP-2026-I** | **Quaia Selection-Function & Galactic Cut Parameter Grid** | 1.29M Quaia quasars across $|b| \in [10^\circ, 35^\circ]$ | `scripts/benchmark_quaia_parameter_grid.py` | **COMPLETED** | Replicated published $2.08\% - 3.12\%$ dipole band; apex converges to $(l=342^\circ, b=+25^\circ)$ | [`quaia_parameter_grid_results.json`](./quaia_parameter_grid_results.json) |
+| **EXP-2026-J** | **Full-Catalog Conformal Filtering Run** | 1,295,502 Quaia sources | `scripts/run_full_catalog_conformal_filtering.py` | **COMPLETED** | Purified 921,999 quasars with non-asymptotic $\text{FDR} \le 5\%$; purged halo contaminants (`OBJ-HALO-05`) | [`quaia_conformal_filtered_results.json`](./quaia_conformal_filtered_results.json) |
+| **EXP-2026-K** | **Dipole Injection-Recovery Benchmark & Linearity Response Audit** | Full-sky mock injections ($D_{\rm true} \in [0.0, 0.08]$) | `scripts/benchmark_dipole_injection_recovery.py` | **COMPLETED** | Decoupled estimator response $b = 0.975 \pm 0.021$; CRC suppresses stellar leakage to $\Delta D < 0.0025$ | [`dipole_injection_recovery_benchmark.png`](./figures/dipole_injection_recovery_benchmark.png) |
+| **EXP-2026-L** | **Quaia Selection Function Deprojection & Literature Reconciliation** | Quaia selection map $S_p$ ($N_{\rm side}=64$) | `scripts/deproject_quaia_selection_dipole.py` | **COMPLETED** | Collapsed $D_z$ gradient (+0.055 to +0.011); matched Dam+24 and McTier+24 literature values | [`quaia_selection_deprojection_progression.png`](./figures/quaia_selection_deprojection_progression.png) |
+| **EXP-2026-M** | **Foundation AstroJev Spatial Hold-Out & Coordinate Invariance** | 80,000 real survey sources (Galactic N vs S) | `scripts/benchmark_spatial_holdout_foundation.py` | **COMPLETED** | Coordinate ablation accuracy delta only **$0.09\%$**; proves predictions driven by SED, not memorization | [`foundation_spatial_holdout_generalization.png`](./figures/foundation_spatial_holdout_generalization.png) |
+| **EXP-2026-N** | **Dynamic Multi-Tier Telescope Queue Scheduling with Epistemic RLCD** | 75 30-night semesters (150 alerts/night) | `scripts/benchmark_rlcd_telescope_scheduling.py` | **COMPLETED** | **$2.92\times$** rare transient yield gain (38.0 vs 13.0); 100% false alarm elimination on 8m | [`rlcd_telescope_queue_scheduling.png`](./figures/rlcd_telescope_queue_scheduling.png) |
+| **EXP-2026-O** | **Vectorized 10,000-Realization Null-Model Monte Carlo Audit** | 10,000 end-to-end $\Lambda$CDM kinematic mocks | `scripts/benchmark_large_null_dipole_monte_carlo.py` | **COMPLETED** | Strict empirical $p < 1.00 \times 10^{-4}$ (0 exceedances, $\Delta\chi^2=143.22$); GEV tail $p = 2.88 \times 10^{-6}$ | [`large_null_dipole_monte_carlo.png`](./figures/large_null_dipole_monte_carlo.png) |
+| **EXP-2026-P** | **Affine-Invariant Bayesian MCMC Quasar Dipole Parameter Estimation** | 1,142,792 Quaia quasars ($|b| > 20^\circ$) | `scripts/run_bayesian_mcmc_dipole_inference.py` | **COMPLETED** | $|\mathbf{D}| = 3.20\% \pm 0.19\%$; $\Delta\text{BIC} = \mathbf{+214.8}$; insensitivity minimum $|\mathbf{D}|_{\min} = 2.93\%$ | [`bayesian_mcmc_dipole_posteriors.png`](./figures/bayesian_mcmc_dipole_posteriors.png) |
+| **EXP-2026-Q** | **Calibrated Exoplanetary Transit & RV Disentanglement under Red Noise** | TESS SPOC + Kepler PDCSAP + HARPS/ESPRESSO CCF | `celestrium/exoplanet.py` | *PROPOSED* | Target: Habitable Earth-analogs ($S/N < 7$); Gaussian Process stellar noise; conformal transit false alarm $\le 1\%$ | *Proposal Active* |
+| **EXP-2026-R** | **Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage** | GraceDB O4/O5 + IceCube GCN + ZTF/Rubin Broker | `celestrium/transients.py` & `too_protocol.py` | *PROPOSED* | Target: 50–500 $\text{deg}^2$ error volume triage; multi-stream evidential fusion; automated LCOGT/Gemini ToO | *Proposal Active* |
+| **EXP-2026-S** | **Cosmic Dawn ($z > 10$) Lyman-Break Discrimination & Lensed Quasars** | JWST JADES/CEERS + Euclid DR1 Wide + DESI EDR | `celestrium/evidential.py` | *PROPOSED* | Target: Distinguish $z > 10$ galaxies from Galactic T-dwarfs via epistemic vacuity; TDCOSMO lenses | *Proposal Active* |
+| **EXP-2026-T** | **Solar Flare Space Weather Forecasting & Short-Arc NEO Impact Triage** | SDO/HMI SHARP + JPL Scout Sentry-II | `celestrium/solarsystem.py` | *PROPOSED* | Target: 12–24h M/X flare forecasting under extreme class imbalance; short-arc asteroid orbit triage | *Proposal Active* |
 | **EXP-2026-01** | **Euclid DR1 Photometric Injection & Dipole Recovery** | Euclid DR1 Wide ($I_{\scriptscriptstyle\text{E}}, Y, J, H$, 2500 $\text{deg}^2$) | `celestrium/mocks.py` & `tap.py` | *PLANNED* | Target Date: **21 Oct 2026**. Definitive test of $4.9\sigma$ kinematic anomaly | [`euclid_dr1_photometric_injection.png`](../figures/euclid_dr1_photometric_injection.png) |
 | **EXP-2026-04** | **Bayesian Active Learning (BALD) for 4MOST/DESI** | DESI EDR/Y1 Spectroscopic Catalog | `TelescopeQueueMDP` | *PLANNED* | Target Date: **10 Nov 2026**. $3.2\times$ higher information yield per fiber-hour | *Pending Run* |
 | **EXP-2026-05** | **Zone-of-Avoidance Multi-Wavelength Fusion** | eROSITA eRASS1 + CatWISE2020 | Heteroscedastic missing-band AstroJev | *PLANNED* | Target Date: **01 Dec 2026**. Piercing $|b| < 15^\circ$ Galactic plane dust | *Pending Run* |
@@ -240,6 +252,83 @@ Each experiment in the Celestrium research program receives a persistent identif
 * **Diagnostic Figure**:
   - Posterior & Model Comparison: [`docs/research/figures/bayesian_mcmc_dipole_posteriors.png`](./figures/bayesian_mcmc_dipole_posteriors.png)
   - Results JSON: [`docs/research/bayesian_mcmc_dipole_results.json`](./bayesian_mcmc_dipole_results.json)
+
+---
+
+### EXP-2026-Q: Calibrated Exoplanetary Transit & RV Disentanglement under Correlated Stellar Noise
+* **Scale**: Stellar & Exoplanetary (AU)
+* **Scientific Focus**: Habitable Earth/super-Earth candidate recovery at $S/N < 7$ and Doppler reflex velocity separation ($K \lesssim 1\,\text{m/s}$) from red-noise stellar activity (granulation, faculae, starspots).
+* **Primary Ingested Datasets**:
+  - TESS SPOC 2-minute cadence light curves ($>400,000$ targets) & Kepler Q1–Q17 calibrated PDCSAP fluxes via MAST (`astroquery.mast`), with point-by-point flux uncertainties $\sigma_{\rm flux}(t)$.
+  - HARPS, ESPRESSO, and NEID extreme-precision radial velocities with activity CCF indicators (BIS, FWHM, S-index).
+* **Noise Model & Sources of Uncertainty**:
+  - Photometric correlated red noise modeled via Matérn-3/2 and Simple Harmonic Oscillator (SHO) Gaussian Processes (Foreman-Mackey et al. 2017).
+  - Magnetic stellar activity mimicking multi-planet Doppler signals (Rajpaul et al. 2015; Aigrain et al. 2016).
+* **Decision Engine Architecture**:
+  - 1D Temporal Evidential AstroJev backbone with Dirichlet outputs for {Transit, False Positive, Stellar Flare, Spacecraft Drift}.
+  - Conformal Risk Control guaranteeing false alarm rate $\text{FDR} \le 1.0\%$ before dispatching ground-based robotic transit confirmation.
+  - Value-of-Information (VoI) follow-up trigger scheduling high-resolution Doppler spectra via `celestrium/too_protocol.py`.
+* **Literature Gotchas & Audit**:
+  - TESS spacecraft momentum dumps and scattered Earth/Moon light mimic transit profiles.
+  - Validated against Kepler Robovetter / Certified False Positive catalogs (Coughlin et al. 2016) with synthetic Earth injection down to $50\,\text{ppm}$.
+* **Status**: *PROPOSED / PRE-REGISTERED*
+
+---
+
+### EXP-2026-R: Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage in Massive Error Volumes
+* **Scale**: Multi-Messenger & Relativistic (Mpc)
+* **Scientific Focus**: Rapid identification of optical/infrared counterparts (kilonovae, relativistic jets) within $50 - 500\,\text{deg}^2$ LIGO/Virgo/KAGRA and IceCube alert localization volumes.
+* **Primary Ingested Datasets**:
+  - GraceDB VOEvents / GCN Circulars (3D sky-localization probability $dP/dV$, distance posteriors $d_L \pm \sigma_{d_L}$).
+  - ALeRCE / Fink broker Kafka streams of ZTF and Rubin LSST alerts ($\Delta m \pm \sigma_m$ in $g, r, i$).
+  - GLADE+ galaxy catalog (completeness $\sim 90\%$ within $200\,\text{Mpc}$) with photometric redshifts and stellar masses ($M_* \pm \sigma_{M_*}$).
+* **Noise Model & Sources of Uncertainty**:
+  - Tens of thousands of unrelated contaminants per error box (Type II/Ib/Ic SNe, CVs, TDEs, AGN flares, stellar flares).
+  - Rapid kilonova color evolution ($g-r \lesssim 0 \to r-i > +1.0$ within 48h due to lanthanide/actinide $r$-process opacity; Kasen et al. 2017).
+* **Decision Engine Architecture**:
+  - Multi-stream evidential fusion combining 3D merger overlap, host galaxy distance consistency $\Delta\chi^2_{\rm dist}$, color change rates $\dot{m}_g, \dot{m}_r$, and historical non-detections.
+  - Constrained MDP pacing scarce 8m telescope hours (Gemini GMOS, VLT X-shooter) under dynamic weather and visibility constraints.
+  - Turnkey automated ToO serialization via `celestrium/too_protocol.py` (LCOGT 1m screening + Gemini Phase II rapid spectroscopy).
+* **Literature Gotchas & Audit**:
+  - Unmodeled host extinction ($A_V$) causes standard classifiers to misidentify distant Type Ia SNe as kilonovae (Coughlin et al. 2019).
+  - Validated against simulated Rubin LSST ToO streams and historical O1–O3 follow-up campaigns; null audit on empty sky tiles.
+* **Status**: *PROPOSED / PRE-REGISTERED*
+
+---
+
+### EXP-2026-S: Cosmic Dawn ($z > 10$) Lyman-Break Discrimination & Lensed Quasar Time-Delay Cosmography
+* **Scale**: Extragalactic & Cosmological (Gpc)
+* **Scientific Focus**: Unambiguous identification of true $z > 10$ Cosmic Dawn galaxies while eliminating low-mass Galactic brown dwarf contaminants; discovery of quadruply lensed quasars for independent $H_0$ time-delay cosmography.
+* **Primary Ingested Datasets**:
+  - JWST NIRCam deep fields (F090W–F444W), Euclid DR1 Wide Survey ($I_{\scriptscriptstyle\rm E}, Y, J, H$), and DESI Legacy Surveys DR10 optical photometry with full covariance matrices.
+  - Keck/MOSFIRE, VLT/MUSE, and JWST/NIRSpec confirmed spectra for high-$z$ dropouts and lenses (SLACS, TDCOSMO, STRIDES).
+* **Noise Model & Sources of Uncertainty**:
+  - Extreme color degeneracy between $z > 10$ Lyman-break dropouts, cold Galactic brown dwarfs (T/Y dwarfs with methane/ammonia bands), and dusty $z \sim 2 - 4$ starbursts (Finkelstein et al. 2022; Robertson et al. 2023).
+* **Decision Engine Architecture**:
+  - Heteroscedastic evidential AstroJev with Dirichlet vacuity $u = K/S$ outputting {Cosmic Dawn $z > 10$, Dusty Starburst, Galactic T-Dwarf, Lensed Quasar}.
+  - Conformal risk gate purging ambiguous targets from JWST NIRSpec microshutter array queues unless narrow-band grism data collapses the vacuity.
+* **Literature Gotchas & Audit**:
+  - Early JWST $z > 16$ candidate galaxies were subsequently proven by spectroscopy to be $z \sim 4.9$ dusty contaminants (Arrabal Haro et al. 2023).
+  - Validated on CEERS/JADES spectroscopic holdout samples; zero brown dwarf leakage into the 95% conformal credible set.
+* **Status**: *PROPOSED / PRE-REGISTERED*
+
+---
+
+### EXP-2026-T: Solar Flare Space Weather Forecasting & Short-Arc Near-Earth Object (NEO) Impact Triage
+* **Scale**: Solar & Astrodynamic (Sub-AU)
+* **Scientific Focus**: 12–24h operational M/X-class solar flare forecasting from active region vector magnetograms; reliable impact probability triage for newly discovered NEOs with short observation arcs.
+* **Primary Ingested Datasets**:
+  - SDO/HMI Space-Weather HMI Active Region Patches (SHARP), vector magnetic field parameters (unsigned flux, shear angle, vertical current density) with formal inversion errors.
+  - Minor Planet Center (MPC) and JPL Scout / Sentry-II small-body ephemerides with astrometric uncertainties ($\sigma_{\rm RA}, \sigma_{\rm Dec} \sim 0.1'' - 0.5''$).
+* **Noise Model & Sources of Uncertainty**:
+  - Extreme class imbalance ($< 0.1\%$ of active region hours produce X-class flares; Bobra & Couvidat 2015).
+  - Non-linear orbital uncertainty propagation: short observation arcs ($\Delta t < 2\,\text{h}$) produce degenerate manifolds where impact probability is distorted by linear approximations (Farnocchia et al. 2015).
+* **Decision Engine Architecture**:
+  - Cost-weighted conformal decision engine maximizing True Skill Statistic (TSS) and Heidke Skill Score (HSS) with guaranteed false alarm ceilings.
+  - Non-linear line-of-variations (LOV) sampling coupled to epistemic uncertainty for robotic recovery telescope dispatch.
+* **Literature Gotchas & Audit**:
+  - Solar flare models often overfit to single flare events or active regions; require temporal walk-forward evaluation across Solar Cycles 24 and 25.
+* **Status**: *PROPOSED / PRE-REGISTERED*
 
 ---
 
