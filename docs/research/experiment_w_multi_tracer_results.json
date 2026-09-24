@@ -1,0 +1,113 @@
+{
+  "experiment": "EXP-2026-W: Unified Multi-Tracer Anisotropy & Cosmic Dipole Co-Inference",
+  "timestamp": "2026-09-24T15:40:25Z",
+  "total_cosmic_sources": 2865080,
+  "tracers": {
+    "quaia": {
+      "total_sources": 1295502,
+      "kinematic_factor": 5.4,
+      "x_slope": 1.7,
+      "alpha_index": 1.0,
+      "n_active_pixels": 24251
+    },
+    "catwise": {
+      "total_sources": 1360788,
+      "kinematic_factor": 5.051,
+      "x_slope": 1.35,
+      "alpha_index": 1.26,
+      "n_active_pixels": 24152
+    },
+    "nvss": {
+      "total_sources": 208790,
+      "kinematic_factor": 3.295,
+      "x_slope": 0.74,
+      "alpha_index": 0.75,
+      "n_active_pixels": 20537
+    }
+  },
+  "model_comparison": {
+    "H_0_cmb_kinematic_null": {
+      "bic": -13606242.36954134,
+      "aic": -13606297.21549238,
+      "max_ll": 6803154.60774619
+    },
+    "H_1_unified_bulk_flow": {
+      "bic": -13606249.391463088,
+      "aic": -13606331.660389649,
+      "max_ll": 6803174.830194824,
+      "delta_bic_vs_H0": 7.021921748295426,
+      "delta_aic_vs_H0": 34.44489726796746
+    },
+    "H_2_decoupled_dipoles": {
+      "bic": -13606068.694753394,
+      "aic": -13606205.809630994,
+      "max_ll": 6803117.904815497,
+      "delta_bic_vs_H1": 180.69670969434083
+    }
+  },
+  "unified_bulk_velocity": {
+    "v_mean_kms": 664.4669474935407,
+    "v_std_kms": 188.35583678675061,
+    "v_ci_95": [
+      461.89819770283566,
+      1194.384684473747
+    ],
+    "apex_l_deg": 289.1555873906098,
+    "apex_b_deg": 50.810310638635315,
+    "v_cmb_ratio": 1.7967307000528385,
+    "separation_from_cmb_deg": 16.430128320610695
+  },
+  "independent_dipoles": {
+    "quaia": {
+      "amplitude_mean": 0.01104957988975639,
+      "amplitude_std": 0.003278289676021355,
+      "apex_l_deg": 228.2793236816965,
+      "apex_b_deg": 17.721754266530805
+    },
+    "catwise": {
+      "amplitude_mean": 0.008403450059575018,
+      "amplitude_std": 0.0019547445932117475,
+      "apex_l_deg": 134.29283706667755,
+      "apex_b_deg": 49.3990076054364
+    },
+    "nvss": {
+      "amplitude_mean": 0.022717856901577266,
+      "amplitude_std": 0.0071703528533184815,
+      "apex_l_deg": 135.17589708786966,
+      "apex_b_deg": 31.93106785335003
+    }
+  },
+  "conformal_sky_anomalies": {
+    "quaia": {
+      "survey": "quaia",
+      "tau_conformal": 2.051833588057351,
+      "n_calibrated_pixels": 24251,
+      "n_anomalous_pixels": 1211,
+      "anomaly_fraction": 0.04993608510989238,
+      "target_risk_level": 0.05,
+      "max_residual": 4.660411661529177,
+      "mean_residual": 0.830100280771323
+    },
+    "catwise": {
+      "survey": "catwise",
+      "tau_conformal": 2.18864670017428,
+      "n_calibrated_pixels": 24152,
+      "n_anomalous_pixels": 1206,
+      "anomaly_fraction": 0.0499337528983107,
+      "target_risk_level": 0.05,
+      "max_residual": 6.589925628355603,
+      "mean_residual": 0.8909786417196451
+    },
+    "nvss": {
+      "survey": "nvss",
+      "tau_conformal": 2.10267766967745,
+      "n_calibrated_pixels": 20537,
+      "n_anomalous_pixels": 1025,
+      "anomaly_fraction": 0.049909918683352,
+      "target_risk_level": 0.05,
+      "max_residual": 22.09445398704631,
+      "mean_residual": 0.8383619696573704
+    }
+  },
+  "execution_time_seconds": 135.6084485054016
+}

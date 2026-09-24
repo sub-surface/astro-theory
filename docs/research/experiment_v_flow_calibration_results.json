@@ -1,0 +1,26 @@
+{
+  "experiment": "EXP-2026-V: Continuous-Flow Foundation AstroJev for Multi-Survey Cross-Calibration",
+  "timestamp": "2026-09-24T18:42:13Z",
+  "sample_size": 12000,
+  "device": "cuda",
+  "zero_point_recovery": {
+    "rmse_mag": 0.03647824376821518,
+    "mae_mag": 0.029297582805156708
+  },
+  "calibration_metrics": {
+    "binned_ece": 0.09996465638279915,
+    "stanford_debiased_edb2": 0.012877035266968529
+  },
+  "fiber_triage": {
+    "tau_conformal": 0.9449384212493896,
+    "target_risk_level": 0.02,
+    "total_evaluated": 2000,
+    "allocated_fibers": 524,
+    "purged_contaminants": 1476,
+    "total_fiber_hours": 663.0,
+    "wasted_contaminant_fibers": 7,
+    "contaminant_false_allocation_rate": 0.02681992337164751,
+    "high_z_quasar_recall": 0.795774647887324
+  },
+  "execution_time_seconds": 60.588738203048706
+}
