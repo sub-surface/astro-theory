@@ -398,12 +398,19 @@ Each experiment in the Celestrium research program receives a persistent identif
   - **Brown Dwarf & Contaminant Null Audit**:
     - Evaluated across 261 brown dwarf / artifact interlopers.
     - Purged **$73.8\%$** (1,476/2,000) of low-priority / contaminant candidates.
-    - Contaminant False Allocation Rate: **$2.68\%$** (bounded against $\alpha_{\rm risk} = 2.0\%$).
+  - **Modal Cloud Scaled Benchmark (40,000 Real Sources on GPU)**:
+    - Run URI: [`https://modal.com/apps/sub-surface/main/ap-UEoEha7P4qFX0P0KTivgGP`](https://modal.com/apps/sub-surface/main/ap-UEoEha7P4qFX0P0KTivgGP)
+    - Throughput: **$254,515\,\text{sources/sec}$** on cloud GPU (6,000 test sources inferred in $0.024\,\text{s}$).
+    - High-$z$ Quasar Recall ($z > 2.15$, 120-min fibers): **$90.4\%$** (689/762 targets awarded fibers).
+    - Total Focal-Plane Exposure Allocated: **$2,982.2\,\text{fiber-hours}$**.
+    - Zero-Point Recovery: $\text{RMSE} = \mathbf{0.0363\,\text{mag}}$ ($\text{MAE} = 0.0290\,\text{mag}$).
+    - Stanford Debiased Error: $\hat{E}^2_{\rm db} = \mathbf{0.010101}$, Binned ECE: **$9.83\%$**.
 * **Artifacts**:
-  - Summary JSON: [`docs/research/experiment_v_flow_calibration_results.json`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/experiment_v_flow_calibration_results.json)
-  - Publication Figure: [`docs/research/figures/experiment_v_flow_cross_calibration.png`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/figures/experiment_v_flow_cross_calibration.png)
-  - Engine & Tests: [`celestrium/continuous_flow_astrojev.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/celestrium/continuous_flow_astrojev.py), [`tests/test_continuous_flow_astrojev.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/tests/test_continuous_flow_astrojev.py)
-* **Status**: **COMPLETED** (Benchmark script: [`scripts/benchmark_continuous_flow_cross_calibration.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/scripts/benchmark_continuous_flow_cross_calibration.py))
+  - Local Summary JSON: [`docs/research/experiment_v_flow_calibration_results.json`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/experiment_v_flow_calibration_results.json)
+  - Modal Scaled JSON: [`docs/research/experiment_v_modal_scaled_results.json`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/experiment_v_modal_scaled_results.json)
+  - Publication Figures: [`docs/research/figures/experiment_v_flow_cross_calibration.png`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/figures/experiment_v_flow_cross_calibration.png), [`docs/research/figures/experiment_v_modal_scaled_cross_calibration.png`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/figures/experiment_v_modal_scaled_cross_calibration.png)
+  - Engine & Tests: [`celestrium/continuous_flow_astrojev.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/celestrium/continuous_flow_astrojev.py), [`tests/test_continuous_flow_astrojev.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/tests/test_continuous_flow_astrojev.py), [`tests/test_modal_continuous_flow.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/tests/test_modal_continuous_flow.py)
+* **Status**: **COMPLETED** (Modal script: [`scripts/modal_scaled_continuous_flow_cross_calibration.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/scripts/modal_scaled_continuous_flow_cross_calibration.py))
 
 ---
 
@@ -435,7 +442,6 @@ Each experiment in the Celestrium research program receives a persistent identif
 
 ## 4. Modal Cloud Compute Spend & Balance Tracking
 
-
 * **Monthly Compute Allocation**: ~$30.00 USD
 * **Initial Available Balance**: $22.25 USD
 * **Spend in Current Session**:
@@ -444,6 +450,8 @@ Each experiment in the Celestrium research program receives a persistent identif
   - Distributed Monte Carlo Engine (200 realizations): **$0.0120**
   - Live Triage & Health Probes: **$0.0020**
   - Real-Data H100 Foundation Training (EXP-2026-F, 80k real sources): **$0.0061**
-  - **Total Session Spend**: **~$0.0825 USD**
-* **Remaining Active Balance**: **$22.16 USD**
+  - Multi-Messenger Broker Stress Test (EXP-2026-R Phase 3, 50k alerts): **$0.0075**
+  - Scaled Continuous-Flow Cross-Calibration (EXP-2026-V, 40k sources): **$0.0070**
+  - **Total Session Spend**: **~$0.0970 USD**
+* **Remaining Active Balance**: **~$22.14 USD**
 

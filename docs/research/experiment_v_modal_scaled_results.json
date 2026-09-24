@@ -1,0 +1,37 @@
+{
+  "experiment": "EXP-2026-V: Scaled Continuous-Flow Foundation AstroJev Cross-Calibration",
+  "timestamp": "2026-09-24T18:48:52Z",
+  "device": "cuda",
+  "total_sources_evaluated": 40000,
+  "test_slice_size": 6000,
+  "throughput_sources_per_sec": 254514.55802063292,
+  "inference_wall_time_sec": 0.02357428999999911,
+  "training_wall_time_sec": 28.640727996826172,
+  "zero_point_recovery": {
+    "rmse_mag": 0.036273062229156494,
+    "mae_mag": 0.02900146320462227
+  },
+  "calibration": {
+    "binned_ece": 0.09832535975674789,
+    "stanford_debiased_edb2": 0.010101072075390781
+  },
+  "fiber_triage": {
+    "tau_conformal": 0.9386234283447266,
+    "target_risk_level": 0.02,
+    "dispatched_fibers": 2958,
+    "purged_contaminants": 3042,
+    "total_exposure_fiber_hours": 2982.25,
+    "contaminant_count": 774,
+    "wasted_contaminant_fibers": 25,
+    "contaminant_false_allocation_rate": 0.03229974160206718,
+    "high_z_quasar_count": 762,
+    "high_z_quasar_recall": 0.9041994750656168
+  },
+  "uncertainty_retention": {
+    "mean_posterior_sigma": 0.06772442907094955,
+    "max_posterior_sigma": 0.17831048369407654,
+    "mean_epistemic_vacuity": 0.3098149299621582,
+    "zero_naked_predictions_verified": true
+  },
+  "execution_total_time_sec": 29.036250114440918
+}
