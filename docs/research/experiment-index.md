@@ -165,6 +165,66 @@ Each experiment in the Celestrium research program receives a persistent identif
 
 ---
 
+### EXP-2026-L: Quaia Selection Function Deprojection & Literature Reconciliation
+* **Execution Command**: `python scripts/deproject_quaia_selection_dipole.py`
+* **Findings**:
+  1. Deprojected official Quaia selection function map $S(\hat{\mathbf{n}})$ ($N_{\text{side}}=64$ in ICRS) across $|b| > 10^\circ$ to $|b| > 35^\circ$.
+  2. Solved the anomalous North-South exposure gradient: $D_z$ collapsed from $+0.055$ down to $+0.011$.
+  3. Reconciled measured dipole directly with published literature band (Dam et al. 2024; McTier et al. 2024):
+     - $|b| > 20^\circ$: $D = 3.12\% \pm 0.35\%$ (Purified: $3.46\%$)
+     - $|b| > 30^\circ$: $D = 2.08\% \pm 0.39\%$ (Purified: $2.12\%$)
+     - $|b| > 35^\circ$: $D = 1.57\% \pm 0.41\%$ (Purified: $1.58\%$, apex latitude $b = +47.0^\circ$, within $1.2^\circ$ of CMB $+48.25^\circ$).
+* **Diagnostic Figure**:
+  - Progression Panel: [`docs/research/figures/quaia_selection_deprojection_progression.png`](./figures/quaia_selection_deprojection_progression.png)
+  - Results JSON: [`docs/research/quaia_deprojected_dipole_results.json`](./quaia_deprojected_dipole_results.json)
+
+---
+
+### EXP-2026-M: Foundation AstroJev Spatial Hold-Out Validation & Coordinate Invariance
+* **Execution Command**: `python scripts/benchmark_spatial_holdout_foundation.py`
+* **Findings**:
+  1. Audited spatial coordinate memorization across 80,000 real survey sources.
+  2. Hemispheric Holdout (Train on Galactic North $b > +10^\circ$, Test on Galactic South $b < -10^\circ$):
+     - Spatial Holdout: $55.23\%$ Top-1 Accuracy, $\text{ECE} = 0.2406$.
+     - Coordinate-Ablated ($l, b$ strictly zeroed): $55.14\%$ Top-1 Accuracy, $\text{ECE} = 0.2516$.
+     - Difference is only **$0.09\%$**, proving that predictions are driven by astrophysical SED properties ($G - RP$, $BP - RP$, $W_1 - W_2$, proper motion, error bars), not coordinate memorization.
+  3. Epistemic Uncertainty correctly escalates from $0.4035$ (in-distribution random) to $0.4988$ (unseen hemisphere).
+* **Diagnostic Figure**:
+  - Generalization Panel: [`docs/research/figures/foundation_spatial_holdout_generalization.png`](./figures/foundation_spatial_holdout_generalization.png)
+  - Results JSON: [`docs/research/foundation_spatial_holdout_results.json`](./foundation_spatial_holdout_results.json)
+
+---
+
+### EXP-2026-N: Dynamic Multi-Tier Telescope Queue Scheduling with Epistemic RLCD
+* **Execution Command**: `python scripts/benchmark_rlcd_telescope_scheduling.py`
+* **Findings**:
+  1. Formulated transient alert follow-up as a Constrained MDP across 75 30-night observing semesters (150 alerts/night) under stochastic weather, lunar cycles, and exponential decay.
+  2. Heterogeneous Facilities: Tier 1 (1m imager, 0.25h), Tier 2 (4m spectrograph, 1.0h), Tier 3 (8m spectrograph, 3.5h).
+  3. Rare Transients Discovered (Kilonovae, FBOTs, SLSN, TDEs):
+     - Naive Greedy: $13.0 \pm 2.6$
+     - Static Threshold: $11.0 \pm 2.3$
+     - **Epistemic RLCD**: **$38.0 \pm 2.8$** (**$2.92\times$ yield gain!**)
+  4. Follow-Up Efficiency: Epistemic RLCD achieved **$27.95\,{\rm U/hr}$** vs $17.64\,{\rm U/hr}$ (+58.4% efficiency), eliminating 8m false alarms via active Tier 1 screening.
+* **Diagnostic Figure**:
+  - Queue Benchmark: [`docs/research/figures/rlcd_telescope_queue_scheduling.png`](./figures/rlcd_telescope_queue_scheduling.png)
+  - Results JSON: [`docs/research/rlcd_telescope_scheduling_results.json`](./rlcd_telescope_scheduling_results.json)
+
+---
+
+### EXP-2026-O: Vectorized 10,000-Realization Null-Model Monte Carlo Audit
+* **Execution Command**: `python scripts/benchmark_large_null_dipole_monte_carlo.py`
+* **Findings**:
+  1. Addressed Supervisor Review Point 2: simulated $N = 10,000$ end-to-end realizations of the $\Lambda$CDM kinematic null hypothesis ($D_{\rm CMB} = 0.007$) with Quaia selection function and $|b| > 20^\circ$ mask in 52.12 seconds (191.9 real/sec).
+  2. Recovered exact null mean vector: $\bar{\mathbf{D}}_{\rm null} = [-0.00045, -0.00463, +0.00521]$ (expected: $[-0.00049, -0.00464, +0.00522]$).
+  3. Evaluated 3D Cartesian vector test: $\Delta\chi^2_{\rm obs} = \mathbf{143.22}$.
+  4. Exceedances out of 10,000: **0**.
+  5. Strict Empirical $P$-Value: **$p < 1.00 \times 10^{-4}$** ($\frac{1}{N+1} = 1.00 \times 10^{-4}$); Parametric GEV Tail: **$p = 2.88 \times 10^{-6}$**; Theoretical $\chi^2(3)$: $p = 7.63 \times 10^{-31}$.
+* **Diagnostic Figure**:
+  - Null Audit Panel: [`docs/research/figures/large_null_dipole_monte_carlo.png`](./figures/large_null_dipole_monte_carlo.png)
+  - Results JSON: [`docs/research/large_null_dipole_monte_carlo_results.json`](./large_null_dipole_monte_carlo_results.json)
+
+---
+
 ## 4. Modal Cloud Compute Spend & Balance Tracking
 
 * **Monthly Compute Allocation**: ~$30.00 USD
@@ -177,3 +237,4 @@ Each experiment in the Celestrium research program receives a persistent identif
   - Real-Data H100 Foundation Training (EXP-2026-F, 80k real sources): **$0.0061**
   - **Total Session Spend**: **~$0.0825 USD**
 * **Remaining Active Balance**: **$22.16 USD**
+

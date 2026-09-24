@@ -32,3 +32,8 @@ celestrium = "celestrium.hub:app"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["celestrium*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+

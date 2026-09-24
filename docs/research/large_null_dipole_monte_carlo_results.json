@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-2026-O",
+    "title": "Vectorized 10,000-Realization Null-Model Monte Carlo Audit",
+    "n_realizations": 10000,
+    "b_cut_deg": 20.0,
+    "f_sky": 0.6583048502604166,
+    "d_cmb_true": 0.007,
+    "timestamp": "2026-09-24T14:46:20Z"
+  },
+  "null_model_statistics": {
+    "mean_reconstructed_vector": [
+      -0.00044965995619352067,
+      -0.004631918168664345,
+      0.0052123018163930945
+    ],
+    "covariance_matrix": [
+      [
+        6.139619217669697e-06,
+        -8.676493153998281e-08,
+        3.306811783653437e-07
+      ],
+      [
+        -8.676493153998281e-08,
+        4.835786912055456e-06,
+        -2.0140491801241027e-08
+      ],
+      [
+        3.306811783653437e-07,
+        -2.0140491801241027e-08,
+        2.412610458132247e-06
+      ]
+    ],
+    "sigma_dx": 0.002477825501860391,
+    "sigma_dy": 0.0021990422715481065,
+    "sigma_dz": 0.001553258014024794
+  },
+  "observed_quaia_evaluation": {
+    "d_obs_amp": 0.0312,
+    "d_obs_apex_l": 342.3,
+    "d_obs_apex_b": 25.8,
+    "delta_chi2_obs": 143.22386280760392,
+    "empirical_exceedances": 0,
+    "empirical_p_value_bound": 9.999000099990002e-05,
+    "theoretical_chi2_3dof_p_value": 7.625744440026984e-31,
+    "parametric_gev_p_value": 2.8798187714817046e-06
+  },
+  "findings": [
+    "Executed N = 10,000 end-to-end simulations with Quaia selection function and |b| > 20\u00b0 mask in 52.12s.",
+    "Empirical Delta-chi^2 matches theoretical chi^2(3 dof) with high fidelity across 99.9% of the distribution.",
+    "Real Quaia deprojected dipole has Delta-chi^2 = 143.2, yielding zero exceedances out of 10,000 draws.",
+    "Strict empirical p-value is rigorously bounded to p < 1/(N+1) = 1.00e-04, eliminating previous weak Monte Carlo claims."
+  ]
+}
