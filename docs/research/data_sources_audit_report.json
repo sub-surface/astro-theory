@@ -1,0 +1,109 @@
+{
+  "Gaia DR3 TAP": {
+    "source": "Gaia DR3 TAP",
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap",
+    "status": "ONLINE",
+    "latency_seconds": 3.764,
+    "rows_returned": 5,
+    "columns": [
+      "source_id",
+      "phot_g_mean_mag",
+      "phot_bp_mean_mag",
+      "phot_rp_mean_mag",
+      "pm",
+      "pmra_error",
+      "pmdec_error",
+      "ruwe",
+      "l",
+      "b"
+    ],
+    "sample_source_id": 137342166385242112
+  },
+  "IRSA AllWISE TAP": {
+    "source": "IRSA AllWISE TAP",
+    "endpoint": "https://irsa.ipac.caltech.edu/TAP",
+    "status": "ONLINE",
+    "latency_seconds": 26.331,
+    "rows_returned": 5,
+    "columns": [
+      "source_id",
+      "w1mpro",
+      "w2mpro",
+      "w1sigmpro",
+      "w2sigmpro",
+      "ra",
+      "dec"
+    ]
+  },
+  "Euclid TAP": {
+    "source": "Euclid Science Archive TAP",
+    "endpoint": "https://eas.esac.esa.int/tap-server/tap",
+    "status": "ONLINE",
+    "latency_seconds": 3.279,
+    "total_tables_discovered": 103,
+    "sample_tables": [
+      "catalogue.mer_catalogue",
+      "catalogue.mer_cutouts",
+      "catalogue.mer_morphology",
+      "catalogue.phz_classification",
+      "catalogue.phz_galaxy_sed"
+    ]
+  },
+  "Quaia G20.5 Catalog": {
+    "source": "Quaia G20.5 Quasar Catalog",
+    "path": "Archive\\2026-06-G-dipole\\data\\quaia\\quaia_G20.5.fits",
+    "status": "ONLINE",
+    "latency_seconds": 0.65,
+    "total_sources": 1295502,
+    "file_size_mb": 163.1,
+    "mean_redshift": 1.533
+  },
+  "Fink Alert Broker": {
+    "source": "Fink Alert Broker (Rubin/ZTF)",
+    "endpoint": "https://api.fink-portal.org/api/v1/latests",
+    "status": "OFFLINE_FALLBACK_AVAILABLE",
+    "fallback": "RubinBurstSimulator",
+    "notice": "Fink public portal timed out; in-flight simulation pipeline ready.",
+    "latency_seconds": 8.016
+  },
+  "ALeRCE Transient Broker": {
+    "source": "ALeRCE Transient Broker",
+    "endpoint": "https://api.alerce.online/ztf/v1/objects/",
+    "status": "ONLINE",
+    "latency_seconds": 5.568,
+    "alerts_received": 5,
+    "sample_oid": "ZTF26abxdtow",
+    "columns": [
+      "main_id",
+      "ra",
+      "dec",
+      "class",
+      "classifier",
+      "probability",
+      "ndet",
+      "firstmjd",
+      "lastmjd"
+    ]
+  },
+  "MAST STScI": {
+    "source": "MAST STScI (HST/JWST/TESS)",
+    "status": "ONLINE",
+    "latency_seconds": 7.432,
+    "records_found": 525,
+    "sample_collection": "HST"
+  },
+  "SDSS Archive": {
+    "source": "SDSS Science Archive",
+    "status": "NO_SPECTRUM_FOUND",
+    "latency_seconds": 4.967,
+    "has_data": false
+  },
+  "Cutout Engine": {
+    "source": "Cutout Engine (SkyView/DSS/PanSTARRS)",
+    "status": "ONLINE",
+    "survey_used": "Legacy Surveys DR10 (deep)",
+    "latency_seconds": 1.983,
+    "output_exists": true,
+    "output_path": "cache\\cutouts\\test_verification_cutout.png"
+  }
+}

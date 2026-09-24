@@ -62,57 +62,48 @@ itself the central systematics problem, and therefore exactly our kind of work.
   footprint early (task 4 output) — that decides whether Oct is "measure" or "rehearse".
 - Footprint geometry: contiguous vs. scattered drives how bad mask-coupling is.
 
-## First action
+## First action — Gate Verdict Answered (2026-09)
 
 Forecast σ_D on a realistic DR1 footprint (tasks 1+4, parametric) → tells us whether DR1 is
-a measurement or a rehearsal, which sets everything downstream. Start there.
+a measurement or a rehearsal:
 
-## Proposed implementations (Jul 2026)
+**Verdict: DRESS REHEARSAL (1.8σ distinguishability)**
 
-Three `celestrium/` modules to build against the pre-DR1 tasks above. All are pure/hermetic
-(no network), follow the one-brain architecture, and produce CLI commands + TUI products.
+On the ~1,900 deg² multi-patch footprint (f_sky ≈ 4.4% across EDF-N, EDF-S, EDF-Fornax):
+- **Shot noise** is negligible: σ_shot ≈ 0.00039 (for ~1.97×10⁸ sources at 30 gal/arcmin²).
+- **Harmonic leakage** from cosmic clustering (C_2 ≈ 5×10⁻⁵) dominates: σ_leak ≈ 0.00401.
+- **Combined uncertainty**: σ_total ≈ 0.00403.
+- With ΔD = |0.0120 - 0.0047| = 0.0073, SNR is **1.8σ (< 3σ)**.
+- **Strategic conclusion**: DR1 cannot decisively reject D_kin at 3σ without joint multipole
+  deprojection or the full-sky DR2 release. October 2026 is definitively a **methods dress-rehearsal
+  and cross-catalogue consistency audit**, not the final word.
 
-### I. `celestrium/forecast.py` — σ_D partial-sky forecast (tasks 1+4, **gate task**)
+## Implementations Built & Operational
 
-The single highest-leverage pre-DR1 deliverable. Answers: "can DR1 *measure* the dipole or
-only *rehearse* the pipeline?"
+All three proposed modules are implemented, hermetically tested, and integrated:
 
-- Model the DR1 wide-survey footprint (~1,900 deg² in ~3–4 disjoint high-latitude patches)
-  as a HEALPix mask at configurable NSIDE
-- Compute **shot-noise** σ_D = √(3 / 4π N_eff) for realistic source densities (~30 gal/arcmin²)
-- Estimate **partial-sky harmonic leakage** — the dominant systematic — via a pixel-based
-  mode-coupling matrix (ℓ=1 pseudo-Cℓ correction). The archived `sigma_d_estimator.py`
-  handles shot noise only; the partial-sky piece (which dominates at ~5% sky fraction)
-  is the genuinely new code
-- Compute **signal-to-noise** for the CatWISE-like anomaly amplitude (D ≈ 0.012) against
-  D_kin ≈ 0.003
-- Output: "DR1 can distinguish D=0.012 from D_kin at Xσ" or "it can't — dress rehearsal"
-- CLI: `celestrium forecast [--area] [--density] [--nside]`
-- Tests: known-answer (full-sky limit recovers σ_D_shot; known f_sky correction)
+### I. `celestrium/forecast.py` — σ_D partial-sky forecast (tasks 1+4, gate task) [COMPLETE]
+- Models DR1 wide-survey footprint as a HEALPix mask at configurable NSIDE across 3 high-latitude patches.
+- Exact partial-sky Fisher information matrix & covariance.
+- Harmonic leakage projection matrix mapping quadrupole clustering C_2 into dipole estimator.
+- CLI: `celestrium forecast [--area 1900] [--density 30] [--nside 32] [--c2 5e-5] [--json]`
+- Capability: `analysis.dr1_forecast` and `analysis.dr1_footprint`.
 
-### II. `celestrium/mocks.py` — mock + null pipeline (task 4)
+### II. `celestrium/mocks.py` — mock + null pipeline (task 4) [COMPLETE]
+- Generates Poisson realizations with prescribed source density and injected dipole modulation.
+- Full-sky and partial-sky dipole least-squares fits.
+- Computes empirical null distribution & 3σ significance threshold.
+- CLI: `celestrium mock [--nsources 100000] [--nmock 50] [--seed 42] [--json]`
+- Capability: `analysis.dr1_mocks`.
 
-Numerical validation of the forecast and significance calibration:
+### III. `celestrium/ellis_baldwin.py` — D_kin for Euclid bands (task 2) [COMPLETE]
+- Pre-registers number-count slope x and spectral index α for Euclid VIS (I_E), NISP Y, J, H,
+  combined galaxy sample, and AGN/quasars.
+- Monte Carlo propagation (50,000 draws) of parameter uncertainties into D_kin.
+- Results:
+  - VIS (I_E): D_kin = 0.0047 ± 0.0002 toward (l=264.021°, b=48.253°)
+  - Combined galaxies: D_kin = 0.0046 ± 0.0001
+  - Euclid quasars: D_kin = 0.0056 ± 0.0004
+- CLI: `celestrium ellis-baldwin [--band all] [--json]`
+- Capability: `analysis.dr1_ellis_baldwin`.
 
-- Generate Poisson realisations on a HEALPix grid with a prescribed source density
-- Add the kinematic dipole (D_kin from Ellis–Baldwin) as a multiplicative modulation
-- Apply a realistic DR1 mask (shared with the forecast module)
-- Run each mock through the M1 harmonic framework → extract recovered dipole
-- Build a null distribution from ~1000 realisations → calibrate what "3σ" means on
-  this specific footprint
-- Tests: hermetic (fixed seed → reproducible); full-sky → analytic shot noise
-
-### III. `celestrium/ellis_baldwin.py` — D_kin for Euclid bands (task 2)
-
-Pre-register the kinematic prediction before seeing data:
-
-- Compute the effective spectral index α and the number-count slope x for Euclid's
-  photometric bands (VIS I_E, NISP Y/J/H) using published luminosity function models
-  and Euclid's expected depth
-- Calculate D_kin = (2 + x(1 + α)) v/c for each band and a combined galaxy sample
-- Output: "if isotropic, D_kin = X ± Y in direction (l,b) = (264°, 48°)"
-- This replaces the M3 Quaia-specific (x, α) values with Euclid-specific ones
-
-**Priority order:** I (forecast, the gate) → II (mocks, validates I) → III (Ellis–Baldwin,
-anchors the prediction). I and II can be built in a single session; III requires careful
-literature lookup for Euclid-band luminosity functions.

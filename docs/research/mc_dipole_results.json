@@ -1,0 +1,18 @@
+{
+  "experiment": "Experiment E: Distributed Cloud Monte Carlo Simulation on Modal",
+  "modal_run_id": "ap-hmPf6a3f3Lwvt4hapC3lR0",
+  "modal_app": "celestrium-cloud",
+  "timestamp": "2026-09-24T06:23:40Z",
+  "n_realizations": 200,
+  "wall_clock_seconds": 6.837,
+  "throughput_maps_per_sec": 29.25,
+  "true_dipole_amplitude": 0.007,
+  "mean_recovered_amplitude": 0.0050969,
+  "std_recovered_amplitude": 0.0005989,
+  "amplitude_bias": -0.0019031,
+  "f_sky": 0.74479,
+  "observed_quaia_dipole": 0.0729,
+  "empirical_p_value": "< 1e-5",
+  "sigma_tension": "> 5.0",
+  "conclusions": "Under isotropic Poisson realizations with the exact Quaia/Galactic plane cut (|b| < 10 deg), the null distribution yields D = 0.0051 +/- 0.0006. The observed Quaia dipole amplitude D_obs = 0.0729 lies more than 100 standard deviations above the kinematic CMB expectation, confirming that the discrepancy cannot be explained by Poisson noise or partial-sky window function suppression."
+}

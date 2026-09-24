@@ -150,10 +150,8 @@ def study_rank(ctx):
     from astropy.table import Table
     from ..study import library
     from ..study.model import leverage_score
-    from ..vault import sync as vault_sync
 
-    merged = library.merge_vault(vault_sync.read_studies_safe())
-    rows = sorted(merged.values(), key=leverage_score, reverse=True)
+    rows = sorted(library.STUDIES.values(), key=leverage_score, reverse=True)
     table = Table({
         "study": np.array([s.id for s in rows], dtype=object),
         "status": np.array([s.status for s in rows], dtype=object),

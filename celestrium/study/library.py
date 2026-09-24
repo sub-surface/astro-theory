@@ -97,6 +97,32 @@ _register(Study(
 
 
 _register(Study(
+    id="euclid-dr1-analytic-forecast",
+    title="Euclid DR1 analytic σ_D & harmonic leakage gate decision",
+    claim="Partial-sky harmonic leakage dominates over Poisson shot noise on the ~1900 deg² footprint.",
+    signature="σ_leak substantially exceeds σ_shot, setting the definitive gate decision.",
+    refutation="σ_leak negligible relative to shot noise.",
+    archives=("Euclid DR1 wide",),
+    rows="analytic", leverage="high", status="scoped",
+    pipeline=(
+        step("analysis.dr1_forecast", area_deg2=1900.0,
+             density_arcmin2=P("density"), nside=32,
+             d_anom=P("d_anom"), d_kin=0.0047,
+             c2_clustering=P("c2"), into="forecast"),
+    ),
+    grid={
+        "density": [0.1, 1.0, 30.0],
+        "d_anom": [0.010, 0.012, 0.014],
+        "c2": [1e-5, 5e-5, 1e-4],
+    },
+    metric="snr",
+    metrics=("verdict", "sigma_total", "sigma_shot", "sigma_leak", "condition_number"),
+    note="Direct gate decision from forecast.py without simulation overhead.",
+))
+
+
+
+_register(Study(
     # id matches `Observables/Wide binaries as a test of gravity.md` — the two
     # halves of one research object bind by id, they do not duplicate.
     id="wide-binaries-gravity-test",

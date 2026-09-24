@@ -363,86 +363,23 @@ def image_coverage_note(dec: float, survey: str = "auto") -> str:
     )
 
 
-@dataclass(frozen=True)
-class TargetProduct:
-    key: str
-    label: str
-    summary: str
-    kind: str
-    cost: str
-    status: str = "executable"
-    coverage_hint: str = ""
-    access: str = "open"
-    fetch_cost: str = "network"
-    modalities: tuple[str, ...] = ("table",)
-
-
-@dataclass(frozen=True)
-class TargetPlan:
-    product: TargetProduct
-    next_action: str = "fetch"
-    reason: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-@dataclass(frozen=True)
-class ProductResult:
-    kind: str
-    label: str
-    summary: str = ""
-    provenance: str = ""
-    table: Any = None
-    path: Any = None
-    fov: float | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "kind": self.kind,
-            "label": self.label,
-            "summary": self.summary,
-            "provenance": self.provenance,
-            "path": str(self.path) if self.path else None,
-            "fov": self.fov,
-        }
-
-
-def recommend_plans(target: ResolvedTarget, modality: str | None = None) -> list[TargetPlan]:
+def recommend_plans(target: ResolvedTarget, modality: str | None = None) -> list:
     """Rank capabilities applicable to a resolved target."""
     from .core import capability as capmod
     capmod.load_all()
     caps = capmod.for_target(target)
-    plans = []
-    for c in caps:
-        if modality:
-            mod_low = modality.lower()
-            if mod_low not in c.kind.lower() and mod_low not in c.name.lower():
-                continue
-        prod = TargetProduct(
-            key=c.name,
-            label=c.name,
-            summary=c.summary,
-            kind=c.kind,
-            cost=c.cost,
-            status="executable",
-            coverage_hint=c.summary,
-            access="open",
-            fetch_cost=c.cost,
-            modalities=(c.kind,),
-        )
-        plans.append(TargetPlan(product=prod, next_action="fetch"))
-    return plans
+    if modality:
+        mod_low = modality.lower()
+        return [c for c in caps if mod_low in c.kind.lower() or mod_low in c.name.lower()]
+    return list(caps)
 
 
-def execute_product(target: ResolvedTarget, plan: TargetPlan,
-                    settings: dict | None = None, emit: Any = None) -> ProductResult:
-    """Execute a chosen product plan through the kernel capability engine."""
+def execute_product(target: ResolvedTarget, plan_or_cap: Any,
+                    settings: dict | None = None, kernel: Any = None):
+    """Execute a capability for a target directly through the kernel."""
     from .core.kernel import Kernel
-    from pathlib import Path
-
-    k = Kernel()
-    cap_key = plan.product.key
+    k = kernel or Kernel()
+    cap_key = getattr(plan_or_cap, "name", None) or getattr(getattr(plan_or_cap, "product", None), "key", str(plan_or_cap))
     params: dict[str, Any] = {"target": target.display_name}
     if settings:
         if "fov" in settings and settings["fov"] is not None:
@@ -452,14 +389,4 @@ def execute_product(target: ResolvedTarget, plan: TargetPlan,
         if "survey" in settings and settings["survey"] not in (None, "auto"):
             params["survey"] = settings["survey"]
 
-    art = k.run(cap_key, params)
-    payload = k.load(art.id)
-    if art.kind in ("table", "surface"):
-        return ProductResult(kind="table", label=art.label or cap_key,
-                             summary=art.cap, table=payload)
-    if art.kind in ("image", "figure", "spectrum"):
-        path = art.full_path or (Path(art.path) if art.path else None)
-        return ProductResult(kind=art.kind, label=art.label or cap_key,
-                             summary=art.cap, path=path)
-    return ProductResult(kind=art.kind, label=art.label or cap_key,
-                         summary=str(payload))
+    return k.run(cap_key, params)

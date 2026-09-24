@@ -44,6 +44,16 @@ def set(key: str, value: Any) -> None:
 # --------------------------------------------------------------------------- #
 # Static Instrument Data Tables
 # --------------------------------------------------------------------------- #
+class _TapAdaptor:
+    """Expose uniform .query(adql) over the consolidated celestrium.tap engine."""
+    def __init__(self, key: str):
+        self.key = key
+
+    def query(self, adql: str):
+        from . import tap
+        return tap.query(self.key, adql)
+
+
 class _LazyAdaptor:
     """Expose a uniform `.query(adql)` over a module whose real signature differs."""
 
@@ -66,13 +76,13 @@ class Archive:
 
 
 ARCHIVES = {
-    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, "celestrium.gaia",
+    "gaia": Archive("gaia", "ESA Gaia DR3 (TAP/ADQL)", True, _TapAdaptor("gaia"),
                     "https://gea.esac.esa.int/tap-server/tap/availability?archive=gaia"),
-    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, "celestrium.irsa",
+    "irsa": Archive("irsa", "NASA/IPAC IRSA — WISE/2MASS/SPHEREx", True, _TapAdaptor("irsa"),
                     "https://irsa.ipac.caltech.edu/TAP/availability"),
-    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, "celestrium.euclid",
+    "euclid": Archive("euclid", "ESA Euclid Q1/Q2 (DR1 prep)", True, _TapAdaptor("euclid"),
                       "https://eas.esac.esa.int/tap-server/tap/availability"),
-    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, "celestrium.heasarc",
+    "heasarc": Archive("heasarc", "NASA HEASARC — X-ray/gamma", True, _TapAdaptor("heasarc"),
                        "https://heasarc.gsfc.nasa.gov/xamin/vo/tap/availability"),
     "desi": Archive(
         "desi", "NOIRLab Astro Data Lab — DESI/Legacy", True,
@@ -80,15 +90,11 @@ ARCHIVES = {
         "https://datalab.noirlab.edu/tap/availability",
     ),
     "casda": Archive(
-        "casda", "CSIRO CASDA — ASKAP/RACS (TAP)", True,
-        _LazyAdaptor("celestrium.vo_generic",
-                     lambda m, q: m.query(m.ENDPOINTS["casda"], q)),
+        "casda", "CSIRO CASDA — ASKAP/RACS (TAP)", True, _TapAdaptor("casda"),
         "https://casda.csiro.au/casda_vo_tools/tap/availability",
     ),
     "vizier-tap": Archive(
-        "vizier-tap", "VizieR over generic TAP", True,
-        _LazyAdaptor("celestrium.vo_generic",
-                     lambda m, q: m.query(m.ENDPOINTS["vizier"], q)),
+        "vizier-tap", "VizieR over generic TAP", True, _TapAdaptor("vizier"),
         "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/availability",
     ),
 }

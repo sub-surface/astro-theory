@@ -18,5 +18,3 @@ EXPORTS_DIR = DATA / "exports"
 LEDGER_DB = DATA / "celestrium.db"
 ARTIFACTS = DATA / "artifacts"
 
-# Where vault writes are staged when direct-write is off (see vault.sync).
-VAULT_OUT = DATA / "vault-out"

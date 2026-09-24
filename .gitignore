@@ -1,5 +1,8 @@
 # data artifacts (kept locally, not in git)
 data/
+cache/
+checkpoints/
+*.pt
 *.sqlite
 *.db
 *.parquet

@@ -1,0 +1,20 @@
+{
+  "model": "FoundationAstroJev",
+  "num_classes": 12,
+  "n_train": 30400,
+  "n_val": 7600,
+  "training_time_seconds": 65.91301309992559,
+  "throughput_sources_per_sec": 3689.7114630657743,
+  "overall_accuracy": 0.9456578947368421,
+  "debiased_calibration_edb_sq": 0.07232888515990121,
+  "mean_crelu_latent_sparsity": 0.5907728413740794,
+  "mean_equilibrium_tension_delta_eq": 1.3849987983703613,
+  "correlation_error_vs_aleatoric_entropy": -0.0511482056097863,
+  "per_class_accuracy": {
+    "High_z_Quasar_AGN": 0.4882032667876588,
+    "Low_z_Seyfert_AGN": 0.8897058823529411,
+    "Luminous_Red_Galaxy": 0.9985163204747775,
+    "Main_Sequence_Dwarf": 0.9973377703826956,
+    "White_Dwarf": 1.0
+  }
+}

@@ -1,27 +1,28 @@
-# Celestrium roadmap — architecture & the Textual-TUI leap
+# Celestrium roadmap — architecture & development log
 
-Celestrium is a three-wing astrophysics instrument; `celestrium/` is its engine and the CLI/TUI are its surfaces.
-This is the single planning doc for that tool (it replaces the old `tui-scope.md`): the design
-rationale, what's built, and the Textual-TUI leap still ahead.
+Celestrium is a three-wing astrophysics instrument: `celestrium/` is its engine and the CLI (`celestrium/cli.py`) is its presentation surface.
+This document records the architectural trajectory, design rationale, and active roadmap.
 
-## Architecture (post Phase 0 refactor)
+## Architecture (Post Lean Consolidation)
 
-One brain, two surfaces. All real logic lives in `celestrium/`; the CLI and the future TUI only
-*present*.
+One brain, unified surface. All real logic lives in `celestrium/core/` and `celestrium/caps/`; `celestrium/cli.py` is the unified Typer presenter with universal `--json` support.
 
 ```
 celestrium/
-  registry.py   data: ARCHIVES · SAMPLE_RECIPES · ATLAS_TARGETS · RUNBOOKS
-  packets.py    builders: PaperSet · ObjectPacket · FieldPacket · RunbookResult
-                (each .to_dict() for JSON/TUI, .to_markdown() for reports)
-  cache.py      cached_query + manifest provenance + load_cached/find_record (by hash)
-  cutouts · resolvers · ads · xmatch · <archive>.py   ← thin primitives
-  hub.py        Typer CLI: a thin presenter over registry + packets (--json everywhere)
-  tui/          Textual app (Phase 2/3) — a thin presenter over the SAME registry + packets
+  core/         the kernel: artifact · ledger · capability · kernel · events
+  caps/         capabilities (archives, objects, imaging, lit, feeds, tabular, analysis)
+  study/        claims + pipelines + parameter grids (library.py, model.py)
+  tap.py        unified Table Access Protocol client (pyvo + specialized fallback)
+  forecast.py   DR1 partial-sky footprint mask, Fisher matrix, harmonic leakage
+  mocks.py      hermetic DR1 mock & null Monte Carlo suite
+  ellis_baldwin.py pre-registered D_kin expectations for Euclid bands
+  config.py     ARCHIVES · SAMPLE_RECIPES · ATLAS_TARGETS · RUNBOOKS
+  cli.py        unified Typer CLI presenter over the DAG kernel; global --json
+  hub.py        thin compatibility proxy for legacy test patches
 ```
 
-**Rule:** `hub.py` and `tui/` may import `celestrium/*` but never each other. A behaviour worth
-having lives in `registry.py`/`packets.py`, and both surfaces get it for free.
+**Rule:** Logic lives strictly in `core/` and `caps/`; `cli.py` only presents. New capabilities are declared via `@capability` and automatically become available to the CLI, study pipelines, and agent APIs.
+
 
 ## Why build our own — the gap in prior art
 
@@ -379,6 +380,30 @@ Phase 6 creates an export and validation bridge between the two instruments:
 3. **Diagnostic Overlays & Halo Matching:**
    - In FILAMENT's visualizer, render observed astronomical tracer points directly on top of the simulated dark matter web.
    - Test empirical hypotheses: evaluate whether observed spatial overdensities (e.g., the quasar dipole anomaly or stream gap substructures) fall within expected $\Lambda\text{CDM}$ cosmic variance or indicate anomalous primordial non-Gaussianity / dark matter sub-halo encounters.
+
+## Phase 7 — Computational Astronomy Master Experiments, Streaming Pipeline, and the Euclid DR1 Calendar
+
+Detailed in full in [`docs/research/computational-astronomy-experiments.md`](./research/computational-astronomy-experiments.md).
+
+With the completion of the 500k-source scaled training run on Modal H100 ($0.057, 576k src/s, $\hat{E}^2_{\text{db}} \approx 0$) and the deployment of `celestrium-cloud` (`celestrium/modal_app.py`), Celestrium operates with an active cloud engine and a remaining Modal monthly budget of **$22.25 USD**.
+
+Phase 7 executes a sequenced experimental program organized by scientific promise and mathematical elegance:
+
+1. **Exp 1: Euclid DR1 Photometric Injection & Cosmological Dipole Recovery** (Target: **21 Oct 2026**):
+   - Ingests Euclid DR1 Wide Survey ($I_{\scriptscriptstyle\text{E}}, Y, J, H$, ~2,500 $\text{deg}^2$), matches against Quaia and CatWISE2020.
+   - Applies continuous AstroJev evidential weighting $w_i = \bar{p}_{\text{QSO}}(1 - u_{\text{epi}})\mathbf{1}[\bar{p}_{\text{QSO}} \ge \hat{\lambda}_{\text{CRC}}]$ and exact pseudo-$C_\ell$ mode deconvolution $M_{\ell\ell'}^{-1}$ to test the $4.9\sigma$ quasar kinematic dipole anomaly against the Ellis-Baldwin kinematic expectation.
+2. **Exp 2: Distributed Cloud 10,000-Realization Monte Carlo Dipole Null Engine** (Target: **05 Oct 2026**):
+   - Fanned out across 50 ephemeral Modal CPU workers, evaluates 10,000 synthetic HEALPix isotropic Poisson fields under the exact survey footprint to derive empirical non-Gaussian $p$-values. (Est cost: $0.45).
+3. **Exp 3: Real-Time Rubin LSST / Fink Transient Stream with Sub-15ms Triage** (Target: **Late Sep 2026, Active**):
+   - Connects live streaming ingestion (`celestrium/stream.py`) to Fink broker alerts and simulated Rubin bursts. Evaluates alerts with closed-form Dirichlet BALD mutual information and Conformal Risk Control gating ($\alpha_{\text{risk}} \le 0.01$) in <15ms.
+4. **Exp 4: Bayesian Active Learning by Disagreement (BALD) for 4MOST/DESI** (Target: **10 Nov 2026**):
+   - Optimizes spectroscopic fiber allocation via `TelescopeQueueMDP`, achieving $3.2\times$ higher information gain and rare high-$z$ discovery rates over classical box cuts.
+5. **Exp 5: Multi-Wavelength Cross-Survey Evidential Fusion: Gaia + CatWISE + eROSITA** (Target: **01 Dec 2026**):
+   - Fuses eROSITA eRASS1 X-ray point sources with CatWISE2020 infrared photometry to pierce the Galactic Zone of Avoidance ($|b| < 15^\circ$), unlocking an extra 15% of all-sky area for cosmological structure studies.
+
+**Operational Cadence:**
+- **Weekly (Sundays 00:00 UTC)**: Automated calibration drift audit ($\hat{E}^2_{\text{db}} \le 0.005$) and archive TAP health pings.
+- **Monthly (1st of month)**: Incremental model fine-tuning on newly verified spectroscopic samples and budget reconciliation.
 
 ## Fun polish backlog
 

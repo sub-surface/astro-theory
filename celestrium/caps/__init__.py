@@ -4,8 +4,8 @@ Importing this package registers them all. Adding a capability is adding a
 decorated function here — no surface edits, no parallel tables, no parity
 matrix to maintain.
 """
-from . import (analysis, archives, feeds, imaging, lit, notebook, objects,  # noqa: F401
+from . import (analysis, archives, feeds, imaging, lit, objects,  # noqa: F401
                studies, tabular)
 
-__all__ = ["analysis", "archives", "feeds", "imaging", "lit", "notebook",
+__all__ = ["analysis", "archives", "feeds", "imaging", "lit",
            "objects", "studies", "tabular"]

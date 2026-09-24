@@ -1,0 +1,190 @@
+{
+  "device": "NVIDIA H100 80GB HBM3",
+  "architecture": "evidential",
+  "total_sources": 500000,
+  "n_train": 350000,
+  "n_val": 50000,
+  "n_recal": 50000,
+  "n_test": 50000,
+  "epochs": 25,
+  "batch_size": 4096,
+  "accuracy": 0.9971,
+  "plugin_ece_10": 0.04809473646640777,
+  "plugin_ece_20": 0.04819944055795669,
+  "plugin_mce": 0.15090540280708897,
+  "brier_score": 0.007946292869746685,
+  "debiased_edb_sq_5": 0.0023376018057690517,
+  "debiased_edb_sq_10": 0.0023373990591963522,
+  "debiased_edb_sq_20": 0.0023549696764353922,
+  "debiased_edb_sq_50": 0.002387473454011445,
+  "calibrated_edb_sq": -3.032660008374491e-10,
+  "overconfident_error_rate": 0.4896551724137931,
+  "latent_crelu_sparsity": 0.6050654649734497,
+  "mean_bald_info_gain": 0.02097553284259598,
+  "truthrl_metrics": {
+    "truthfulness_score": 0.99132,
+    "n_total": 50000,
+    "n_correct": 49740,
+    "n_abstain": 173,
+    "n_hallucination": 87,
+    "accuracy_on_accepted": 0.998253958697092,
+    "abstention_rate": 0.00346,
+    "hallucination_rate": 0.00174
+  },
+  "crc_lambda_hat": 0.020751148462295532,
+  "stress_tests": {
+    "ood_anomaly": {
+      "n_samples": 2000,
+      "mean_vacuity": 0.09634394943714142,
+      "overconfident_fraction": 0.743,
+      "mean_confidence": 0.8375533223152161
+    },
+    "photon_starvation": [
+      {
+        "snr_range": [
+          1.0,
+          4.0
+        ],
+        "n_sources": 6465,
+        "accuracy": 0.9939675174013921,
+        "mean_vacuity": 0.06802733242511749,
+        "mean_confidence": 0.9459404945373535
+      },
+      {
+        "snr_range": [
+          4.0,
+          8.0
+        ],
+        "n_sources": 9781,
+        "accuracy": 0.9967283508843676,
+        "mean_vacuity": 0.06639628857374191,
+        "mean_confidence": 0.9484311938285828
+      },
+      {
+        "snr_range": [
+          8.0,
+          15.0
+        ],
+        "n_sources": 9359,
+        "accuracy": 0.9964739822630623,
+        "mean_vacuity": 0.06580877304077148,
+        "mean_confidence": 0.9492586851119995
+      },
+      {
+        "snr_range": [
+          15.0,
+          30.0
+        ],
+        "n_sources": 10228,
+        "accuracy": 0.9974579585451702,
+        "mean_vacuity": 0.06544160097837448,
+        "mean_confidence": 0.9497585892677307
+      },
+      {
+        "snr_range": [
+          30.0,
+          100.0
+        ],
+        "n_sources": 14167,
+        "accuracy": 0.9989412013834968,
+        "mean_vacuity": 0.06538761407136917,
+        "mean_confidence": 0.9500888586044312
+      }
+    ],
+    "footprint_bias": {
+      "latitude_bins": [
+        {
+          "b_range": [
+            0.0,
+            15.0
+          ],
+          "n_sources": 17097,
+          "accuracy": 0.9955547756916419,
+          "qso_recall": 1.0,
+          "mean_confidence": 0.9492577910423279
+        },
+        {
+          "b_range": [
+            15.0,
+            30.0
+          ],
+          "n_sources": 10378,
+          "accuracy": 0.997301984968202,
+          "qso_recall": 0.9997008674842955,
+          "mean_confidence": 0.9490728974342346
+        },
+        {
+          "b_range": [
+            30.0,
+            45.0
+          ],
+          "n_sources": 6259,
+          "accuracy": 0.9987218405496086,
+          "qso_recall": 0.9994068801897983,
+          "mean_confidence": 0.9492245316505432
+        },
+        {
+          "b_range": [
+            45.0,
+            60.0
+          ],
+          "n_sources": 5398,
+          "accuracy": 0.9983327158206743,
+          "qso_recall": 0.9997018485390579,
+          "mean_confidence": 0.9489758014678955
+        },
+        {
+          "b_range": [
+            60.0,
+            90.0
+          ],
+          "n_sources": 10868,
+          "accuracy": 0.9977916820022084,
+          "qso_recall": 0.9994074074074074,
+          "mean_confidence": 0.9484320282936096
+        }
+      ],
+      "dipole_leakage_slope": 3.076548946160977e-05
+    },
+    "banach_contraction": {
+      "steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "residuals": [
+        13.425752639770508,
+        3.3290557861328125,
+        1.1175084114074707,
+        0.4666275382041931,
+        0.23109684884548187,
+        0.13287346065044403,
+        0.0876208022236824,
+        0.06582879275083542,
+        0.05578033626079559,
+        0.05220485106110573,
+        0.051502492278814316,
+        0.050940535962581635,
+        0.04886522516608238,
+        0.0446372926235199,
+        0.041083626449108124
+      ],
+      "is_strictly_contracting": true
+    }
+  },
+  "training_time_seconds": 45.89655876159668,
+  "estimated_cost_usd": 0.05737069845199585,
+  "checkpoint_path": "/vol/checkpoints/astrojev_evidential_nvidia_h100_80gb_hbm3.pt"
+}

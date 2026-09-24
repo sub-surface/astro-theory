@@ -55,16 +55,20 @@ with content-addressed `blake2b` hashes, so every figure traces back to the exac
 celestrium/   the instrument (Python package)
   core/       kernel · ledger · capability · artifact · events (execution spine)
   config.py   single source of truth for archives, recipes, targets, runbooks, feeds
-  hub.py · tui/  the thin CLI + Textual cockpit presenters
+  cli.py      unified Typer CLI presenter (--json everywhere)
+  tap.py      unified Table Access Protocol client (pyvo + specialized fallback)
   caps/       capabilities (archives, objects, imaging, lit, feeds, tabular, analysis)
-  cutouts · resolvers · ads · xmatch · <archive>.py   boring, direct primitives
+  forecast.py DR1 partial-sky footprint mask, Fisher matrix, harmonic leakage
+  mocks.py    hermetic DR1 mock & null Monte Carlo suite
+  ellis_baldwin.py pre-registered D_kin expectations for Euclid bands
+  cutouts · resolvers · ads · xmatch · spectra   clean, direct primitives
 docs/         data-atlas · toolbox · imaging-guide · roadmap · research/
 tests/        hermetic unit test suite (pytest tests/)
 ```
 
-The architecture rule — *all logic in `celestrium/`; the CLI and TUI only present* — is what
-lets a human and an AI agent drive the exact same tool. Full design + the function-first specification:
-[`docs/Celestrium_ Rewrite the Astronomy Research Instrument.md`](./docs/Celestrium_%20Rewrite%20the%20Astronomy%20Research%20Instrument.md).
+The architecture rule — *all logic in `celestrium/core/` and `celestrium/caps/`; `cli.py` only presents* — is what
+lets a human and an AI agent drive the exact same tool with zero friction.
+
 
 ## Roles
 - **Leon** — physical judgment: what's worth predicting, which cuts are defensible.

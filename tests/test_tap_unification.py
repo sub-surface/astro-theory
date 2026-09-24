@@ -1,8 +1,8 @@
-"""Hermetic tests for TAPClient unification and archive fallbacks."""
+"""Hermetic tests for unified TAP client and archive fallbacks."""
 import pytest
 from astropy.table import Table
 
-from celestrium import vo_generic, gaia, irsa, euclid
+from celestrium import tap
 
 
 class DummyTableEntry:
@@ -27,18 +27,18 @@ class DummyService:
 
 
 def test_tap_client_query(monkeypatch):
-    monkeypatch.setattr(vo_generic.pyvo.dal, "TAPService", DummyService)
+    monkeypatch.setattr(tap.pyvo.dal, "TAPService", DummyService)
     
-    client = vo_generic.TAPClient("http://fake.tap")
+    client = tap.TAPClient("http://fake.tap")
     tab = client.query("SELECT * FROM foo")
     assert len(tab) == 1
     assert "source_id" in tab.colnames
 
 
 def test_tap_client_discover(monkeypatch):
-    monkeypatch.setattr(vo_generic.pyvo.dal, "TAPService", DummyService)
+    monkeypatch.setattr(tap.pyvo.dal, "TAPService", DummyService)
     
-    client = vo_generic.TAPClient("http://fake.tap")
+    client = tap.TAPClient("http://fake.tap")
     tables = client.discover()
     assert len(tables) == 3
     assert "gaiadr3.gaia_source" in tables
@@ -49,22 +49,21 @@ def test_tap_client_discover(monkeypatch):
 
 
 def test_gaia_fallback_to_tap_client(monkeypatch):
-    monkeypatch.setattr(vo_generic.pyvo.dal, "TAPService", DummyService)
+    monkeypatch.setattr(tap.pyvo.dal, "TAPService", DummyService)
     
-    # Simulate astroquery failing
     def raise_err(*args, **kwargs):
         raise RuntimeError("astroquery connection failed")
     
     import astroquery.gaia
     monkeypatch.setattr(astroquery.gaia.Gaia, "launch_job_async", raise_err)
 
-    tab = gaia.query("SELECT top 1 source_id FROM gaiadr3.gaia_source")
+    tab = tap.query("gaia", "SELECT top 1 source_id FROM gaiadr3.gaia_source")
     assert len(tab) == 1
     assert tab["source_id"][0] == 12345
 
 
 def test_irsa_fallback_to_tap_client(monkeypatch):
-    monkeypatch.setattr(vo_generic.pyvo.dal, "TAPService", DummyService)
+    monkeypatch.setattr(tap.pyvo.dal, "TAPService", DummyService)
     
     def raise_err(*args, **kwargs):
         raise RuntimeError("astroquery irsa failed")
@@ -72,13 +71,13 @@ def test_irsa_fallback_to_tap_client(monkeypatch):
     import astroquery.ipac.irsa
     monkeypatch.setattr(astroquery.ipac.irsa.Irsa, "query_tap", raise_err)
 
-    tab = irsa.query("SELECT top 1 * FROM allwise_p3as_psd")
+    tab = tap.query("irsa", "SELECT top 1 * FROM allwise_p3as_psd")
     assert len(tab) == 1
     assert tab["source_id"][0] == 12345
 
 
 def test_euclid_fallback_to_tap_client(monkeypatch):
-    monkeypatch.setattr(vo_generic.pyvo.dal, "TAPService", DummyService)
+    monkeypatch.setattr(tap.pyvo.dal, "TAPService", DummyService)
     
     def raise_err(*args, **kwargs):
         raise RuntimeError("astroquery euclid failed")
@@ -86,6 +85,6 @@ def test_euclid_fallback_to_tap_client(monkeypatch):
     import astroquery.esa.euclid
     monkeypatch.setattr(astroquery.esa.euclid.Euclid, "launch_job", raise_err)
 
-    tab = euclid.query("SELECT top 1 * FROM catalogue.mer_catalogue")
+    tab = tap.query("euclid", "SELECT top 1 * FROM catalogue.mer_catalogue")
     assert len(tab) == 1
     assert tab["source_id"][0] == 12345

@@ -1,0 +1,12 @@
+{
+  "accuracy": 0.99675,
+  "brier": 0.005483123008161783,
+  "ece": 0.0027473099455237945,
+  "mce": 0.5078181028366089,
+  "total_sources": 500000,
+  "device": "NVIDIA H100 80GB HBM3",
+  "training_time_seconds": 124.80038094520569,
+  "estimated_cost_usd": 0.15600047618150711,
+  "overconfident_error_rate": 0.7692307692307693,
+  "sparsity": 0.5905371308326721
+}

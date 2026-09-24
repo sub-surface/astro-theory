@@ -1,0 +1,33 @@
+{
+  "architecture": "FoundationAstroJev",
+  "device": "NVIDIA H100 80GB HBM3",
+  "n_sources": 80000,
+  "num_classes": 12,
+  "epochs": 25,
+  "batch_size": 4096,
+  "train_time_seconds": 4.8954724039999995,
+  "throughput_sources_per_sec": 285978.5296422233,
+  "estimated_cost_usd": 0.006119340504999999,
+  "raw_accuracy": 0.881375,
+  "raw_edb_sq": 0.155256666186693,
+  "calibrated_edb_sq": 0.00011875237135785822,
+  "latent_crelu_sparsity": 0.5843769907951355,
+  "mean_equilibrium_tension": 1.5813099145889282,
+  "crc_calibrated_threshold": 0.38602519035339355,
+  "crc_empirical_risk": 0.0,
+  "crc_sample_retention": 0.000625,
+  "per_class_accuracy": {
+    "High_z_Quasar_AGN": 0.5911282545805208,
+    "Low_z_Seyfert_AGN": 0.8657471264367816,
+    "Luminous_Red_Galaxy": 0.991,
+    "Emission_Line_Galaxy": 0.7992277992277992,
+    "Blazar_Relativistic_Jet": 0.8991935483870968,
+    "Main_Sequence_Dwarf": 0.9953825857519789,
+    "Red_Giant_Branch": 0.9919028340080972,
+    "White_Dwarf": 0.9877551020408163,
+    "Subdwarf_Halo_Star": 0.9333333333333333,
+    "Brown_Dwarf_LTY": 1.0,
+    "Explosive_Transient": 0.8363636363636363,
+    "Variable_Star_Flarer": 0.7137096774193549
+  }
+}

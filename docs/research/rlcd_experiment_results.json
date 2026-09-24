@@ -1,0 +1,20 @@
+{
+  "policy_1_greedy": {
+    "accuracy": 0.6664,
+    "debiased_calibration_edb_sq": 0.018880863653908838,
+    "mean_reward": -0.5959436297416687
+  },
+  "policy_2_rewarding_doubt": {
+    "accuracy": 0.6664,
+    "debiased_calibration_edb_sq": 0.000266253555275048,
+    "mean_reward": -0.5549047302743891
+  },
+  "policy_3_full_rlcd": {
+    "accepted_accuracy": 1.0,
+    "lambda_hat": 1.0,
+    "empirical_fdr": 0.0,
+    "sample_retention": 0.0,
+    "mean_reward": 0.0
+  },
+  "figure_path": "docs\\research\\figures\\rlcd_decision_calibration_benchmark.png"
+}

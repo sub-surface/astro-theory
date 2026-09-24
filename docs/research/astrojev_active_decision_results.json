@@ -1,0 +1,40 @@
+{
+  "status": "COMPLETED",
+  "dataset": {
+    "n_total": 16000,
+    "real_quaia_used": true
+  },
+  "calibration": {
+    "accuracy": 1.0,
+    "brier_score": 0.02527371235191822,
+    "plugin_ece": 0.13702643156051636,
+    "debiased_squared_ce": 0.018860307738577407,
+    "rmsce_debiased": 0.1373328356168961,
+    "rmsce_plugin": 0.1373328356168961,
+    "scaling_binning_ece": 0.0,
+    "temperature": 0.15061194687201554,
+    "latent_crelu_sparsity": 0.6158671975135803
+  },
+  "active_learning_bald": {
+    "mean_bald_info_gain": 0.056865494348033674,
+    "top_bald_score": 0.07468401547975734
+  },
+  "conformal_risk_control": {
+    "lambda_hat": 0.056908901780843735,
+    "alpha_risk": 0.05,
+    "empirical_risk": 0.04865938430983118,
+    "sample_retention": 0.5035,
+    "n_samples": 2000,
+    "target_class": 0
+  },
+  "telescope_mdp_schedule": {
+    "targets_scheduled": 102,
+    "total_time_min": 298.9,
+    "total_bald_gain": 6.9848
+  },
+  "cvar_risk_weighting": {
+    "mean_standard_weight": 0.43722981214523315,
+    "mean_cvar_weight": 0.32510370961179164,
+    "high_vacuity_retention": NaN
+  }
+}
