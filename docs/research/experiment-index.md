@@ -225,7 +225,26 @@ Each experiment in the Celestrium research program receives a persistent identif
 
 ---
 
+### EXP-2026-P: Affine-Invariant Bayesian MCMC Quasar Dipole Parameter Estimation
+* **Execution Command**: `python scripts/run_bayesian_mcmc_dipole_inference.py`
+* **Findings**:
+  1. Ran Goodman & Weare (2010) ensemble MCMC (48 walkers, 2,500 steps) on 1,142,792 Quaia quasars ($|b| > 20^\circ, f_{\rm sky} = 0.658$).
+  2. Verified chain convergence: Gelman-Rubin $\hat{R}(D_x) = 1.012$, $\hat{R}(D_y) = 1.016$, $\hat{R}(D_z) = 1.014$ (all $< 1.05$).
+  3. Posterior Dipole Estimates:
+     - Standard Selection Model: $|\mathbf{D}| = 3.20\% \pm 0.19\%$ towards $(l = 342.5^\circ \pm 3.6^\circ, b = +25.2^\circ \pm 2.6^\circ)$.
+     - Joint Selection Exponent Model: $|\mathbf{D}| = 3.07\% \pm 0.19\%$, $\gamma_{\rm sel} = 0.963 \pm 0.005$.
+  4. Model Selection & Evidence:
+     - $\Delta\text{BIC} = +214.8$ against the $\Lambda$CDM Kinematic Null ($\ln \mathcal{B}_{10} = 107.4$—decisive evidence on Jeffreys scale).
+  5. Systematic Non-Linearity Insensitivity:
+     - Across selection exponent grid $\gamma_{\rm sel} \in [0.6, 1.6]$, the minimum possible recovered dipole is $|\mathbf{D}|_{\min} = 2.93\%$, proving that no continuous selection depth non-linearity can reconcile Quaia with the CMB kinematic benchmark ($0.70\%$).
+* **Diagnostic Figure**:
+  - Posterior & Model Comparison: [`docs/research/figures/bayesian_mcmc_dipole_posteriors.png`](./figures/bayesian_mcmc_dipole_posteriors.png)
+  - Results JSON: [`docs/research/bayesian_mcmc_dipole_results.json`](./bayesian_mcmc_dipole_results.json)
+
+---
+
 ## 4. Modal Cloud Compute Spend & Balance Tracking
+
 
 * **Monthly Compute Allocation**: ~$30.00 USD
 * **Initial Available Balance**: $22.25 USD

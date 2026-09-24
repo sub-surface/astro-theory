@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "validation_suite": "Celestrium Target-of-Opportunity (ToO) Data Pipeline Verification",
+    "timestamp": "2026-09-24T13:59:32Z",
+    "total_alerts_tested": 500
+  },
+  "schema_validation": {
+    "passed_count": 500,
+    "pass_rate_pct": 100.0,
+    "mean_latency_ms": 0.021941001061350107,
+    "max_latency_ms": 0.12729992158710957,
+    "meets_15ms_budget": true
+  },
+  "resilience_audit": {
+    "corrupt_packets_tested": 5,
+    "corrupt_packets_rejected": 5,
+    "resilience_score_pct": 100.0
+  },
+  "protocol_serializers": {
+    "lcogt_requestgroup": {
+      "valid": true,
+      "proposal_id": "CELESTRIUM-2026B-001",
+      "target": "AT2026_KN_CANDIDATE_01",
+      "filters": [
+        "gp",
+        "rp",
+        "ip"
+      ]
+    },
+    "gemini_gmos_phase2": {
+      "valid": true,
+      "facility": "Gemini-South",
+      "too_type": "Rapid",
+      "instrument": "GMOS-S",
+      "grating": "B600+_G5323",
+      "total_time_hours": 1.3333333333333333
+    },
+    "ivoa_voevent_2_0": {
+      "valid": true,
+      "ivorn": "ivo://celestrium.org/too/CEL_2026_0924_001#1790258371",
+      "classification": "Kilonova_GW_Counterpart",
+      "confidence": 0.912
+    }
+  },
+  "verdict": "ALL PROTOCOLS AND DATA PIPELINES 100% VALIDATED"
+}

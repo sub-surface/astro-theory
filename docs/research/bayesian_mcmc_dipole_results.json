@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-2026-P",
+    "title": "Affine-Invariant Bayesian MCMC Quasar Dipole Parameter Estimation",
+    "catalog": "Archive/2026-06-G-dipole/data/quaia/quaia_G20.5.fits",
+    "selfunc": "Archive/2026-06-G-dipole/data/quaia/selfunc_G20.5_nside64.fits",
+    "b_cut_deg": 20.0,
+    "n_quasars_analyzed": 1142792,
+    "f_sky": 0.6583048502604166,
+    "n_walkers": 48,
+    "n_steps": 2500,
+    "burn_in": 1000,
+    "timestamp": "2026-09-24T14:07:47Z"
+  },
+  "mcmc_convergence": {
+    "r_hat_dx": 1.0119851284733912,
+    "r_hat_dy": 1.016117018328064,
+    "r_hat_dz": 1.0136262351849397,
+    "converged": true,
+    "acceptance_rate_m1": 0.5859510470855008,
+    "acceptance_rate_m2": 0.544609510470855
+  },
+  "model_1_posterior": {
+    "amplitude_median": 0.0319945447425032,
+    "amplitude_err_pos": 0.001921245322893457,
+    "amplitude_err_neg": 0.0018750806695310637,
+    "apex_l_deg": 342.5396503055849,
+    "apex_b_deg": 25.23886074323879,
+    "max_log_likelihood": -104653.4664415642,
+    "aic": 209314.9328831284,
+    "bic": 209348.47122576772
+  },
+  "model_2_joint_posterior": {
+    "amplitude_median": 0.03074701553932175,
+    "apex_l_deg": 340.22217172480816,
+    "apex_b_deg": 27.856630846720478,
+    "gamma_sel_median": 0.9629129484107792,
+    "gamma_sel_err": 0.005143533557473989,
+    "max_log_likelihood": -104628.5509257685,
+    "aic": 209267.101851537,
+    "bic": 209309.02477983615
+  },
+  "model_comparison": {
+    "kinematic_null_bic": 209563.30357423634,
+    "free_dipole_bic": 209348.47122576772,
+    "delta_bic_m0_vs_m1": 214.83234846862615,
+    "bayes_factor_ln_b10": 107.41617423431308,
+    "jeffreys_evidence_level": "DECISIVE (ln B_10 >> 5)"
+  },
+  "sensitivity_audit": {
+    "gamma_grid": [
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0,
+      1.1,
+      1.2000000000000002,
+      1.3,
+      1.4,
+      1.5,
+      1.6
+    ],
+    "recovered_dipole_amplitudes": [
+      0.029275902279925818,
+      0.029419679691136503,
+      0.031670625117688686,
+      0.035899599268780155,
+      0.041804220506629595,
+      0.049109387138673126,
+      0.05764940082519753,
+      0.06736900548536244,
+      0.07830467621705384,
+      0.0905708951879386,
+      0.10435586329989147
+    ],
+    "min_possible_dipole": 0.029275902279925818,
+    "reconciled_with_cmb": false
+  },
+  "findings": [
+    "Bayesian MCMC infers a selection-deprojected Quaia dipole amplitude of 3.20% (+0.19%, -0.19%) pointing towards (l=342.5\u00b0, b=25.2\u00b0).",
+    "Comparing the free dipole model against the Lambda-CDM kinematic null yields Delta-BIC = +214.8 (ln B_10 = 107.4), which represents decisive Bayesian evidence on the Jeffreys scale.",
+    "The selection function exponent gamma_sel is constrained to 0.96 \u00b1 0.01, highly consistent with the published linear selection function (gamma = 1.0).",
+    "Across the entire sensitivity grid gamma in [0.6, 1.6], the dipole amplitude never drops below 2.93%, proving that non-linear selection scaling cannot reconcile Quaia with the CMB kinematic benchmark."
+  ]
+}
