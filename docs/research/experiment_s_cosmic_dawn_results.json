@@ -1,0 +1,154 @@
+{
+  "experiment_id": "EXP-2026-S",
+  "timestamp": "2026-09-24T15:29:53Z",
+  "device": "cuda",
+  "n_samples": 10000,
+  "calibration": {
+    "pre_rlcd": {
+      "accuracy": 1.0,
+      "ece": 0.03687387704849243,
+      "ece_ci_95": [
+        0.03655276298522949,
+        0.037120743095874785
+      ],
+      "debiased_squared_ce": 0.001359682808587337,
+      "rmsce_debiased": 0.03687387704849243,
+      "mean_doubt_reward": -0.037586212158203125
+    },
+    "post_rlcd": {
+      "accuracy": 1.0,
+      "ece": 0.009042143821716309,
+      "ece_ci_95": [
+        0.008933033049106597,
+        0.009129607677459716
+      ],
+      "debiased_squared_ce": 8.176036489260241e-05,
+      "rmsce_debiased": 0.009042143821716309,
+      "mean_doubt_reward": -0.009085031226277351
+    },
+    "ece_reduction_pct": 75.47818524798711,
+    "edb_reduction_pct": 93.98680601267964
+  },
+  "brown_dwarf_null_audit": {
+    "n_null_contaminants": 2000,
+    "false_nirspec_triggers": 0,
+    "false_alarm_rate_pct": 0.0,
+    "crc_alpha_bound_pct": 1.0,
+    "passed_crc_bound": true,
+    "purged_brown_dwarfs": 1000,
+    "routed_to_grism_doubt": 0
+  },
+  "cosmic_dawn_yield": {
+    "total_test_candidates": 1500,
+    "true_cosmic_dawn_sources": 238,
+    "jwst_nirspec_dispatched": 237,
+    "vlt_muse_lenses_dispatched": 275,
+    "cosmic_dawn_recall_pct": 99.57983193277312
+  },
+  "sample_triaged_candidates": [
+    {
+      "target_id": "JWST_CAND_000001",
+      "action": "DISPATCH_JWST_NIRSPEC_DEEP",
+      "predicted_class": "Cosmic_Dawn_z_gt_10",
+      "confidence": 0.9873946309089661,
+      "confidence_err": 0.007216561120003462,
+      "confidence_interval_95": [
+        0.9732501711137593,
+        1.0
+      ],
+      "epistemic_vacuity": 0.01680719666182995,
+      "recommendation": "Verified Cosmic Dawn (z > 10) candidate. Dispatch 10h JWST NIRSpec MSA spectroscopy with guaranteed FDR <= 1%."
+    },
+    {
+      "target_id": "JWST_CAND_000002",
+      "action": "REJECT_GALACTIC_CONTAMINANT",
+      "predicted_class": "Galactic_Brown_Dwarf",
+      "confidence": 0.9929261803627014,
+      "confidence_err": 0.004064818378537893,
+      "confidence_interval_95": [
+        0.9849591363407671,
+        1.0
+      ],
+      "epistemic_vacuity": 0.009431792423129082,
+      "recommendation": "Galactic Brown Dwarf contaminant unmasked (PM SNR=252.5, r_hl=0.019''). Purged from NIRSpec queue."
+    },
+    {
+      "target_id": "JWST_CAND_000003",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Dusty_Starburst_z2_5",
+      "confidence": 0.9912185072898865,
+      "confidence_err": 0.005040239077061415,
+      "confidence_interval_95": [
+        0.9813396386988461,
+        1.0
+      ],
+      "epistemic_vacuity": 0.011708301492035389,
+      "recommendation": "Dusty interloper or low-significance foreground galaxy."
+    },
+    {
+      "target_id": "JWST_CAND_000004",
+      "action": "REJECT_GALACTIC_CONTAMINANT",
+      "predicted_class": "Galactic_Brown_Dwarf",
+      "confidence": 0.9929260611534119,
+      "confidence_err": 0.0040648821741342545,
+      "confidence_interval_95": [
+        0.9849588920921087,
+        1.0
+      ],
+      "epistemic_vacuity": 0.009431930258870125,
+      "recommendation": "Galactic Brown Dwarf contaminant unmasked (PM SNR=150.1, r_hl=0.022''). Purged from NIRSpec queue."
+    },
+    {
+      "target_id": "JWST_CAND_000005",
+      "action": "REJECT_GALACTIC_CONTAMINANT",
+      "predicted_class": "Galactic_Brown_Dwarf",
+      "confidence": 0.9929261803627014,
+      "confidence_err": 0.004064818378537893,
+      "confidence_interval_95": [
+        0.9849591363407671,
+        1.0
+      ],
+      "epistemic_vacuity": 0.009431792423129082,
+      "recommendation": "Galactic Brown Dwarf contaminant unmasked (PM SNR=334.2, r_hl=0.025''). Purged from NIRSpec queue."
+    },
+    {
+      "target_id": "JWST_CAND_000006",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Dusty_Starburst_z2_5",
+      "confidence": 0.991167426109314,
+      "confidence_err": 0.005069459788501263,
+      "confidence_interval_95": [
+        0.9812312849238515,
+        1.0
+      ],
+      "epistemic_vacuity": 0.011776760220527649,
+      "recommendation": "Dusty interloper or low-significance foreground galaxy."
+    },
+    {
+      "target_id": "JWST_CAND_000007",
+      "action": "REJECT_GALACTIC_CONTAMINANT",
+      "predicted_class": "Galactic_Brown_Dwarf",
+      "confidence": 0.992925226688385,
+      "confidence_err": 0.0040653543546795845,
+      "confidence_interval_95": [
+        0.984957132153213,
+        1.0
+      ],
+      "epistemic_vacuity": 0.009433018043637276,
+      "recommendation": "Galactic Brown Dwarf contaminant unmasked (PM SNR=833.2, r_hl=0.031''). Purged from NIRSpec queue."
+    },
+    {
+      "target_id": "JWST_CAND_000008",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Dusty_Starburst_z2_5",
+      "confidence": 0.9911942481994629,
+      "confidence_err": 0.0050538042560219765,
+      "confidence_interval_95": [
+        0.9812887918576598,
+        1.0
+      ],
+      "epistemic_vacuity": 0.011739358305931091,
+      "recommendation": "Dusty interloper or low-significance foreground galaxy."
+    }
+  ]
+}

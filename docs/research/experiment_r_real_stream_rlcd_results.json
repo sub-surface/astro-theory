@@ -1,0 +1,250 @@
+{
+  "experiment_id": "EXP-2026-R",
+  "timestamp": "2026-09-24T15:00:38Z",
+  "streamed_datasets": {
+    "real_phenomena_catalog": "data/real_phenomena_dataset.npz (80k sources)",
+    "quaia_fits_catalog": "quaia_G20.5.fits (1.3M sources, memmap streamed)",
+    "gaia_tap_cache": "data/gaia_tap_cache.npz (30k sources)",
+    "real_o4_events": [
+      "S240422ed",
+      "S230518h",
+      "S230522a",
+      "S240426d"
+    ],
+    "real_icecube_events": [
+      "IceCube-240422A",
+      "IceCube-230518A"
+    ]
+  },
+  "calibration_validation": {
+    "baseline": {
+      "ece": 0.863629740079244,
+      "ece_ci_95": [
+        0.8551747796249887,
+        0.8746225095105667
+      ],
+      "debiased_squared_ce": 0.750370709101244,
+      "rmsce_debiased": 0.8662394063428678,
+      "mean_doubt_reward": -2.1143057346343994,
+      "normalized_doubt_score": 0.3878457909279196
+    },
+    "post_rlcd_doubt": {
+      "ece": 0.09937393181025984,
+      "ece_ci_95": [
+        0.07960992464485267,
+        0.12784825129806993
+      ],
+      "debiased_squared_ce": 0.012974802942148806,
+      "rmsce_debiased": 0.11390699250769816,
+      "mean_doubt_reward": -0.506521999835968,
+      "normalized_doubt_score": 0.8533468603390928
+    },
+    "ece_reduction_pct": 88.49345648968253,
+    "debiased_reduction_pct": 98.27088094127643
+  },
+  "triage_execution_with_error_bars": {
+    "total_candidates": 50,
+    "action_counts": {
+      "LCOGT_SCREENING_TOO": 29,
+      "PASS_DEFER": 21
+    },
+    "conformal_lambda_hat": 0.88,
+    "conformal_risk_alpha": 0.05,
+    "sample_candidates": [
+      {
+        "candidate_id": "LSST_0000001",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "Supernova_Ia",
+        "confidence": 0.2112080454826355,
+        "confidence_err": 0.14701542600883352,
+        "confidence_interval_95": [
+          0.0,
+          0.4993582804599492
+        ],
+        "epistemic_vacuity": 0.8944416046142578,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.23725267539409972
+      },
+      {
+        "candidate_id": "LSST_0000002",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "Supernova_Ia",
+        "confidence": 0.23837994039058685,
+        "confidence_err": 0.15192036932127306,
+        "confidence_interval_95": [
+          0.0,
+          0.536143864260282
+        ],
+        "epistemic_vacuity": 0.8738202452659607,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -1.4338894899880688
+      },
+      {
+        "candidate_id": "LSST_0000003",
+        "action": "PASS_DEFER",
+        "predicted_class": "Core_Collapse_SN",
+        "confidence": 0.26850488781929016,
+        "confidence_err": 0.1370087143918232,
+        "confidence_interval_95": [
+          0.0,
+          0.5370419680272636
+        ],
+        "epistemic_vacuity": 0.6340306401252747,
+        "prediction_set": [
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable"
+        ],
+        "doubt_reward": -1.3148861610302331
+      },
+      {
+        "candidate_id": "LSST_0000004",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "AGN_Variable",
+        "confidence": 0.34476038813591003,
+        "confidence_err": 0.15489013556371006,
+        "confidence_interval_95": [
+          0.04117572243103834,
+          0.6483450538407818
+        ],
+        "epistemic_vacuity": 0.7129212617874146,
+        "prediction_set": [
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable"
+        ],
+        "doubt_reward": -1.0649056303887734
+      },
+      {
+        "candidate_id": "LSST_0000005",
+        "action": "PASS_DEFER",
+        "predicted_class": "Stellar_Flare",
+        "confidence": 0.8912777304649353,
+        "confidence_err": 0.04529201391351035,
+        "confidence_interval_95": [
+          0.8025053831944551,
+          0.9800500777354155
+        ],
+        "epistemic_vacuity": 0.1297643780708313,
+        "prediction_set": [
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.11509919361151112
+      },
+      {
+        "candidate_id": "LSST_0000006",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "AGN_Variable",
+        "confidence": 0.2102193385362625,
+        "confidence_err": 0.14650194185901613,
+        "confidence_interval_95": [
+          0.0,
+          0.49736314457993414
+        ],
+        "epistemic_vacuity": 0.890792965888977,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.23600001578801025
+      },
+      {
+        "candidate_id": "LSST_0000007",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "Core_Collapse_SN",
+        "confidence": 0.2386144995689392,
+        "confidence_err": 0.14570982374657812,
+        "confidence_interval_95": [
+          0.0,
+          0.5242057541122322
+        ],
+        "epistemic_vacuity": 0.793961226940155,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.2726154785154853
+      },
+      {
+        "candidate_id": "LSST_0000008",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "AGN_Variable",
+        "confidence": 0.23567542433738708,
+        "confidence_err": 0.14098180634645852,
+        "confidence_interval_95": [
+          0.0,
+          0.5119997647764458
+        ],
+        "epistemic_vacuity": 0.7441515326499939,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.2687627427786831
+      },
+      {
+        "candidate_id": "LSST_0000009",
+        "action": "LCOGT_SCREENING_TOO",
+        "predicted_class": "AGN_Variable",
+        "confidence": 0.3032240867614746,
+        "confidence_err": 0.15480035502528458,
+        "confidence_interval_95": [
+          0.0,
+          0.6066327826110324
+        ],
+        "epistemic_vacuity": 0.7675736546516418,
+        "prediction_set": [
+          "Kilonova",
+          "Fast_Optical_Transient",
+          "Supernova_Ia",
+          "Core_Collapse_SN",
+          "AGN_Variable",
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -1.1932831865438112
+      },
+      {
+        "candidate_id": "LSST_0000010",
+        "action": "PASS_DEFER",
+        "predicted_class": "Stellar_Flare",
+        "confidence": 0.7186908721923828,
+        "confidence_err": 0.09998600764689118,
+        "confidence_interval_95": [
+          0.5227182972044762,
+          0.9146634471802895
+        ],
+        "epistemic_vacuity": 0.312124639749527,
+        "prediction_set": [
+          "Stellar_Flare"
+        ],
+        "doubt_reward": -0.33032395503032436
+      }
+    ]
+  }
+}

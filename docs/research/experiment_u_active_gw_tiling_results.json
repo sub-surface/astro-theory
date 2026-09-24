@@ -1,0 +1,29 @@
+{
+  "experiment_id": "EXP-2026-U",
+  "timestamp": "2026-09-24T15:19:35Z",
+  "n_simulations": 100,
+  "elapsed_seconds": 16.394761099945754,
+  "policy_comparison": {
+    "greedy_2d": {
+      "kilonova_detection_rate_pct": 89.0,
+      "color_reddening_confirmation_rate_pct": 0.0,
+      "mean_galaxy_mass_coverage_pct": 99.64943628006242,
+      "mean_shutter_efficiency_pct": 83.97234189269189,
+      "mean_detection_time_hrs": 3.7314190740340383
+    },
+    "static_3d_mass": {
+      "kilonova_detection_rate_pct": 57.99999999999999,
+      "color_reddening_confirmation_rate_pct": 0.0,
+      "mean_galaxy_mass_coverage_pct": 98.27356811049889,
+      "mean_shutter_efficiency_pct": 83.92912586764425,
+      "mean_detection_time_hrs": 4.409355604846284
+    },
+    "active_evidential": {
+      "kilonova_detection_rate_pct": 97.0,
+      "color_reddening_confirmation_rate_pct": 97.0,
+      "mean_galaxy_mass_coverage_pct": 99.3093185883806,
+      "mean_shutter_efficiency_pct": 84.63800396393609,
+      "mean_detection_time_hrs": 3.1727989536156747
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "experiment_id": "EXP-2026-T",
+  "timestamp": "2026-09-24T15:21:00Z",
+  "device": "cuda",
+  "n_samples": 10000,
+  "skill_scores": {
+    "x_class_solar_flare": {
+      "tpr": 1.0,
+      "fpr": 0.0,
+      "tss": 1.0,
+      "hss": 1.0,
+      "false_alarm_rate_pct": 0.0
+    },
+    "hazardous_neo_impact": {
+      "tpr": 1.0,
+      "fpr": 0.0,
+      "tss": 1.0,
+      "hss": 1.0,
+      "false_alarm_rate_pct": 0.0
+    }
+  },
+  "triage_actions": {
+    "global_space_weather_alerts": 74,
+    "planetary_defense_radar": 62,
+    "robotic_tracking": 0,
+    "pass_nominal": 1364
+  },
+  "sample_triaged_events": [
+    {
+      "event_id": "EVT_000001",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9714154005050659,
+      "confidence_err": 0.016177566722035408,
+      "confidence_interval_95": [
+        0.9397073697298766,
+        1.0
+      ],
+      "epistemic_vacuity": 0.038059405982494354,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000002",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "C_M_Class_Subflare",
+      "confidence": 0.9495744109153748,
+      "confidence_err": 0.02813415601849556,
+      "confidence_interval_95": [
+        0.8944314651191234,
+        1.0
+      ],
+      "epistemic_vacuity": 0.06723368167877197,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000003",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9717712998390198,
+      "confidence_err": 0.015988850966095924,
+      "confidence_interval_95": [
+        0.9404331519454717,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03762753680348396,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000004",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9706994295120239,
+      "confidence_err": 0.016522279009222984,
+      "confidence_interval_95": [
+        0.9383157626539469,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03876390680670738,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000005",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9719278812408447,
+      "confidence_err": 0.015902530401945114,
+      "confidence_interval_95": [
+        0.9407589216530323,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03742203116416931,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000006",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.971830427646637,
+      "confidence_err": 0.01595606654882431,
+      "confidence_interval_95": [
+        0.9405565372109413,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03754903003573418,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000007",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9713674783706665,
+      "confidence_err": 0.016201134771108627,
+      "confidence_interval_95": [
+        0.9396132542192936,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03810884431004524,
+      "recommendation": "Active region background nominal."
+    },
+    {
+      "event_id": "EVT_000008",
+      "action": "PASS_NOMINAL",
+      "predicted_class": "Quiet_Background",
+      "confidence": 0.9716915488243103,
+      "confidence_err": 0.016033178195357323,
+      "confidence_interval_95": [
+        0.9402665195614099,
+        1.0
+      ],
+      "epistemic_vacuity": 0.03773396089673042,
+      "recommendation": "Active region background nominal."
+    }
+  ]
+}

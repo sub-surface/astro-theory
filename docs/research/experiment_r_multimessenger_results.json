@@ -1,0 +1,99 @@
+{
+  "experiment_id": "EXP-2026-R",
+  "title": "Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage in Massive Error Volumes",
+  "timestamp": "2026-09-24T14:43:54Z",
+  "status": "COMPLETED",
+  "key_metrics": {
+    "mean_triage_latency_ms": 0.1222017290816453,
+    "target_conformal_fdr_bound": 0.05,
+    "calibrated_crc_lambda": 0.895,
+    "empty_sky_empirical_fdr": 0.0302,
+    "spatiotemporal_scrambling_p_value": 0.001996007984031936,
+    "gemini_recovery_at_140mpc": 1.0,
+    "total_yield_at_200mpc": 1.0
+  },
+  "null_audits": {
+    "empty_sky": {
+      "n_fields_tested": 50,
+      "total_unassociated_candidates": 10000,
+      "gemini_false_alarms": 302,
+      "lcogt_screenings": 668,
+      "auto_cataloged": 3289,
+      "deferred": 5741,
+      "empirical_false_alarm_rate": 0.0302,
+      "target_conformal_risk": 0.05,
+      "null_hypothesis_satisfied": true
+    },
+    "spatiotemporal_permutation": {
+      "n_realizations": 500,
+      "max_observed_kilonova_score": 0.9015291333198547,
+      "scrambled_null_mean": 0.07680224950611592,
+      "scrambled_null_std": 0.08081545608766749,
+      "exceedances": 0,
+      "empirical_p_value": 0.001996007984031936,
+      "statistically_significant": true
+    }
+  },
+  "injection_recovery": {
+    "distances_mpc": [
+      40.0,
+      80.0,
+      140.0,
+      200.0,
+      260.0,
+      320.0
+    ],
+    "n_trials_per_distance": 25,
+    "results": [
+      {
+        "distance_mpc": 40.0,
+        "gemini_recovery_rate": 1.0,
+        "lcogt_screening_rate": 0.0,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.11281431075630792
+      },
+      {
+        "distance_mpc": 80.0,
+        "gemini_recovery_rate": 1.0,
+        "lcogt_screening_rate": 0.0,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.12159179283892256
+      },
+      {
+        "distance_mpc": 140.0,
+        "gemini_recovery_rate": 1.0,
+        "lcogt_screening_rate": 0.0,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.11321658964279994
+      },
+      {
+        "distance_mpc": 200.0,
+        "gemini_recovery_rate": 1.0,
+        "lcogt_screening_rate": 0.0,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.12641117134432037
+      },
+      {
+        "distance_mpc": 260.0,
+        "gemini_recovery_rate": 0.96,
+        "lcogt_screening_rate": 0.04,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.13392455771981007
+      },
+      {
+        "distance_mpc": 320.0,
+        "gemini_recovery_rate": 0.84,
+        "lcogt_screening_rate": 0.16,
+        "total_detection_efficiency": 1.0,
+        "miss_rate": 0.0,
+        "mean_latency_ms": 0.125251952187711
+      }
+    ]
+  },
+  "diagnostic_figure": "docs/research/figures/experiment_r_multimessenger_triage.png"
+}

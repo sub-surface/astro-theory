@@ -1,146 +1,94 @@
-# CLAUDE.md — onboarding for Celestrium (astro-theory)
+# CLAUDE.md — Onboarding & Technical Standards for Celestrium (astro-theory)
 
-Read this first when picking up work here. It's the fast path to oriented.
-(Parent context: this is one project inside the `Psychograph/` hub — see `../AGENTS.md`.)
+Read this first when picking up work in this repo.
+(Parent context: `Psychograph/` hub — see `../AGENTS.md`.)
 
-## What this is
+---
 
-**Celestrium** — a three-wing astrophysics instrument for desk-scale research. The premise:
-from a desk the binding constraint isn't photons, it's ideas + analysis. Public archives
-(Gaia, Euclid, WISE, DESI, Planck) are richer than the community can exploit, so Celestrium
-works the idea side across three wings:
+## 1. What Celestrium Is
 
-1. **Theory workshop** — literature in, ideas assessed (ADS/SciX, object bibliographies, paper
-   sets, dossiers, the field-effort census).
-2. **Experimental validation** — pull a small data slice, test the empirical claim (ADQL via a
-   provenance cache, cross-match audits, row-capped samples).
-3. **Imaging & recreation** — the quiet third wing: survey-aware scientific panels, colour
-   cutouts, and wallpaper-grade renders (diagrams *and* desktop backgrounds).
+**Celestrium** is an operational astrophysics research instrument operating across three wings:
+1. **Theory Workshop & Evidential AI**: Deep evidential decision engines (`celestrium/astrojev.py`, `celestrium/multimessenger.py`), Dirichlet calibration, and Conformal Risk Control.
+2. **Experimental Validation & Data Streaming**: Multi-catalog stream ingestion (`celestrium/data_streamer.py`), TAP queries (`celestrium/tap.py`), selection deprojection, and MCMC inference.
+3. **Observatory Follow-Up & ToO Dispatch**: Autonomous Multi-Tier Target-of-Opportunity serialization (`celestrium/too_protocol.py`) for Gemini 8m GMOS and LCOGT 1m networks.
 
-Roles: **Leon** = physical judgment (what's worth predicting, which cuts are defensible).
-**Claude** = literature throughput, turning signatures into ADQL/Python, the candidate DB and
-literature census.
+**Primary Living Ledgers**:
+- Experiments Ledger: [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) (All experiments EXP-2026-A through T).
+- Literature Convergence & Novelty Matrix: [`docs/research/literature-convergence-and-novel-results.md`](./docs/research/literature-convergence-and-novel-results.md).
+- Active Roadmap: [`docs/roadmap.md`](./docs/roadmap.md).
 
-## Repo layout
+---
+
+## 2. Repo Architecture & Key Pointers
 
 ```
-celestrium/   the instrument (Python package — the app's namespace)
-  core/       the kernel: artifact · ledger · capability · kernel · events
-  caps/       every capability, one module per family
-  study/      claims + pipelines + parameter grids (library.py, model.py)
-  tap.py      unified Table Access Protocol client (pyvo + driver fallback)
-  forecast.py DR1 partial-sky footprint mask, Fisher matrix, harmonic leakage
-  mocks.py    hermetic DR1 mock & null Monte Carlo suite
-  ellis_baldwin.py pre-registered D_kin expectations for Euclid bands
-  cli.py      unified CLI presenter over the DAG kernel; global --json
-  hub.py      thin compatibility proxy for legacy test patches
-docs/         data-atlas.md · toolbox.md · imaging-guide.md · roadmap.md
-  research/   directions · field-map · candidates · theoretical-threads · euclid-dr1-prep
-tests/        hermetic CLI + service-layer + kernel tests
-Archive/      shelved completed lines (e.g. 2026-06-G-dipole)
-data/         git-ignored: celestrium.db (the ledger), artifacts/, cache, reports, posters
-refs.bib      bibliography (committed; ads.py appends here)
-README.md · CLAUDE.md · AGENTS.md
+celestrium/                 Core instrument package
+  core/                     Kernel: artifact (content-addressed DAG), ledger, capability, events
+  caps/                     Capability registry (@capability declarations)
+  astrojev.py               Evidential deep learning (Dirichlet, BALD, Krasnoselskii-Mann)
+  multimessenger.py         Multi-messenger GW+Neutrino+Optical triage & RLCD doubt head
+  data_streamer.py          Memory-mapped real data streaming & heteroscedastic noise
+  stream.py                 Streaming triage engine with conformal sets & error bars
+  too_protocol.py           Turnkey ToO protocol serializers (Gemini GMOS, LCOGT)
+  tap.py                    Unified Table Access Protocol client (pyvo + driver fallback)
+  cli.py                    Headless Typer CLI interface (run with --json)
+docs/research/              Pre-registered proposals, experiment indexes, and literature dossiers
+tests/                      Hermetic test suite (184+ tests, 100% network-independent)
+modal_app.py                Distributed GPU cloud training & triage service (Modal)
 ```
 
-## The kernel (`celestrium/core/`) — read this first
+---
 
-Everything the instrument does is one shape: **take inputs, run a named capability with
-parameters, produce a durable artifact, record that it happened.** Five objects:
+## 3. Core Technical Standards & "Gotchas" (Mandatory)
 
-- `artifact.py` — one typed record for everything produced. **Content-addressed**:
-  `id = blake2b(capability, params, inputs)`. So the cache *is* the ledger, `inputs` make it
-  a DAG, and the id is the recipe (`celestrium repro <id>`).
-- `ledger.py` — `data/celestrium.db`: artifacts · lineage edges · runs · studies. Payloads
-  stay on disk under `data/artifacts/`.
-- `capability.py` — `@capability(name=…, kind=…, params={…})`. **One declaration.** The CLI,
-  methods generator, and agent API all *enumerate the registry*, so a capability cannot exist
-  on one surface and be missing from another. Parity is structural.
-- `kernel.py` — dedupe → run → persist → record → emit. Retries network capabilities,
-  streams events, and generates a methods paragraph from lineage (`celestrium methods <id>`).
-- `events.py` — one event model; the CLI renders progress lines.
+### A. Retention of Analytical Error Bars on Decisions (Zero Naked Predictions)
+- **Standard**: Every model decision (classification, candidate triage, follow-up scheduling) MUST retain explicit analytical uncertainties. Never emit naked point probabilities.
+- **Formulas**:
+  - Dirichlet posterior standard deviation: $\sigma_k = \sqrt{\frac{p_k(1 - p_k)}{S + 1}}$
+  - 95% Credible Interval: $[p_k - 1.96\sigma_k, p_k + 1.96\sigma_k]$ (clamped to $[0, 1]$)
+  - Conformal prediction set: $C_\lambda(X) = \{ k : p_k \ge 1 - \hat{\lambda}_{\rm CRC} \}$
+  - Epistemic vacuity: $u_{\rm epi} = K / (S + K)$
+- **Gating Policy**: High-cost follow-up (e.g. 8m GMOS spectroscopy `GEMINI_RAPID_TOO`) requires $p_{\rm target} \ge \hat{\lambda}_{\rm CRC}$ **AND** $u_{\rm epi} \le 0.35$ **AND** lower bound $p - 1.96\sigma \ge 0.40$.
+- **Reward Doubt**: Ambiguous or high-vacuity targets must route to low-cost robotic screening (`LCOGT_SCREENING_TOO`) to collapse uncertainty before spending scarce 8m aperture time.
 
-**Adding a capability is adding one decorated function in `celestrium/caps/`.** Nothing else.
-A `Param("artifact")` is special: the kernel folds it into that run's `inputs`, so lineage is
-recorded without any capability thinking about it.
+### B. Disentangled RLCD Optimization (TUM 2026 / Bani-Harouni et al.)
+- **Gotcha**: Training confidence or calibration heads end-to-end with representation backbones corrupts embedding geometry and leads to mode collapse.
+- **Standard**: Strictly freeze the representation trunk (`input_proj`, `recurrent_cell`) during calibration. Fine-tune ONLY the Dirichlet readout head under composite loss:
+  $$\mathcal{L} = \mathcal{L}_{\rm Brier} + \beta \mathcal{L}_{\rm doubt} + \gamma \mathcal{L}_{\rm CARL}$$
+  using clipped logarithmic scoring for doubt: $R = \log(\max(\hat{p}, \epsilon))$ for correct, $\log(\max(1 - \hat{p}, \epsilon))$ for incorrect.
 
-```bash
-python -m celestrium caps --detail          # the single source of truth
-python -m celestrium run analysis.dipole_fit density=<id>
-python -m celestrium ledger --lineage <id>  # provenance chain
-python -m celestrium study run euclid-dr1-dipole-forecast
-```
+### C. Calibration Validation: Stanford Debiased Error (Kumar et al. NeurIPS 2019)
+- **Gotcha**: Standard binned plugin ECE has an intrinsic positive variance bias $\sim \frac{\hat{y}_b(1-\hat{y}_b)}{n_b - 1}$ that inflates apparent error on small or imbalanced validation sets.
+- **Standard**: Always evaluate and report the Stanford Debiased Squared Calibration Error $\hat{E}^2_{\rm db}$ alongside ECE with bootstrap 95% confidence intervals and RMSCE.
 
-## The CLI surface (`celestrium/cli.py`)
+### D. Memory-Efficient Real Data Streaming
+- **Gotcha**: Loading multi-million-row catalogs (e.g. 1.3M Quaia sources) into memory exhausts RAM.
+- **Standard**: Always stream large FITS catalogs in micro-chunks using `astropy.io.fits.open(..., memmap=True)` (<50 MB RAM footprint).
+- **Heteroscedasticity**: Always perturb or evaluate features using observational error bars: $\tilde{\mathbf{x}}_i \sim \mathcal{N}(\mu_i, \sigma_i^2)$ on active observational masks.
 
-All real logic lives in `celestrium/`; `celestrium/cli.py` is the unified entry point.
-The instrument is 100% headless, fast, scriptable, and agent-driveable via Typer and `--json`.
-The bloated Textual TUI and external Obsidian vault sync have been eviscerated.
+### E. PyTorch Cross-Device Comparisons
+- **Gotcha**: Multi-device tensor assertions (e.g. comparing frozen CPU reference weights against GPU-trained model weights) crash with device mismatch errors.
+- **Standard**: Explicitly align devices (`ref.to(device)` or `tensor.cpu()`) before performing any state-dict or weight verification assertions.
 
-- `config.py` — data: `ARCHIVES` (gaia/irsa/euclid/heasarc native ADQL + lazy adaptors for
-  desi/casda/vizier-tap), `SAMPLE_RECIPES`, `ATLAS_TARGETS`, `RUNBOOKS`.
-- `tap.py` — unified Table Access Protocol query and discovery engine.
-- `cutouts.py` · `resolvers.py` · `ads.py` · `xmatch.py` · `spectra.py` — thin primitives.
-- `cli.py` — Typer CLI, thin presenter; commands grouped by wing in `--help`. Global `--json`.
-- `hub.py` — legacy proxy forwarding to `cli.py` to preserve monkeypatching in existing test suites.
+### F. Hermetic Test Integrity
+- **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
+- Verify regularly: `python -m pytest` (currently 200 passing tests).
 
-```bash
-python -m pytest tests/ -q          # hermetic (no network); 115+ tests in ~40s
-python -m celestrium --help         # wing-grouped commands
-python -m celestrium forecast       # Euclid DR1 gate decision & error budget
-python -m celestrium ellis-baldwin  # pre-registered kinematic expectations
-python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss   # X-match audit primitive
-```
+### G. Windows PowerShell UTF-8 Encoding for Modal CLI
+- **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.
+- **Standard**: Always prefix Modal CLI commands with `$env:PYTHONIOENCODING="utf-8"; $env:PYTHONUTF8=1; modal run ...`.
 
-## Studies (`study/`)
+---
 
-A **study** is a claim, a pipeline, and the grid of cuts you vary against it — the thing that
-lets you *"report the amplitude as a function of the cuts, not as a number"*. Pipelines live in
-`study/library.py`. `study.run` is itself a capability, so a result surface is a normal artifact
-whose lineage children are the individual runs.
+## 4. Hardware & Cloud Environments
 
-Two integrity features: **preregistration** (the pipeline+grid+metric hash is stored on first run
-and never silently replaced — changing the analysis after seeing results is flagged in the artifact),
-and **cost estimation** (`study estimate` says what will run vs what is already cached, before you commit).
+- **Local Machine**: Windows 11 host (PowerShell), NVIDIA GeForce RTX 2060 (6 GB VRAM). Fast local iteration and unit testing.
+- **Modal Cloud Compute**: Active grant balance ~$22.16 USD. Use for scaled H100 SXM5 multi-GPU training, large-scale Monte Carlo runs, and broker streaming workers (`modal run modal_app.py`).
 
-## Active line
+---
 
-**G-Euclid DR1 prep** (`docs/research/euclid-dr1-prep.md`). Euclid **DR1 (~1900 deg² wide)
-lands 21 Oct 2026** — first deep optical/NIR sample with a selection function independent of
-WISE/Gaia, hence the cleanest cosmic-dipole (isotropy) test.
+## 5. Collaboration Conventions
 
-**Gate decision answered by `celestrium forecast`**:
-At ~1,900 deg² (f_sky ~ 4.4% in 3 disjoint patches), **partial-sky harmonic leakage
-(σ_leak ≈ 0.0040) dominates over Poisson shot noise (σ_shot ≈ 0.0004)** by an order of magnitude.
-Combined σ_total ≈ 0.0040, giving **~1.8σ distinguishability** between CatWISE excess
-(D ≈ 0.012) and kinematic expectation (D_kin ≈ 0.0047).
-Therefore, **Euclid DR1 is definitively a METHODS DRESS-REHEARSAL & cross-catalogue audit**,
-while DR2 provides the full-sky definitive measurement. Pre-DR1 tooling (`forecast.py`,
-`mocks.py`, `ellis_baldwin.py`) is fully built and operational.
-
-
-## Conventions
-
-- **Pull rows, not pixels.** Start `TOP 5`, widen deliberately. Confirm table/column names
-  against the live schema (releases drift) — most clients have a `discover()`/`schema()` helper.
-- **Provenance by default.** Route data pulls through `cache.cached_query`; the manifest stays complete.
-- `data/` is git-ignored. Literature → `refs.bib` (committed).
-- **ADS token** (free) enables live `ads.py`/`hub cite`/`papers`: `~/.ads/dev_key` or `$ADS_DEV_KEY`.
-  Rubin DP is data-rights-gated — not anonymously queryable.
-- Windows + PowerShell host; the Bash tool is available for POSIX scripts.
-
-## Collaboration
-
-Three agents work this repo — Claude, Codex (GPT), and occasionally Gemini — and **all commits
-carry the author `Sub-Surface`** (Leon's GitHub account, this machine's git identity), so the
-author field does not identify the agent. Check `git log` and the working tree before editing;
-session logs live in `docs/devlogs/` (e.g. the 2026-07-01 Gemini TUI rewrite + Codex fix pass).
-As of July 2026 Codex is active again (artifact-fallback hardening, Rubin-watch scoping); the
-Celestrium reorg, the `tui/commands.py` parser extraction, and the Phase 5 cockpit overhaul are
-Claude's.
-
-## Where to go deeper
-- `docs/roadmap.md` — the instrument's architecture + the Textual-TUI plan (Phase 2/3).
-- `celestrium/README.md` — the query cookbook (one pattern, many dialects) + command reference.
-- `docs/imaging-guide.md` — survey-aware cutout decision logic.
-- `Archive/2026-06-G-dipole/` — the completed dipole pipeline (M1–M5) we resume against Euclid.
+- Three agents (Claude, Codex, Gemini) collaborate here under the local git identity `Sub-Surface`.
+- Always check `git status` and test suite before modifying code.
+- Avoid introducing extra markdown files as redundant sources of truth; update [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) and [`docs/research/literature-convergence-and-novel-results.md`](./docs/research/literature-convergence-and-novel-results.md).

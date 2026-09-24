@@ -764,5 +764,71 @@ def conformal_risk_control_cap(ctx, catalog, alpha_risk, model_checkpoint):
                     sample_retention=res["sample_retention"])
 
 
+@capability(
+    name="analysis.multimessenger_triage", kind="data", wing="validation", cost="free",
+    params={"superevent": Param("string", "S240422ed", help="GraceDB superevent ID"),
+            "distance_mpc": Param("float", 140.0, help="GW mean luminosity distance in Mpc"),
+            "error_area_deg2": Param("float", 100.0, help="90% sky error area in deg2"),
+            "alpha_crc": Param("float", 0.05, help="target false discovery risk bound"),
+            "crc_lambda": Param("float", 0.89, help="conformal kilonova inclusion threshold"),
+            "n_candidates": Param("int", 100, help="number of broker candidates to triage")},
+    summary="Real-Time Multi-Messenger Triage: evidential counterpart triage with Conformal Risk Control.",
+)
+def multimessenger_triage_cap(ctx, superevent, distance_mpc, error_area_deg2, alpha_crc, crc_lambda, n_candidates):
+    from ..multimessenger import (
+        fetch_gracedb_alert,
+        generate_multimessenger_scenario,
+        MultiMessengerTriageEngine,
+    )
+
+    gw_alert = fetch_gracedb_alert(superevent)
+    if gw_alert is None or gw_alert.metadata.get("mock"):
+        gw_alert, nu_alert, candidates = generate_multimessenger_scenario(
+            n_contaminants=n_candidates,
+            distance_mpc=distance_mpc,
+            error_area_deg2=error_area_deg2,
+            inject_kilonova=True,
+            seed=42,
+        )
+    else:
+        _, nu_alert, candidates = generate_multimessenger_scenario(
+            n_contaminants=n_candidates,
+            distance_mpc=gw_alert.distance_mean_mpc,
+            error_area_deg2=gw_alert.error_area_90_deg2,
+            inject_kilonova=True,
+            seed=42,
+        )
+
+    engine = MultiMessengerTriageEngine(alpha_crc=alpha_crc, crc_lambda=crc_lambda)
+    results = engine.triage_candidates(candidates, gw_alert, nu_alert)
+
+    action_counts = {}
+    for r in results:
+        action_counts[r.action] = action_counts.get(r.action, 0) + 1
+
+    gemini_triggers = [r.too_payload for r in results if r.action == "GEMINI_RAPID_TOO"]
+    lcogt_screenings = [r.too_payload for r in results if r.action == "LCOGT_SCREENING_TOO"]
+
+    summary = {
+        "superevent_id": gw_alert.superevent_id,
+        "distance_mpc": gw_alert.distance_mean_mpc,
+        "error_area_deg2": gw_alert.error_area_90_deg2,
+        "total_candidates": len(candidates),
+        "actions": action_counts,
+        "gemini_rapid_count": len(gemini_triggers),
+        "lcogt_screening_count": len(lcogt_screenings),
+        "conformal_risk_alpha": alpha_crc,
+    }
+
+    ctx.progress(f"Multi-Messenger Triage ({gw_alert.superevent_id}): {len(candidates)} candidates -> "
+                 f"Gemini 8m Rapid: {len(gemini_triggers)} | LCOGT 1m Screen: {len(lcogt_screenings)}")
+
+    return ctx.data(summary, label=f"MM-Triage {gw_alert.superevent_id} ({len(candidates)} cands)",
+                    superevent_id=gw_alert.superevent_id,
+                    gemini_rapid=len(gemini_triggers),
+                    lcogt_screening=len(lcogt_screenings))
+
+
+
 
 

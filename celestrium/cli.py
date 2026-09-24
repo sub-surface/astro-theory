@@ -1225,6 +1225,40 @@ def jev_stream(
     _emit(payload, render)
 
 
+@jev_app.command("mm-triage")
+def jev_mm_triage(
+    superevent: str = typer.Option("S240422ed", "--superevent", "-s", help="GraceDB O4 superevent ID"),
+    dist_mpc: float = typer.Option(140.0, "--distance", "-d", help="Mean distance in Mpc"),
+    area_deg2: float = typer.Option(100.0, "--area", "-a", help="90% sky error area in deg2"),
+    risk_bound: float = typer.Option(0.05, "--risk", "-r", help="Conformal FDR risk bound"),
+    crc_lambda: float = typer.Option(0.895, "--crc-lambda", help="Kilonova inclusion threshold"),
+    cands: int = typer.Option(100, "--candidates", "-c", help="Candidate pool size"),
+):
+    """Real-time Multi-Messenger (GW + Neutrino + Optical/IR) evidential triage."""
+    art = _run("analysis.multimessenger_triage",
+               superevent=superevent,
+               distance_mpc=dist_mpc,
+               error_area_deg2=area_deg2,
+               alpha_crc=risk_bound,
+               crc_lambda=crc_lambda,
+               n_candidates=cands)
+    payload = _load(art.id)
+
+    def render():
+        console.print(f"\n[bold cyan]Multi-Messenger Evidential Triage ({payload['superevent_id']})[/]")
+        console.print(f"Error Area: [yellow]{payload['error_area_deg2']:.1f} deg²[/] | Distance: [yellow]{payload['distance_mpc']:.1f} Mpc[/] | Candidates: [bold]{payload['total_candidates']}[/]")
+        table = RichTable("Action Queue", "Target Count", "Description", title="Autonomous Action Hierarchy")
+        table.add_row("[bold green]GEMINI_RAPID_TOO[/]", str(payload.get("gemini_rapid_count", 0)), "Rapid 8m GMOS Spectroscopic Confirmation (CRC FDR <= 5%)")
+        table.add_row("[bold cyan]LCOGT_SCREENING_TOO[/]", str(payload.get("lcogt_screening_count", 0)), "Tier 1 1m Sinistro gp/rp/ip Color-Evolution Screening")
+        for act, cnt in payload.get("actions", {}).items():
+            if act not in ("GEMINI_RAPID_TOO", "LCOGT_SCREENING_TOO"):
+                table.add_row(f"[dim]{act}[/]", str(cnt), "Background transient / auto-cataloged / deferred")
+        console.print(table)
+        console.print(f"[green]Conformal Safety Gate:[/] alpha_risk = {payload['conformal_risk_alpha']*100:.1f}%")
+
+    _emit(payload, render)
+
+
 def main():
     _ensure_utf8_console()
     app()

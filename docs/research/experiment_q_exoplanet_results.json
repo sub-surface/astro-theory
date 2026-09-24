@@ -1,0 +1,163 @@
+{
+  "experiment_id": "EXP-2026-Q",
+  "timestamp": "2026-09-24T15:18:00Z",
+  "device": "cuda",
+  "n_samples": 10000,
+  "calibration": {
+    "pre_rlcd": {
+      "accuracy": 0.9686666666666667,
+      "ece": 0.059580409129460644,
+      "ece_ci_95": [
+        0.05362621566156548,
+        0.06810031539946797
+      ],
+      "debiased_squared_ce": 0.003107135956687048,
+      "rmsce_debiased": 0.055741689575102116,
+      "mean_doubt_reward": -0.13404229283332825,
+      "normalized_doubt_score": 0.9708930859404128
+    },
+    "post_rlcd": {
+      "accuracy": 0.9786666666666667,
+      "ece": 0.024702796041965434,
+      "ece_ci_95": [
+        0.020788787961999615,
+        0.03367876068204645
+      ],
+      "debiased_squared_ce": 0.000214406165674645,
+      "rmsce_debiased": 0.014642614714409617,
+      "mean_doubt_reward": -0.08570642024278641,
+      "normalized_doubt_score": 0.9813890873124385
+    },
+    "ece_reduction_pct": 58.53872707001826,
+    "edb_reduction_pct": 93.09955635468063
+  },
+  "stellar_activity_null_audit": {
+    "n_null_mimics": 2000,
+    "false_8m_triggers": 0,
+    "false_alarm_rate_pct": 0.0,
+    "crc_alpha_bound_pct": 1.0,
+    "passed_crc_bound": true,
+    "doubt_routed_to_monitoring": 2000,
+    "doubt_routed_to_1m": 0
+  },
+  "test_set_yield": {
+    "total_test_candidates": 1500,
+    "true_exoplanets": 308,
+    "espresso_dispatched": 263,
+    "true_exoplanet_recall_pct": 84.0909090909091
+  },
+  "sample_triaged_candidates": [
+    {
+      "target_id": "TOI_000001",
+      "action": "COMMIT_ESPRESSO_RV",
+      "predicted_class": "Exoplanet_Candidate",
+      "confidence": 0.9421440958976746,
+      "confidence_err": 0.03208402544260025,
+      "confidence_interval_95": [
+        0.879259406030178,
+        1.0
+      ],
+      "epistemic_vacuity": 0.07699326425790787,
+      "doubt_reward": -0.059597048059951786,
+      "recommendation": "Validated Kepler/TESS planetary transit with activity-free Doppler reflex. Dispatch 8m VLT ESPRESSO."
+    },
+    {
+      "target_id": "TOI_000002",
+      "action": "ROBOTIC_1M_PHOTOMETRY",
+      "predicted_class": "Eclipsing_Binary_Blend",
+      "confidence": 0.9794360399246216,
+      "confidence_err": 0.011709753423929214,
+      "confidence_interval_95": [
+        0.9564849232137204,
+        1.0
+      ],
+      "epistemic_vacuity": 0.02741822972893715,
+      "doubt_reward": -0.020778342428296254,
+      "recommendation": "Transit depth ambiguity detected. Dispatch LCOGT 1m multi-band photometry to test chromatic dilution."
+    },
+    {
+      "target_id": "TOI_000003",
+      "action": "COMMIT_ESPRESSO_RV",
+      "predicted_class": "Exoplanet_Candidate",
+      "confidence": 0.9427862763404846,
+      "confidence_err": 0.03176489844918251,
+      "confidence_interval_95": [
+        0.8805270753800869,
+        1.0
+      ],
+      "epistemic_vacuity": 0.07625043392181396,
+      "doubt_reward": -0.05891566430475907,
+      "recommendation": "Validated Kepler/TESS planetary transit with activity-free Doppler reflex. Dispatch 8m VLT ESPRESSO."
+    },
+    {
+      "target_id": "TOI_000004",
+      "action": "ROBOTIC_1M_PHOTOMETRY",
+      "predicted_class": "Eclipsing_Binary_Blend",
+      "confidence": 0.9794392585754395,
+      "confidence_err": 0.011707932688295841,
+      "confidence_interval_95": [
+        0.9564917105063796,
+        1.0
+      ],
+      "epistemic_vacuity": 0.02741387113928795,
+      "doubt_reward": -0.02077505620500237,
+      "recommendation": "Transit depth ambiguity detected. Dispatch LCOGT 1m multi-band photometry to test chromatic dilution."
+    },
+    {
+      "target_id": "TOI_000005",
+      "action": "ROBOTIC_1M_PHOTOMETRY",
+      "predicted_class": "Eclipsing_Binary_Blend",
+      "confidence": 0.9795665740966797,
+      "confidence_err": 0.011635847389698029,
+      "confidence_interval_95": [
+        0.9567603132128716,
+        1.0
+      ],
+      "epistemic_vacuity": 0.02724134735763073,
+      "doubt_reward": -0.020645076478249008,
+      "recommendation": "Transit depth ambiguity detected. Dispatch LCOGT 1m multi-band photometry to test chromatic dilution."
+    },
+    {
+      "target_id": "TOI_000006",
+      "action": "MONITOR_STELLAR_ROTATION",
+      "predicted_class": "Stellar_Activity_Mimic",
+      "confidence": 0.9815752506256104,
+      "confidence_err": 0.010506867431104183,
+      "confidence_interval_95": [
+        0.9609817904606461,
+        1.0
+      ],
+      "epistemic_vacuity": 0.02456633560359478,
+      "doubt_reward": -0.0185965992023889,
+      "recommendation": "Stellar activity doubt detected (BIS correlation=0.87, Prot diff=7.0%). Delay 8m RV."
+    },
+    {
+      "target_id": "TOI_000007",
+      "action": "MONITOR_STELLAR_ROTATION",
+      "predicted_class": "Eclipsing_Binary_Blend",
+      "confidence": 0.9800224304199219,
+      "confidence_err": 0.011357992887496948,
+      "confidence_interval_95": [
+        0.9577607643604279,
+        1.0
+      ],
+      "epistemic_vacuity": 0.026531120762228966,
+      "doubt_reward": -0.020179819395856176,
+      "recommendation": "Stellar activity doubt detected (BIS correlation=0.62, Prot diff=132.4%). Delay 8m RV."
+    },
+    {
+      "target_id": "TOI_000008",
+      "action": "MONITOR_STELLAR_ROTATION",
+      "predicted_class": "Stellar_Activity_Mimic",
+      "confidence": 0.9814352989196777,
+      "confidence_err": 0.010585678741335869,
+      "confidence_interval_95": [
+        0.9606873685866595,
+        1.0
+      ],
+      "epistemic_vacuity": 0.02475295588374138,
+      "doubt_reward": -0.01873918805011787,
+      "recommendation": "Stellar activity doubt detected (BIS correlation=0.80, Prot diff=10.6%). Delay 8m RV."
+    }
+  ]
+}

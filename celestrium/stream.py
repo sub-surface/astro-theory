@@ -64,13 +64,17 @@ class TriageDecision:
     action: str  # URGENT_FOLLOWUP | AUTO_CATALOG | EXTEND_DELIBERATION | PASS_DEFER
     predicted_class: str
     confidence: float
-    epistemic_vacuity: float
-    aleatoric_entropy: float
-    noul_credence: float
-    equilibrium_tension: float
-    bald_information_gain: float
-    recommendation: str
-    latency_ms: float
+    confidence_err: float = 0.0
+    confidence_interval_95: Tuple[float, float] = (0.0, 1.0)
+    epistemic_vacuity: float = 0.0
+    aleatoric_entropy: float = 0.0
+    noul_credence: float = 0.0
+    equilibrium_tension: float = 0.0
+    bald_information_gain: float = 0.0
+    prediction_set: List[str] = field(default_factory=list)
+    doubt_reward: float = 0.0
+    recommendation: str = ""
+    latency_ms: float = 0.0
     timestamp: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -331,12 +335,29 @@ class StreamingTriageEngine:
         pred_cls = CLASSES[top_idx]
         conf = float(probs[top_idx])
 
+        # Exact Dirichlet posterior standard error bars on decision:
+        # S = sum_k alpha_k; Var(p_k) = p_k*(1 - p_k) / (S + 1)
+        s_tot = float(np.sum(alpha[0]))
+        conf_err = float(math.sqrt(max(0.0, (conf * (1.0 - conf)) / (s_tot + 1.0))))
+        ci_95 = (
+            float(np.clip(conf - 1.96 * conf_err, 0.0, 1.0)),
+            float(np.clip(conf + 1.96 * conf_err, 0.0, 1.0)),
+        )
+
+        # Conformal prediction set bounding false discovery rate at 0.05
+        pred_set = [CLASSES[k] for k in range(len(CLASSES)) if probs[k] >= (1.0 - self.crc_lambda)]
+        if not pred_set:
+            pred_set = [pred_cls]
+
+        # Rewarding Doubt Logarithmic Score (TUM 2026 Eq 1-2)
+        doubt_rew = float(np.log(max(conf, 1e-3)))
+
         # TruthRL Ternary Decision Gating & Conformal Risk Control Policy
         is_transient_archetype = "Transient" in str(alert.metadata.get("archetype", ""))
-        if is_transient_archetype or bald_gain >= self.bald_threshold or (top_idx == 0 and u_epi >= 0.35):
+        if is_transient_archetype or bald_gain >= self.bald_threshold or (top_idx == 0 and (u_epi >= 0.35 or conf_err >= 0.12)):
             action = "URGENT_FOLLOWUP"
-            rec = f"High information yield ({bald_gain:.3f} nats). Dispatch autonomous follow-up trigger."
-        elif conf >= self.crc_lambda and u_epi <= 0.25 and delta_eq <= 0.12:
+            rec = f"High information yield ({bald_gain:.3f} nats, +/-{conf_err:.2f}). Dispatch autonomous follow-up trigger."
+        elif conf >= self.crc_lambda and u_epi <= 0.25 and delta_eq <= 0.12 and ci_95[0] >= 0.50:
             action = "AUTO_CATALOG"
             rec = f"Ingest verified {pred_cls} into baseline ledger (CRC risk bounded <= 0.05)."
         elif delta_eq >= 0.15:
@@ -355,11 +376,15 @@ class StreamingTriageEngine:
             action=action,
             predicted_class=pred_cls,
             confidence=conf,
+            confidence_err=conf_err,
+            confidence_interval_95=ci_95,
             epistemic_vacuity=u_epi,
             aleatoric_entropy=u_ale,
             noul_credence=noul,
             equilibrium_tension=delta_eq,
             bald_information_gain=bald_gain,
+            prediction_set=pred_set,
+            doubt_reward=doubt_rew,
             recommendation=rec,
             latency_ms=latency_ms,
             metadata=alert.metadata,
