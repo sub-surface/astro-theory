@@ -200,7 +200,13 @@ def test_conformal_risk_control_calibration():
     assert crc["sample_retention"] > 0.50
 
 
-def test_end_to_end_multimessenger_triage():
+@pytest.fixture(scope="module")
+def trained_multimessenger_model():
+    torch.manual_seed(0)
+    return train_multimessenger_model(n_train=1200, n_val=300, epochs=5, save_path=None, device="cpu")["model"]
+
+
+def test_end_to_end_multimessenger_triage(trained_multimessenger_model):
     gw, nu, cands = generate_multimessenger_scenario(
         n_contaminants=50,
         distance_mpc=120.0,
@@ -208,11 +214,7 @@ def test_end_to_end_multimessenger_triage():
         inject_kilonova=True,
         seed=101,
     )
-    # Train a small model: the engine's default checkpoint is gitignored, and a
-    # randomly initialized net cannot be expected to flag the injected kilonova.
-    torch.manual_seed(0)
-    model = train_multimessenger_model(n_train=1200, n_val=300, epochs=5, save_path=None, device="cpu")["model"]
-    engine = MultiMessengerTriageEngine(model=model, alpha_crc=0.05, crc_lambda=0.65, device="cpu")
+    engine = MultiMessengerTriageEngine(model=trained_multimessenger_model, alpha_crc=0.05, crc_lambda=0.65, device="cpu")
     results = engine.triage_candidates(cands, gw, nu)
 
     assert len(results) == len(cands)
@@ -238,8 +240,8 @@ def test_end_to_end_multimessenger_triage():
         assert len(errs_l) == 0
 
 
-def test_empty_sky_null_audit():
-    engine = MultiMessengerTriageEngine(alpha_crc=0.05, crc_lambda=0.89)
+def test_empty_sky_null_audit(trained_multimessenger_model):
+    engine = MultiMessengerTriageEngine(model=trained_multimessenger_model, alpha_crc=0.05, crc_lambda=0.89, device="cpu")
     null_res = run_empty_sky_null_audit(engine, n_fields=5, candidates_per_field=50, seed=42)
     assert null_res["total_unassociated_candidates"] == 250
     # Under empty sky, false alarm rate should satisfy target safety bound
