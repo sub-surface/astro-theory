@@ -1,6 +1,9 @@
 name = "astro"
 compatibility_date = "2024-12-01"
 
+[build]
+command = "npm --prefix site install && npm --prefix site run build"
+
 [observability.logs]
 enabled = true
 

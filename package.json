@@ -2,8 +2,11 @@
   "name": "astro-theory",
   "description": "Celestrium — Astrophysical Intelligence Engine & Research Platform",
   "private": true,
+  "workspaces": [
+    "site"
+  ],
   "scripts": {
-    "build": "npm run build --prefix site",
-    "deploy": "npm run build --prefix site && npx wrangler deploy"
+    "build": "npm run build --workspace=site",
+    "deploy": "npm run build --workspace=site && npx wrangler deploy"
   }
 }
