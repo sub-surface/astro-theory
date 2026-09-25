@@ -1,0 +1,110 @@
+---
+import PaperLayout from '../../layouts/PaperLayout.astro';
+import DipoleSimulator from '../../components/DipoleSimulator.astro';
+---
+
+<PaperLayout
+  paperCode="PAPER A"
+  subject="astro-ph.CO · astro-ph.IM"
+  venue="Astronomy & Astrophysics (A&A)"
+  title="Systematics-Aware Measurement of the Cosmological Dipole: Multi-Tracer Bayesian Co-Inference across 2.86 Million Sources"
+  shortTitle="Paper A — Systematics-Aware Cosmological Dipole"
+  date="September 2026"
+  version="2.0"
+  experiments="EXP-2026-B, I, J, K, L, O, P, W"
+  description="Multi-tracer Bayesian co-inference across 2.86 million sources (Gaia DR3 × unWISE Quaia, CatWISE, NVSS) reconciling the quasar dipole anomaly with the Ellis-Baldwin kinematic frame."
+>
+  <!-- Abstract Lead -->
+  <p class="lead">
+    Measurements of the cosmological matter dipole inferred from distant active galactic nuclei (AGN) have persistently reported amplitudes twice as large as the kinematic dipole benchmark predicted by standard &Lambda;CDM cosmology. In this work, we conduct an end-to-end systematics audit and establish the first joint hierarchical Bayesian Poisson co-inference framework evaluating <strong>2,865,080 all-sky cosmic sources</strong> simultaneously across three independent wavelength domains: optical (<em>Gaia</em> DR3 &times; <em>unWISE</em> Quaia: 1,295,502 quasars), mid-infrared (CatWISE2020: 1,360,788 AGNs), and radio (NVSS: 208,790 sources).
+  </p>
+
+  <!-- Interactive Model Embed -->
+  <h2>Interactive Model: Harmonic Decoupling & Selection Deprojection</h2>
+  <p>
+    Use the simulation below to explore how the partial-sky Galactic dust mask and the non-uniform Quaia selection function induce mode-coupling leakage into the dipole vector.
+  </p>
+  <DipoleSimulator />
+
+  <h2>1. Introduction & The Cosmological Dipole Anomaly</h2>
+  <p>
+    The cosmological principle asserts that on sufficiently large scales (r &gt; 100 h⁻¹ Mpc), the Universe is spatially homogeneous and isotropic. An observer moving with velocity v relative to the cosmic rest frame observes a kinematic aberration and Doppler modulation of distant sources. For a power-law source count N(&gt;S) &prop; S⁻ˣ with energy spectral index S_&nu; &prop; &nu;⁻ᵅ, the predicted number-count dipole is:
+  </p>
+
+  <pre><code>D_CMB = [2 + x(1 + &alpha;)] &bull; (v / c)</code></pre>
+
+  <p>
+    For typical quasar populations with x &asymp; 0.6 and &alpha; &asymp; 0.5, D_CMB has an expected amplitude of D &asymp; 0.0070 oriented toward (l, b) &asymp; (264.0&deg;, +48.3&deg;). However, numerous observational studies over the past decade have reported dipole amplitudes in radio and infrared quasar catalogs exceeding the kinematic prediction by factors of two or more, generating intense debate over whether the discrepancy indicates a breakdown of the standard FLRW metric or unresolved observational systematics.
+  </p>
+
+  <h2>2. Forensic Audit of the Quaia G20.5 Sample</h2>
+  <p>
+    The Quaia catalog (Storey-Fisher et al. 2023) comprises 1,295,502 quasar candidates selected from <em>Gaia</em> DR3 and <em>unWISE</em>. To retain completeness while rejecting stellar foreground, Storey-Fisher et al. applied a magnitude-scaled proper motion cut:
+  </p>
+
+  <pre><code>&mu; &lt; 10^(+0.4(G - 18.25)) mas/yr</code></pre>
+
+  <p>
+    We conducted a row-by-row audit across all 1,295,502 sources in `quaia_G20.5.fits`. Because <em>Gaia</em> astrometric measurement errors scale inversely with photon flux (&sigma;_&mu; &prop; 10^(+0.4 &Delta;G)), the expanding selection boundary admits Galactic halo stars with true proper motions &mu; &isin; [2.0, 7.6] mas/yr whose optical and infrared colors randomly fall inside the quasar locus.
+  </p>
+
+  <figure>
+    <img src="/figures/dipole_injection_recovery_benchmark.png" alt="Dipole injection-recovery benchmark" />
+    <figcaption>
+      <span class="fig-num">[Fig. 01]</span>
+      <strong>Dipole Injection-Recovery and Linearity Audit:</strong> 
+      Synthetic dipoles injected into full-sky mocks across 8 amplitude steps D_true &isin; [0.0, 0.08] with 50 Monte Carlo realizations per step. The decoupled estimator M⁻¹ D achieves a linear response slope of b = 0.975 &plusmn; 0.021, while Conformal Risk Control suppresses stellar contaminant leakage down to &Delta;D &lt; 0.0025.
+    </figcaption>
+  </figure>
+
+  <h2>3. Selection Function Deprojection & Gradient Collapse</h2>
+  <p>
+    In addition to stellar contamination, non-uniform survey scanning introduces anisotropic selection variations across celestial hemispheres. In the raw Quaia sample, an uncorrected North-South exposure gradient induces a spurious Cartesian dipole component D_z = +0.055.
+  </p>
+
+  <figure>
+    <img src="/figures/quaia_selection_deprojection_progression.png" alt="Quaia selection deprojection progression" />
+    <figcaption>
+      <span class="fig-num">[Fig. 02]</span>
+      <strong>Empirical Selection Deprojection Progression:</strong>
+      Dipole vector progression across Galactic cuts |b| &isin; [10&deg;, 35&deg;]. Deprojecting the official Quaia selection function map S(n) collapses the spurious D_z gradient from +0.055 to +0.011. At |b| &gt; 35&deg;, the purified amplitude converges to D = 1.58% &plusmn; 0.41% with apex latitude b = +47.0&deg;, within 1.2&deg; of the CMB benchmark (+48.25&deg;).
+    </figcaption>
+  </figure>
+
+  <h2>4. Vectorized 10,000-Realization Null-Model Monte Carlo Audit</h2>
+  <p>
+    To rigorously assess whether the remaining dipole excess could arise by chance from Poisson shot noise or Galactic plane mask coupling (|b| &lt; 20&deg;), we executed a vectorized serverless Monte Carlo audit generating 10,000 independent end-to-end realizations of the &Lambda;CDM kinematic null hypothesis.
+  </p>
+
+  <figure>
+    <img src="/figures/large_null_dipole_monte_carlo.png" alt="Large null dipole Monte Carlo audit" />
+    <figcaption>
+      <span class="fig-num">[Fig. 03]</span>
+      <strong>Vectorized 10,000-Realization Kinematic Null Audit:</strong>
+      Distribution of 3D Cartesian &Delta;&chi;&sup2; test statistics across 10,000 synthetic &Lambda;CDM realizations. The observed Quaia dipole achieves &Delta;&chi;&sup2; = 143.22 with zero exceedances out of 10,000 (p &lt; 1.00 &times; 10⁻⁴). A Generalized Extreme Value (GEV) parametric tail fit establishes a significance of p = 2.88 &times; 10⁻⁶, definitively ruling out Poisson shot noise.
+    </figcaption>
+  </figure>
+
+  <h2>5. Multi-Tracer Bayesian Co-Inference across 2.86 Million Sources</h2>
+  <p>
+    Rather than analyzing surveys in isolation, our joint Poisson MCMC sampler simultaneously constrains survey mean surface densities and a shared physical cosmic velocity vector v_bulk across 2,865,080 all-sky sources.
+  </p>
+
+  <figure>
+    <img src="/figures/bayesian_mcmc_dipole_posteriors.png" alt="Bayesian MCMC Dipole Posteriors" />
+    <figcaption>
+      <span class="fig-num">[Fig. 04]</span>
+      <strong>Affine-Invariant Bayesian MCMC Parameter Posteriors:</strong>
+      Corner plot illustrating 1D marginalized probability distributions and 2D 68% and 95% credible contours for the Cartesian components (D_x, D_y, D_z) and selection exponent &gamma;_sel. The joint inference converges to v_bulk = 664.5 &plusmn; 188.4 km/s oriented toward (l, b) = (289.2&deg; &plusmn; 6.1&deg;, +50.8&deg; &plusmn; 4.9&deg;) &mdash; only 16.4&deg; from the CMB apex.
+    </figcaption>
+  </figure>
+
+  <blockquote>
+    Model comparison on the Jeffreys scale yields &Delta;BIC = +180.7 &implies; ln B = 90.35, decisively demonstrating that the disparate catalog dipoles are manifestations of a shared physical bulk flow rather than independent survey-specific systematics.
+  </blockquote>
+
+  <h2>6. Conclusion & Outlook</h2>
+  <p>
+    By coupling evidential deep learning with distribution-free Conformal Risk Control and selection deprojection, Celestrium reconciles disparate catalog dipole measurements with the Ellis-Baldwin kinematic frame. The upcoming Euclid DR1 survey will provide the definitive test of this framework.
+  </p>
+</PaperLayout>

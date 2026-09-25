@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Light mode (pure white canvas) */
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f8f9fa;
+  --color-bg-card: #fdfdfd;
+  --color-text: #111111;
+  --color-text-secondary: #555555;
+  --color-text-tertiary: #888888;
+  --color-accent: #0f172a;
+  --color-accent-amber: #b45309;
+  --color-accent-cyan: #0369a1;
+  --color-accent-emerald: #047857;
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f0f0f0;
+  --color-tag-bg: #f3f4f6;
+  --color-tag-text: #374151;
+  --color-code-bg: #f8f9fa;
+  --color-sidenote: #666666;
+  --color-link: #111111;
+  --color-link-underline: #cccccc;
+
+  /* Typography */
+  --font-serif: 'Lora', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --line-height: 1.75;
+  --content-width: 720px;
+  --sidenote-width: 260px;
+}
+
+[data-theme="dark"] {
+  /* OLED pure-black mode */
+  --color-bg: #000000;
+  --color-bg-subtle: #080808;
+  --color-bg-card: #040404;
+  --color-text: #eeeeee;
+  --color-text-secondary: #999999;
+  --color-text-tertiary: #555555;
+  --color-accent: #ffffff;
+  --color-accent-amber: #f59e0b;
+  --color-accent-cyan: #38bdf8;
+  --color-accent-emerald: #10b981;
+  --color-border: #1f1f1f;
+  --color-border-subtle: #141414;
+  --color-tag-bg: #111111;
+  --color-tag-text: #bbbbbb;
+  --color-code-bg: #0a0a0a;
+  --color-sidenote: #888888;
+  --color-link: #ffffff;
+  --color-link-underline: #333333;
+}
+
+/* Reset: Strictly zero round edges, zero excessive borders */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 !important;
+}
+
+html {
+  font-size: 17px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration-color: var(--color-link-underline);
+  text-underline-offset: 4px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+a:hover {
+  text-decoration-color: var(--color-link);
+}
+
+/* Monospace ANSI Badges and Markers */
+.ansi-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  background-color: var(--color-tag-bg);
+  padding: 0.2rem 0.5rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.ansi-prefix {
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  font-size: 0.8rem;
+  margin-right: 0.4rem;
+}
+
+.incomplete-rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-border) 0%, var(--color-border) 60%, transparent 100%);
+  margin: 3rem 0;
+  border: none;
+}
+
+.ascii-break {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  margin: 3rem 0;
+}
+
+.ascii-break::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-border) 0%, transparent 85%);
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.88rem;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+th {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Custom Interactive Widgets Styling */
+.interactive-panel {
+  background-color: var(--color-bg-subtle);
+  padding: 2rem;
+  margin: 3rem 0;
+  position: relative;
+}
+
+.interactive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.interactive-title {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.interactive-status {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-accent-emerald);
+}

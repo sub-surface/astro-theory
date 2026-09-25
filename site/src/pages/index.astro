@@ -1,0 +1,454 @@
+---
+import Base from '../layouts/Base.astro';
+import DipoleSimulator from '../components/DipoleSimulator.astro';
+import EvidentialPlayground from '../components/EvidentialPlayground.astro';
+import RemarkableObjectsViewer from '../components/RemarkableObjectsViewer.astro';
+import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
+---
+
+<Base title="Astrophysical Intelligence Engine" activeNav="home">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-preface">
+      <span class="ansi-tag">[INST:CELESTRIUM-V2]</span>
+      <span class="ansi-tag">3 WINGS OPERATIONAL</span>
+      <span class="ansi-tag">OLED TRUE-BLACK COMPATIBLE</span>
+    </div>
+
+    <h1 class="hero-headline">
+      Calibrated epistemic decisions across multi-survey skies.
+    </h1>
+
+    <p class="hero-lead">
+      Celestrium is an open astrophysics research instrument operating at the nexus of theoretical cosmology, evidential deep learning, and autonomous observatory follow-up. We model heteroscedastic noise, deconvolve cosmic harmonic leakages, and schedule multi-messenger telescope queues under distribution-free conformal risk guarantees.
+    </p>
+
+    <!-- Key Telemetry Metrics -->
+    <div class="telemetry-grid">
+      <div class="tele-card">
+        <span class="tc-label">SOURCES INGESTED</span>
+        <span class="tc-value">2,865,080</span>
+        <span class="tc-sub">Gaia DR3 &bull; unWISE &bull; NVSS</span>
+      </div>
+      <div class="tele-card">
+        <span class="tc-label">CALIBRATION ERROR (E²_db)</span>
+        <span class="tc-value">0.000118</span>
+        <span class="tc-sub">Stanford Debiased (NeurIPS '19)</span>
+      </div>
+      <div class="tele-card">
+        <span class="tc-label">TRIAGE THROUGHPUT</span>
+        <span class="tc-value">1.35M / sec</span>
+        <span class="tc-sub">NVIDIA H100 SXM5 GPU</span>
+      </div>
+      <div class="tele-card">
+        <span class="tc-label">8m GMOS FALSE ALARMS</span>
+        <span class="tc-value">0.000%</span>
+        <span class="tc-sub">Conformal FDR &le; 1.0%</span>
+      </div>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <!-- The Three Wings -->
+  <section class="wings-section">
+    <div class="section-kicker">// ARCHITECTURAL FOUNDATION</div>
+    <h2 class="section-title">The Three Operational Wings</h2>
+
+    <div class="wings-grid">
+      <div class="wing-card">
+        <div class="wing-num">[01]</div>
+        <h3 class="wing-title">Theory Workshop & Evidential AI</h3>
+        <p class="wing-desc">
+          Continuous-Flow normalizing networks and Dirichlet prior heads directly ingesting heteroscedastic survey uncertainties log &sigma;. Disentangled RLCD rewards doubt, separating photon shot noise from out-of-distribution epistemic vacuity with analytical credible intervals.
+        </p>
+      </div>
+
+      <div class="wing-card">
+        <div class="wing-num">[02]</div>
+        <h3 class="wing-title">Experimental Validation & Streaming</h3>
+        <p class="wing-desc">
+          Unified Table Access Protocol (TAP) discovery across 10 astronomical archives (Gaia, Euclid, IRSA, MAST, SDSS). Zero-bloat compressed streaming (96 B/src), selection function deprojection, and vectorized affine-invariant Bayesian Poisson MCMC.
+        </p>
+      </div>
+
+      <div class="wing-card">
+        <div class="wing-num">[03]</div>
+        <h3 class="wing-title">Observatory Follow-Up & ToO Dispatch</h3>
+        <p class="wing-desc">
+          Autonomous multi-tier Target-of-Opportunity (ToO) protocol serialization for Gemini 8m GMOS spectroscopy and robotic LCOGT 1m networks. Active 3D gravitational-wave tiling MDPs prioritizing dual-band Kasen reddening confirmation.
+        </p>
+      </div>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <!-- Interactive Model 1: Dipole Simulator -->
+  <section class="interactive-feature">
+    <div class="section-kicker">// INTERACTIVE PAPER EXPERIMENT</div>
+    <h2 class="section-title">Cosmic Dipole & Harmonic Leakage Deconvolution</h2>
+    <DipoleSimulator />
+  </section>
+
+  <!-- Research Papers Index -->
+  <section class="papers-overview">
+    <div class="section-kicker">// ACTIVE PUBLICATIONS</div>
+    <h2 class="section-title">Core Research Manuscripts</h2>
+    <p class="section-lead">
+      Each proposed scientific publication from Celestrium is presented on this site as an interactive, fully auditable paper with embedded models, data cutouts, and reproducible telemetry.
+    </p>
+
+    <div class="papers-list">
+      <!-- Paper A -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER A</span>
+          <span class="entry-subject">astro-ph.CO &bull; astro-ph.IM</span>
+          <span class="entry-venue">Astronomy & Astrophysics (A&A)</span>
+        </div>
+        <a href="/papers/paper-a-cosmic-dipole/" class="entry-link">
+          <h3>Systematics-Aware Measurement of the Cosmological Dipole: Multi-Tracer Bayesian Co-Inference across 2.86 Million Sources</h3>
+        </a>
+        <p class="entry-summary">
+          Analyzes the 1.3M Quaia quasar catalog alongside CatWISE2020 and NVSS 1.4 GHz sources. Proves that selection function expansion admitting fast halo subdwarfs (<code>OBJ-HALO-05</code>) induces harmonic leakage. Joint Poisson MCMC converges to v_bulk = 664.5 &plusmn; 188.4 km/s toward (289.2&deg;, +50.8&deg;) (&Delta;BIC = +180.7).
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">2.86M SOURCES</span>
+          <span class="entry-tag">CONFORMAL FDR &le; 5%</span>
+          <span class="entry-tag">&Delta;BIC = +180.7</span>
+          <a href="/papers/paper-a-cosmic-dipole/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Paper B -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER B</span>
+          <span class="entry-subject">astro-ph.IM &bull; cs.LG</span>
+          <span class="entry-venue">MNRAS / ApJ</span>
+        </div>
+        <a href="/papers/paper-b-continuous-flow-astrojev/" class="entry-link">
+          <h3>Continuous-Flow Foundation AstroJev: Simulation-Free Latent SED Matching and Disentangled RLCD Calibration</h3>
+        </a>
+        <p class="entry-summary">
+          Combines Conditional Flow Matching (CFM) for cross-survey zero-point recovery (RMSE = 0.0363 mag) with Disentangled RLCD. Freezing the representation trunk and tuning Dirichlet heads under proper scoring rules collapses calibration error by 98.3%. Validated on DESI 5,000-fiber allocation.
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">CFM ZERO-POINT RECOVERY</span>
+          <span class="entry-tag">98.3% CALIBRATION COLLAPSE</span>
+          <span class="entry-tag">DESI 5,000 FIBERS</span>
+          <a href="/papers/paper-b-continuous-flow-astrojev/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Paper C -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER C</span>
+          <span class="entry-subject">cs.AI &bull; astro-ph.IM</span>
+          <span class="entry-venue">Astronomy and Computing / ICML</span>
+        </div>
+        <a href="/papers/paper-c-autonomous-followup-mdp/" class="entry-link">
+          <h3>Autonomous Target-of-Opportunity Triage & Active 3D Follow-up MDPs with Conformal Risk Bounds</h3>
+        </a>
+        <p class="entry-summary">
+          Solves the irreversible telescope follow-up resource bottleneck. Evaluates 50,000 real GraceDB O4, IceCube, and ALeRCE alerts on cloud GPU (1.35 &times; 10⁶ alerts/s) with 0.000% false alarms on 8m GMOS. Formulates active 3D GW tiling yielding 97.0% kilonova recovery before optical fading.
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">1.35M ALERTS/SEC</span>
+          <span class="entry-tag">0.000% 8M FALSE ALARMS</span>
+          <span class="entry-tag">97% KILONOVA YIELD</span>
+          <a href="/papers/paper-c-autonomous-followup-mdp/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Paper D -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER D</span>
+          <span class="entry-subject">astro-ph.CO &bull; astro-ph.IM</span>
+          <span class="entry-venue">A&A Letters / MNRAS Letters</span>
+        </div>
+        <a href="/papers/paper-d-euclid-dr1-forecast/" class="entry-link">
+          <h3>Pre-Flight Kinematic and Clustered Dipole Forecast for Euclid DR1: Quantifying Harmonic Leakage in 26,000 deg²</h3>
+        </a>
+        <p class="entry-summary">
+          Pre-flight forward modeling of Euclid Data Release 1. Inverts the specific wide survey mode-coupling matrix M_ll' where quadrupole and octupole density fluctuations leak into the dipole at &Delta;D/D &sim; 14%. Forecasts that Euclid DR1 will measure the true kinematic dipole to &plusmn; 6.5% precision.
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">EUCLID DR1 PRE-FLIGHT</span>
+          <span class="entry-tag">MODE-COUPLING MATRIX M_ll'</span>
+          <span class="entry-tag">&plusmn;6.5% FORECAST PRECISION</span>
+          <a href="/papers/paper-d-euclid-dr1-forecast/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <!-- Interactive Model 2: Evidential Playground -->
+  <section class="interactive-feature">
+    <div class="section-kicker">// INTERACTIVE DECISION ENGINE</div>
+    <h2 class="section-title">Dirichlet Evidential UQ & RLCD Doubt Gating</h2>
+    <EvidentialPlayground />
+  </section>
+
+  <!-- Remarkable Objects Section -->
+  <section class="catalog-feature">
+    <div class="section-kicker">// BENCHMARK DATASET MINING</div>
+    <h2 class="section-title">Remarkable Astrophysical Objects Mined from 1.3M Sources</h2>
+    <RemarkableObjectsViewer />
+  </section>
+
+  <!-- Field Taxonomy Section -->
+  <section class="taxonomy-feature">
+    <div class="section-kicker">// ENCYCLOPAEDIC COVERAGE & GAPS</div>
+    <h2 class="section-title">Astronomy Field Taxonomy & Research Gap Matrix</h2>
+    <FieldTaxonomyExplorer />
+  </section>
+</Base>
+
+<style>
+  .hero-section {
+    padding: 2.5rem 0 3.5rem;
+    max-width: var(--content-width);
+  }
+
+  .hero-preface {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-headline {
+    font-family: var(--font-serif);
+    font-size: 2.7rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--color-text);
+    margin-bottom: 1.8rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-lead {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--color-text);
+    margin-bottom: 2.5rem;
+  }
+
+  .telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+    margin: 2.5rem 0;
+  }
+
+  @media (max-width: 860px) {
+    .telemetry-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .hero-headline {
+      font-size: 2.1rem;
+    }
+  }
+
+  .tele-card {
+    background: var(--color-bg-subtle);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .tc-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+
+  .tc-value {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .tc-sub {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+  }
+
+  .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 1.2rem;
+  }
+
+  .section-lead {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    max-width: var(--content-width);
+    margin-bottom: 2.5rem;
+  }
+
+  .wings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin: 2.5rem 0;
+  }
+
+  @media (max-width: 860px) {
+    .wings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .wing-card {
+    background: var(--color-bg-subtle);
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .wing-num {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+  }
+
+  .wing-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.35;
+  }
+
+  .wing-desc {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .papers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin: 2.5rem 0;
+  }
+
+  .paper-entry {
+    background: var(--color-bg-subtle);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .entry-meta {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .entry-code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  .entry-subject {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-accent-cyan);
+    background: var(--color-tag-bg);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .entry-venue {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-accent-amber);
+    background: var(--color-tag-bg);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .entry-link {
+    text-decoration: none;
+  }
+
+  .entry-link h3 {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.35;
+    transition: color 0.15s;
+  }
+
+  .entry-link:hover h3 {
+    color: var(--color-text-secondary);
+  }
+
+  .entry-summary {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .entry-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    padding-top: 0.8rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .entry-tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .read-btn {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text);
+    text-decoration: none;
+    margin-left: auto;
+  }
+
+  .read-btn:hover {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,196 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="About Celestrium" activeNav="about">
+  <div class="about-page-header">
+    <span class="ansi-tag">[PROTOCOL:INSTRUMENT-SPEC]</span>
+    <span class="ansi-tag">SUB-SURFACE / ASTRO-THEORY</span>
+    <h1 class="page-title">About Celestrium</h1>
+    <p class="page-desc">
+      Celestrium is an open astrophysical research instrument designed to automate evidential inference, survey validation, and telescope follow-up decision-making under real-world observational noise.
+    </p>
+    <div class="incomplete-rule"></div>
+  </div>
+
+  <section class="about-section">
+    <div class="section-kicker">// CORE PHILOSOPHY</div>
+    <h2 class="section-title">Calibrated Epistemic Decision-Making</h2>
+    <p class="about-p">
+      The advent of Rubin LSST (10 million alerts/night), Euclid DR1 (26,000 deg&sup2; near-infrared survey), and multi-million source astrometric/infrared catalogs (Gaia DR3, unWISE, Quaia) marks an inflection point in observational astrophysics. The bottleneck is no longer data acquisition, but <strong>decision triage under heteroscedastic observational noise</strong>.
+    </p>
+    <p class="about-p">
+      Traditional deep learning architectures deployed in alert brokers routinely output overconfident posterior probabilities when confronted with photon shot noise or out-of-distribution interlopers. Celestrium reframes astronomical decision-making around four non-negotiable mathematical standards.
+    </p>
+  </section>
+
+  <section class="standards-grid">
+    <div class="standard-card">
+      <div class="std-num">[STD 01]</div>
+      <h3 class="std-title">Zero Naked Predictions</h3>
+      <p class="std-desc">
+        Every model decision (classification, candidate triage, follow-up scheduling) MUST retain explicit analytical uncertainties. Point probabilities without error bars are prohibited. Every decision outputs Dirichlet standard deviations &sigma;_k = &radic;(p_k(1 - p_k) / (S + 1)), 95% Credible Intervals [p_k &plusmn; 1.96&sigma;_k], and conformal prediction sets C_&lambda;(X).
+      </p>
+    </div>
+
+    <div class="standard-card">
+      <div class="std-num">[STD 02]</div>
+      <h3 class="std-title">Disentangled RLCD Optimization</h3>
+      <p class="std-desc">
+        Training confidence heads end-to-end with representation backbones corrupts embedding geometry and induces mode collapse. Following Bani-Harouni et al. (TUM 2026), Celestrium strictly freezes representation trunks during calibration, fine-tuning ONLY Dirichlet readout heads under composite proper loss (Brier score + logarithmic doubt scoring + CARL regularizer).
+      </p>
+    </div>
+
+    <div class="standard-card">
+      <div class="std-num">[STD 03]</div>
+      <h3 class="std-title">Stanford Debiased Error (NeurIPS 2019)</h3>
+      <p class="std-desc">
+        Standard binned Expected Calibration Error (ECE) exhibits an intrinsic positive variance bias &asymp; y_b(1 - y_b) / (n_b - 1) that inflates apparent error on small or imbalanced validation sets. Celestrium always computes and reports the Stanford Debiased Squared Calibration Error E&sup2;_db alongside bootstrap 95% confidence intervals.
+      </p>
+    </div>
+
+    <div class="standard-card">
+      <div class="std-num">[STD 04]</div>
+      <h3 class="std-title">Conformal Risk Control</h3>
+      <p class="std-desc">
+        High-cost follow-up (such as 8m GMOS spectroscopy) requires mathematical guarantees on false alarms. We employ distribution-free Conformal Risk Control (CRC), provably bounding False Discovery Rates strictly below pre-registered risk ceilings without parametric distributional assumptions.
+      </p>
+    </div>
+  </section>
+
+  <div class="incomplete-rule"></div>
+
+  <section class="about-section">
+    <div class="section-kicker">// INFRASTRUCTURE & ECONOMICS</div>
+    <h2 class="section-title">Hardware Architecture & Cloud Economics</h2>
+    <p class="about-p">
+      Celestrium operates across a dual-tier execution environment optimized for cost efficiency and high throughput:
+    </p>
+    <ul class="about-list">
+      <li><strong>Local Development:</strong> Windows 11 host (PowerShell), NVIDIA GeForce RTX 2060 (6 GB VRAM) for rapid local unit testing (200 passing hermetic tests, 100% network-independent).</li>
+      <li><strong>Serverless Cloud Compute (Modal):</strong> Scaled NVIDIA H100 80GB SXM5 GPUs for large-scale training and Monte Carlo runs. An entire 80,000-source FoundationAstroJev training run completes in 4.90 seconds at a total compute cost of <strong>$0.0061 USD</strong> (&lt; 1 cent).</li>
+      <li><strong>Zero-Bloat Streaming:</strong> Large survey catalogs (e.g. 1.3M Quaia quasars) are memory-mapped via <code>astropy.io.fits(..., memmap=True)</code> with a strictly bounded RAM footprint (&lt; 50 MB), streaming at 96 bytes per source.</li>
+    </ul>
+  </section>
+
+  <div class="incomplete-rule"></div>
+
+  <section class="about-section">
+    <div class="section-kicker">// COLLABORATION MODEL</div>
+    <h2 class="section-title">Autonomous Multi-Agent Pairing</h2>
+    <p class="about-p">
+      Celestrium is developed through continuous pair programming between human researchers and autonomous agents (Claude, Codex, Gemini) operating under the unified local git identity <code>Sub-Surface</code>. All theoretical threads, computational experiments, and manuscripts are version-controlled and verified through reproducible CLI entry points.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .about-page-header {
+    max-width: var(--content-width);
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 1rem 0 1.2rem;
+  }
+
+  .page-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .about-section {
+    margin: 3rem 0;
+    max-width: var(--content-width);
+  }
+
+  .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 1.2rem;
+  }
+
+  .about-p {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text);
+    margin-bottom: 1.2rem;
+  }
+
+  .standards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.8rem;
+    margin: 2.5rem 0;
+  }
+
+  @media (max-width: 800px) {
+    .standards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .standard-card {
+    background: var(--color-bg-subtle);
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .std-num {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+  }
+
+  .std-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .std-desc {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+
+  .about-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .about-list li {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .about-list li strong {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+</style>

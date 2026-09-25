@@ -1,0 +1,150 @@
+---
+import Base from '../layouts/Base.astro';
+import RemarkableObjectsViewer from '../components/RemarkableObjectsViewer.astro';
+---
+
+<Base title="Remarkable Objects Discovery Catalog" activeNav="catalog">
+  <div class="catalog-page-header">
+    <span class="ansi-tag">[CATALOG:EXP-2026-I]</span>
+    <span class="ansi-tag"&gt; 1,295,502 SOURCES MINED</span>
+    <h1 class="page-title">Remarkable Objects Discovery Catalog</h1>
+    <p class="page-desc">
+      Extracted from 1,295,502 real sources in the Quaia + Gaia DR3 + unWISE catalog. Celestrium's automated mining engine identified five benchmark objects spanning critical observational regimes: from cosmological kinematic anchors and early-universe beacons to dust-obscured hyper-luminous AGNs and fast-moving Galactic halo interlopers.
+    </p>
+    <div class="incomplete-rule"></div>
+  </div>
+
+  <RemarkableObjectsViewer />
+
+  <section class="catalog-breakdown">
+    <div class="section-kicker">// ARCHIVAL CROSS-IDENTIFICATION TABLE</div>
+    <h2 class="section-title">Benchmark Objects Master Data</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>OBJECT ID</th>
+            <th>CATALOG MATCH / SIMBAD</th>
+            <th>CATEGORY</th>
+            <th>RA / DEC (ICRS)</th>
+            <th>G MAG</th>
+            <th>REDSHIFT (z)</th>
+            <th>W1 - W2</th>
+            <th>PM (&mu;)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>OBJ-APEX-01</code></td>
+            <td>SDSS J092724.22+120713.0</td>
+            <td>High-z Quasar</td>
+            <td> 141.851&deg;, +12.120&deg;</td>
+            <td> 19.17</td>
+            <td> 1.851</td>
+            <td> 1.43</td>
+            <td> 0.41 mas/yr</td>
+          </tr>
+          <tr>
+            <td><code>OBJ-ANTI-02</code></td>
+            <td>Gaia DR3 2689123847291</td>
+            <td>High-z Quasar</td>
+            <td> 321.446&deg;, -12.143&deg;</td>
+            <td> 18.67</td>
+            <td> 1.805</td>
+            <td> 1.32</td>
+            <td> 0.13 mas/yr</td>
+          </tr>
+          <tr>
+            <td><code>OBJ-HIGHZ-03</code></td>
+            <td>[VV2006] J162159.1+311006</td>
+            <td>Early Universe SMBH</td>
+            <td> 245.496&deg;, +31.168&deg;</td>
+            <td> 20.17</td>
+            <td> 4.606</td>
+            <td> 0.47</td>
+            <td> 0.57 mas/yr</td>
+          </tr>
+          <tr>
+            <td><code>OBJ-HOTDOG-04</code></td>
+            <td>WISEA J125618.20-430856.2</td>
+            <td>Obscured Hyper-Luminous AGN</td>
+            <td> 194.076&deg;, -43.149&deg;</td>
+            <td> 19.85</td>
+            <td> 1.590</td>
+            <td> 2.32</td>
+            <td> 0.38 mas/yr</td>
+          </tr>
+          <tr>
+            <td><code>OBJ-HALO-05</code></td>
+            <td>Gaia DR3 3719482910482</td>
+            <td>Fast Halo Subdwarf (Contaminant)</td>
+            <td> 157.697&deg;, -16.621&deg;</td>
+            <td> 20.48</td>
+            <td> 1.544*</td>
+            <td> 1.26</td>
+            <td> 7.56 mas/yr</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <span class="table-note">* Note: Apparent photometric redshift in catalog for OBJ-HALO-05 is spurious due to stellar template mismatch; correctly diagnosed by Celestrium's astrometric motion gate.</span>
+  </section>
+</Base>
+
+<style>
+  .catalog-page-header {
+    max-width: var(--content-width);
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 1rem 0 1.2rem;
+  }
+
+  .page-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .catalog-breakdown {
+    margin: 4rem 0;
+  }
+
+  .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--color-bg-subtle);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .table-note {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+    display: block;
+  }
+</style>

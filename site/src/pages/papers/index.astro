@@ -1,0 +1,197 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const papers = [
+  {
+    code: "PAPER A",
+    subject: "astro-ph.CO · astro-ph.IM",
+    venue: "Astronomy & Astrophysics (A&A)",
+    title: "Systematics-Aware Measurement of the Cosmological Dipole: Multi-Tracer Bayesian Co-Inference across 2.86 Million Sources",
+    slug: "paper-a-cosmic-dipole",
+    metrics: "2,865,080 Sources · ΔBIC = +180.7 · FDR ≤ 5%",
+    abstract: "Measurements of the cosmic matter dipole from distant quasars persistently report amplitudes twice as large as the kinematic CMB benchmark. We establish an end-to-end systematics audit and the first joint hierarchical Bayesian Poisson co-inference framework evaluating 2.86 million all-sky sources simultaneously across optical (Quaia: 1.3M), mid-infrared (CatWISE: 1.4M), and radio (NVSS: 208k) surveys. We deproject the official selection function, bound halo subdwarf stellar contamination via Conformal Risk Control, and recover v_bulk = 664.5 ± 188.4 km/s separated by only 16.4° from the CMB apex."
+  },
+  {
+    code: "PAPER B",
+    subject: "astro-ph.IM · cs.LG",
+    venue: "MNRAS / ApJ",
+    title: "Continuous-Flow Foundation AstroJev: Simulation-Free Latent SED Matching and Disentangled RLCD Calibration",
+    slug: "paper-b-continuous-flow-astrojev",
+    metrics: "RMSE = 0.0363 mag · 98.3% Error Reduction · 254k src/s",
+    abstract: "Machine learning classifiers deployed across next-generation sky surveys face cross-instrument zero-point drift and severe miscalibration under heteroscedastic noise. We present Continuous-Flow Foundation AstroJev, combining Simulation-Free Conditional Flow Matching (CFM) for invariant SED transport with Disentangled RLCD. Freezing the representation trunk and tuning Dirichlet heads under proper scoring rules collapses Stanford debiased calibration error by 98.3%. Cloud GPU triage allocates DESI 5,000-fiber focal planes with 90.4% High-z Quasar Recall."
+  },
+  {
+    code: "PAPER C",
+    subject: "cs.AI · astro-ph.IM",
+    venue: "Astronomy and Computing / ICML",
+    title: "Autonomous Target-of-Opportunity Triage & Active 3D Follow-up MDPs with Conformal Risk Bounds",
+    slug: "paper-c-autonomous-followup-mdp",
+    metrics: "1,347,895 alerts/s · 0.000% False Alarms · 97% Yield",
+    abstract: "Follow-up spectroscopy on transient events or exotic candidates consumes limited telescope night-hours. Standard alert brokers emit overconfident predictions on edge cases, causing costly false-alarm cascades. We formulate telescope follow-up decision-making under strictly proper scoring rules and introduce Reinforcement Learning on Calibrated Decisions (RLCD). Evaluated on 50,000 real GraceDB O4, IceCube, and ALeRCE alerts, our policy achieves 0.000% false alarms on Gemini 8m GMOS. An active 3D GW tiling MDP prioritizes dual-band Kasen reddening confirmation, achieving 97.0% kilonova recovery."
+  },
+  {
+    code: "PAPER D",
+    subject: "astro-ph.CO · astro-ph.IM",
+    venue: "A&A Letters / MNRAS Letters",
+    title: "Pre-Flight Kinematic and Clustered Dipole Forecast for Euclid DR1: Quantifying Harmonic Leakage in 26,000 deg²",
+    slug: "paper-d-euclid-dr1-forecast",
+    metrics: "26,000 deg² · Mode-Coupling M_ll' · ±6.5% Precision",
+    abstract: "Euclid Data Release 1 will map thousands of square degrees in optical and near-infrared passbands. We present a pre-flight forward-modeling analysis of Euclid DR1's capability to resolve the cosmological dipole anomaly. Utilizing our unified Table Access Protocol (TAP) discovery interface on the ESA Euclid Science Archive, we simulate the wide survey footprint and show that survey geometry induces a specific mode-coupling matrix where quadrupole and octupole fluctuations leak into the dipole at ΔD/D ~ 14%. We forecast that DR1 will measure the true kinematic dipole to ±6.5% precision."
+  }
+];
+---
+
+<Base title="Research Papers & Interactive Articles" activeNav="papers">
+  <div class="papers-page-header">
+    <span class="ansi-tag">[CORPUS:PEER-REVIEWED-PROSPECTS]</span>
+    <h1 class="page-title">Research Manuscripts & Interactive Articles</h1>
+    <p class="page-desc">
+      Celestrium transforms pre-registered astrophysical manuscripts into living, interactive articles. Each paper pairs the full theoretical text with embedded simulation models, auditable telemetry, and interactive figures.
+    </p>
+    <div class="incomplete-rule"></div>
+  </div>
+
+  <div class="papers-container">
+    {papers.map((p) => (
+      <article class="paper-card">
+        <div class="card-meta">
+          <span class="meta-code">{p.code}</span>
+          <span class="meta-subject">{p.subject}</span>
+          <span class="meta-venue">{p.venue}</span>
+        </div>
+
+        <a href={`/papers/${p.slug}/`} class="card-link">
+          <h2 class="card-title">{p.title}</h2>
+        </a>
+
+        <p class="card-abstract">{p.abstract}</p>
+
+        <div class="card-bottom">
+          <span class="card-metrics">{p.metrics}</span>
+          <a href={`/papers/${p.slug}/`} class="open-link">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .papers-page-header {
+    max-width: var(--content-width);
+    margin-bottom: 3rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 1rem 0 1.2rem;
+  }
+
+  .page-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .papers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    max-width: var(--content-width);
+  }
+
+  .paper-card {
+    background: var(--color-bg-subtle);
+    padding: 2.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .meta-code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  .meta-subject {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-accent-cyan);
+    background: var(--color-tag-bg);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .meta-venue {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-accent-amber);
+    background: var(--color-tag-bg);
+    padding: 0.2rem 0.5rem;
+  }
+
+  .card-link {
+    text-decoration: none;
+  }
+
+  .card-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.35;
+    transition: color 0.15s;
+  }
+
+  .card-link:hover .card-title {
+    color: var(--color-text-secondary);
+  }
+
+  .card-abstract {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .card-metrics {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .open-link {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .open-link:hover {
+    text-decoration: underline;
+  }
+</style>

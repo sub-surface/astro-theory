@@ -1,0 +1,95 @@
+---
+import PaperLayout from '../../layouts/PaperLayout.astro';
+import MultiMessengerTiling from '../../components/MultiMessengerTiling.astro';
+---
+
+<PaperLayout
+  paperCode="PAPER C"
+  subject="cs.AI · astro-ph.IM"
+  venue="Astronomy and Computing / ICML"
+  title="Autonomous Target-of-Opportunity Triage & Active 3D Follow-up MDPs with Conformal Risk Bounds"
+  shortTitle="Paper C — Autonomous ToO Triage & 3D MDPs"
+  date="September 2026"
+  version="2.0"
+  experiments="EXP-2026-A, H, N, R, U"
+  description="Autonomous decision suites grounded in RLCD, Constrained MDPs, and Conformal Risk Control for real-time multi-messenger alert triage and Gemini 8m / LCOGT follow-up dispatch."
+>
+  <!-- Abstract Lead -->
+  <p class="lead">
+    Next-generation multi-messenger sky surveys (Vera C. Rubin LSST, LIGO-Virgo-KAGRA O4/O5, IceCube, DESI) generate millions of transient candidates per night. Follow-up facilities are severely constrained: scarce 8m-10m spectrographs (Gemini GMOS, Keck, VLT) observe fewer than 0.01% of triggered alerts, wide-field optical imagers (DECam, Rubin) face expansive gravitational-wave localization skymaps (&Delta;&Omega; ~ 100–1000 deg&sup2;), and multi-object spectrographs must assign apertures under acute stellar contamination. Standard alert brokers suffer catastrophic overconfidence on ambiguous boundary targets, permanently squandering finite observing night-hours on false alarms.
+  </p>
+
+  <!-- Interactive Model Embed -->
+  <h2>Interactive Model: Active 3D GW Tiling & Kasen Lightcurves</h2>
+  <p>
+    Explore the autonomous tiling simulator below to observe how prioritizing dual-epoch Kasen reddening confirmation collapses epistemic doubt and eliminates false alarms on 8m spectrographs.
+  </p>
+  <MultiMessengerTiling />
+
+  <h2> 1. Introduction: The Irreversible Follow-Up Bottleneck</h2>
+  <p>
+    The fundamental challenge of modern multi-messenger astrophysics is not discovery, but <strong>decision triage</strong>:
+  </p>
+  <ul>
+    <li>Alert brokers (Fink, ALeRCE, Lasair) ingest millions of candidate detections per night.</li>
+    <li>Spectroscopic facilities allocate limited integration time in seconds (t_exp ~ 300–3600 s).</li>
+    <li>Triggering an exposure on a false positive (e.g. a Galactic flare star masquerading as a kilonova candidate) permanently consumes non-recoverable night hours.</li>
+  </ul>
+
+  <figure>
+    <img src="/figures/experiment_r_multimessenger_triage.png" alt="Multi-Messenger Triage Architecture" />
+    <figcaption>
+      <span class="fig-num">[Fig. 01]</span>
+      <strong>Multi-Messenger Triage and Permutation Significance:</strong>
+      Multi-stream heteroscedastic ingestion coupling GraceDB O4 VOEvents, IceCube neutrino alerts, and ALeRCE optical transients with GLADE+ 3D host galaxies. A 500-realization spatiotemporal coordinate and date permutation test yields 0 exceedances above the true kilonova score (p = 1.996 &times; 10⁻³).
+    </figcaption>
+  </figure>
+
+  <h2> 2. Disentangled RLCD Calibration under Survey Streaming</h2>
+  <p>
+    To protect scarce 8m apertures, we implement Disentangled RLCD calibration (Bani-Harouni et al. 2026). The deep representation trunk is frozen while the Dirichlet readout head is optimized under a composite proper loss:
+  </p>
+
+  <pre><code>L = L_Brier + &beta; L_doubt + &gamma; L_CARL</code></pre>
+
+  <figure>
+    <img src="/figures/experiment_r_real_stream_rlcd_triage.png" alt="Real Stream RLCD Triage" />
+    <figcaption>
+      <span class="fig-num">[Fig. 02]</span>
+      <strong>Calibration Error Collapse on Real Broker Streams:</strong>
+      Evaluating across 1,295,502 Quaia sources and real GraceDB O4 superevents (`S240422ed`, `S230518h`). Disentangled RLCD collapses Stanford debiased squared calibration error from $0.75037$ down to $0.01297$ ($98.27\%$ error reduction), aligning model confidence directly with true posterior probability.
+    </figcaption>
+  </figure>
+
+  <h2> 3. Active-Evidential 3D Gravitational Wave Error-Volume Tiling</h2>
+  <p>
+    Binary Neutron Star (BNS) localization skymaps often span hundreds of square degrees. Rather than greedily covering the highest 2D probability pixels with single-band exposures, Celestrium models transient follow-up as a finite-horizon Constrained Markov Decision Process (CMDP).
+  </p>
+
+  <figure>
+    <img src="/figures/experiment_u_active_gw_tiling_benchmark.png" alt="Active GW Tiling Benchmark" />
+    <figcaption>
+      <span class="fig-num">[Fig. 03]</span>
+      <strong>Active 3D GW Tiling Benchmark across 100 O4 BNS Error Volumes:</strong>
+      Active-Evidential RLCD achieves a 97.0% kilonova recovery rate (+8.0% gain over greedy 2D) and a 97.0% dual-band ($g$ and $z$) color confirmation rate, shortening mean discovery time from 3.73 hours to 3.17 hours post-merger while maintaining 84.6% shutter-on-target efficiency.
+    </figcaption>
+  </figure>
+
+  <h2> 4. Multi-Tier Telescope Queue Optimization</h2>
+  <p>
+    We deployed the RLCD scheduler across 75 simulated 30-night observing semesters with heterogeneous facilities: Tier 1 (robotic 1m imager, 0.25h), Tier 2 (4m spectrograph, 1.0h), and Tier 3 (8m GMOS spectrograph, 3.5h).
+  </p>
+
+  <figure>
+    <img src="/figures/rlcd_telescope_queue_scheduling.png" alt="Telescope Queue Scheduling" />
+    <figcaption>
+      <span class="fig-num">[Fig. 04]</span>
+      <strong>Multi-Tier Telescope Queue Performance:</strong>
+      Epistemic RLCD achieves a 2.92-fold rare transient discovery yield gain (38.0 vs 13.0 for greedy policies). Ambiguous and high-vacuity candidates are safely diverted to robotic 1m screening to collapse uncertainty, achieving 0.000% false alarms on Gemini 8m spectroscopy.
+    </figcaption>
+  </figure>
+
+  <blockquote>
+    Every triage dispatch generated by Celestrium produces turnkey, schema-compliant JSON payloads for automated Gemini GMOS Phase II and LCOGT RequestGroup APIs.
+  </blockquote>
+</PaperLayout>

@@ -1,0 +1,415 @@
+---
+---
+
+<div class="evidential-sim interactive-panel">
+  <div class="interactive-header">
+    <div class="interactive-title">// INTERACTIVE MODEL: DIRICHLET EVIDENTIAL UQ & RLCD GATING</div>
+    <div class="interactive-status">[EXP-2026-F/H/R ENGINE]</div>
+  </div>
+
+  <p class="sim-intro">
+    Standard deep neural networks emit overconfident predictions on noisy survey targets. Adjust observational photon noise, astrometric error, and mid-IR colors to inspect how Celestrium decomposes data noise (aleatoric $u_ale$) from model ignorance (epistemic vacuity $u_epi$) with analytical Dirichlet error bars $[p \pm 1.96\sigma]$.
+  </p>
+
+  <div class="evidential-grid">
+    <!-- Controls -->
+    <div class="evidential-controls">
+      <div class="ctrl-row">
+        <label for="input-g">
+          <span class="ctrl-name">Gaia G Magnitude:</span>
+          <span id="val-g" class="ctrl-val"> 19.5 mag</span>
+        </label>
+        <input type="range" id="input-g" min="14.0" max="21.0" step="0.1" value="19.5" class="sim-slider" />
+      </div>
+
+      <div class="ctrl-row">
+        <label for="input-snr">
+          <span class="ctrl-name">unWISE Detection SNR:</span>
+          <span id="val-snr" class="ctrl-val"> 8.5 &sigma;</span>
+        </label>
+        <input type="range" id="input-snr" min="1.5" max="30.0" step="0.5" value="8.5" class="sim-slider" />
+      </div>
+
+      <div class="ctrl-row">
+        <label for="input-pm">
+          <span class="ctrl-name">Astrometric Error (&sigma;_&mu;):</span>
+          <span id="val-pm" class="ctrl-val"> 1.8 mas/yr</span>
+        </label>
+        <input type="range" id="input-pm" min="0.1" max="5.0" step="0.1" value="1.8" class="sim-slider" />
+      </div>
+
+      <div class="ctrl-row">
+        <label for="input-w12">
+          <span class="ctrl-name">Mid-IR Color (W1 - W2):</span>
+          <span id="val-w12" class="ctrl-val"> 1.35 mag</span>
+        </label>
+        <input type="range" id="input-w12" min="-0.2" max="2.4" step="0.05" value="1.35" class="sim-slider" />
+        <div class="slider-scale">
+          <span>Stellar (-0.1)</span>
+          <span>Quasar Locus (0.8 - 1.5)</span>
+          <span>Hot DOG (&gt;2.0)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output Display -->
+    <div class="evidential-output">
+      <div class="decision-badge" id="action-badge">
+        <span class="action-tag">AUTONOMOUS DISPATCH</span>
+        <span class="action-decision" id="action-text">AUTO_CATALOG</span>
+      </div>
+
+      <!-- Probability Bars -->
+      <div class="prob-bars">
+        <div class="bar-unit">
+          <div class="bar-header">
+            <span>HIGH-Z QUASAR (QSO)</span>
+            <span id="prob-qso" class="bar-pct"> 86.4% &plusmn; 2.1%</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-fill-qso" class="bar-fill" style="width: 86.4%; background: var(--color-accent-cyan);"></div>
+          </div>
+        </div>
+
+        <div class="bar-unit">
+          <div class="bar-header">
+            <span>GALACTIC STAR (HALO)</span>
+            <span id="prob-star" class="bar-pct"> 9.8% &plusmn; 1.4%</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-fill-star" class="bar-fill" style="width: 9.8%; background: var(--color-accent-amber);"></div>
+          </div>
+        </div>
+
+        <div class="bar-unit">
+          <div class="bar-header">
+            <span>BROWN DWARF / ANOMALY</span>
+            <span id="prob-dwarf" class="bar-pct"> 3.8% &plusmn; 0.9%</span>
+          </div>
+          <div class="bar-track">
+            <div id="bar-fill-dwarf" class="bar-fill" style="width: 3.8%; background: var(--color-accent-emerald);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual Uncertainty Cards -->
+      <div class="uq-cards">
+        <div class="uq-box">
+          <span class="uq-title">ALEATORIC ENTROPY (u_ale)</span>
+          <span id="uq-ale" class="uq-number"> 0.248</span>
+          <span class="uq-desc">Unavoidable photon shot noise & astrometric scatter</span>
+        </div>
+        <div class="uq-box">
+          <span class="uq-title">EVIDENTIAL VACUITY (u_epi)</span>
+          <span id="uq-epi" class="uq-number"> 0.114</span>
+          <span class="uq-desc">Model ignorance / out-of-distribution doubt</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="evidential-footer">
+    <span class="sim-note">
+      * Zero naked predictions: Gating policy enforces 95% Credible Interval lower bound [p - 1.96&sigma;] &ge; 0.40 and vacuity u_epi &le; 0.35 before triggering 8m telescope aperture time. Ambiguous cases route to 1m LCOGT screening to collapse uncertainty.
+    </span>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var inG = document.getElementById('input-g');
+    var inSnr = document.getElementById('input-snr');
+    var inPm = document.getElementById('input-pm');
+    var inW12 = document.getElementById('input-w12');
+
+    var valG = document.getElementById('val-g');
+    var valSnr = document.getElementById('val-snr');
+    var valPm = document.getElementById('val-pm');
+    var valW12 = document.getElementById('val-w12');
+
+    var actionBadge = document.getElementById('action-badge');
+    var actionText = document.getElementById('action-text');
+
+    var probQso = document.getElementById('prob-qso');
+    var probStar = document.getElementById('prob-star');
+    var probDwarf = document.getElementById('prob-dwarf');
+
+    var barFillQso = document.getElementById('bar-fill-qso');
+    var barFillStar = document.getElementById('bar-fill-star');
+    var barFillDwarf = document.getElementById('bar-fill-dwarf');
+
+    var uqAle = document.getElementById('uq-ale');
+    var uqEpi = document.getElementById('uq-epi');
+
+    function updateEvidential() {
+      var g = parseFloat(inG.value);
+      var snr = parseFloat(inSnr.value);
+      var pmErr = parseFloat(inPm.value);
+      var w12 = parseFloat(inW12.value);
+
+      valG.textContent = g.toFixed(1) + ' mag';
+      valSnr.textContent = snr.toFixed(1) + ' σ';
+      valPm.textContent = pmErr.toFixed(1) + ' mas/yr';
+      valW12.textContent = w12.toFixed(2) + ' mag';
+
+      // Physical Dirichlet concentration calculation
+      // QSO evidence scales with mid-IR excess W1-W2 and high SNR
+      var eQso = 0.5 + Math.max(0, (w12 - 0.5) * 6.0) * (snr / 10.0);
+      // Star evidence scales with low W1-W2 and high astrometric certainty
+      var eStar = 0.5 + Math.max(0, (0.7 - w12) * 5.0) * (1.0 / (pmErr + 0.2));
+      // Brown dwarf or anomaly evidence
+      var eDwarf = 0.2 + (w12 &gt; 2.0 ? (w12 - 2.0) * 8.0 : 0.1);
+
+      // Heteroscedastic noise penalty on faint magnitudes
+      var noisePenalty = Math.max(0, (g - 19.0) * 0.4);
+      var K = 3.0; // 3 classes
+
+      // Dirichlet concentrations alpha_k = e_k + 1
+      var alphaQso = eQso + 1.0;
+      var alphaStar = eStar + 1.0;
+      var alphaDwarf = eDwarf + 1.0;
+      var S = alphaQso + alphaStar + alphaDwarf;
+
+      var pQso = alphaQso / S;
+      var pStar = alphaStar / S;
+      var pDwarf = alphaDwarf / S;
+
+      // Analytical Dirichlet standard deviations
+      var sigQso = Math.sqrt((pQso * (1 - pQso)) / (S + 1));
+      var sigStar = Math.sqrt((pStar * (1 - pStar)) / (S + 1));
+      var sigDwarf = Math.sqrt((pDwarf * (1 - pDwarf)) / (S + 1));
+
+      // Epistemic vacuity u_epi = K / S
+      var uEpi = Math.min(1.0, K / S + noisePenalty * 0.15);
+      // Aleatoric uncertainty tracks photon noise
+      var uAle = Math.min(1.0, (1.0 / (snr + 0.1)) * 1.8 + (pmErr / 5.0) * 0.3);
+
+      // Update UI Bars
+      var pctQso = (pQso * 100).toFixed(1);
+      var pctStar = (pStar * 100).toFixed(1);
+      var pctDwarf = (pDwarf * 100).toFixed(1);
+
+      probQso.textContent = pctQso + '% ± ' + (sigQso * 196).toFixed(1) + '%';
+      probStar.textContent = pctStar + '% ± ' + (sigStar * 196).toFixed(1) + '%';
+      probDwarf.textContent = pctDwarf + '% ± ' + (sigDwarf * 196).toFixed(1) + '%';
+
+      barFillQso.style.width = pctQso + '%';
+      barFillStar.style.width = pctStar + '%';
+      barFillDwarf.style.width = pctDwarf + '%';
+
+      uqAle.textContent = uAle.toFixed(3);
+      uqEpi.textContent = uEpi.toFixed(3);
+
+      // Decision Triage logic (Celestrium Standard A)
+      var action, badgeColor;
+      if (snr &lt; 3.0 || g &gt; 20.6) {
+        action = "PASS_DEFER (LOW SNR NOISE)";
+        badgeColor = "var(--color-text-tertiary)";
+      } else if (uEpi &gt; 0.35 || Math.abs(pQso - pStar) &lt; 0.25) {
+        action = "LCOGT_SCREENING_TOO (REWARD DOUBT)";
+        badgeColor = "var(--color-accent-amber)";
+      } else if (pQso &gt; 0.85 && (pQso - 1.96 * sigQso) >= 0.40 && uEpi <= 0.20) {
+        action = "GEMINI_RAPID_TOO (8m CONFIRMED)";
+        badgeColor = "var(--color-accent-cyan)";
+      } else {
+        action = "AUTO_CATALOG (HIGH CONFIDENCE)";
+        badgeColor = "var(--color-accent-emerald)";
+      }
+
+      actionText.textContent = action;
+      actionText.style.color = badgeColor;
+    }
+
+    inG.addEventListener('input', updateEvidential);
+    inSnr.addEventListener('input', updateEvidential);
+    inPm.addEventListener('input', updateEvidential);
+    inW12.addEventListener('input', updateEvidential);
+
+    updateEvidential();
+  })();
+</script>
+
+<style>
+  .evidential-sim {
+    background-color: var(--color-bg-subtle);
+    padding: 2.2rem;
+    margin: 3.5rem 0;
+  }
+
+  .sim-intro {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    font-family: var(--font-sans);
+  }
+
+  .evidential-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .evidential-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ctrl-row {
+    margin-bottom: 1.8rem;
+  }
+
+  .ctrl-row label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .ctrl-name {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+
+  .ctrl-val {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--color-accent-cyan);
+  }
+
+  .sim-slider {
+    width: 100%;
+    height: 4px;
+    background: var(--color-border);
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+
+  .sim-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--color-text);
+    cursor: pointer;
+  }
+
+  .slider-scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    margin-top: 0.4rem;
+  }
+
+  .decision-badge {
+    background: var(--color-bg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .action-tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.05em;
+  }
+
+  .action-decision {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .prob-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .bar-unit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+
+  .bar-pct {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--color-bg);
+  }
+
+  .bar-fill {
+    height: 100%;
+    transition: width 0.15s ease-out;
+  }
+
+  .uq-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .uq-box {
+    background: var(--color-bg);
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .uq-title {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.04em;
+  }
+
+  .uq-number {
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .uq-desc {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+  }
+
+  .evidential-footer {
+    margin-top: 1.8rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .sim-note {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+    display: block;
+  }
+</style>

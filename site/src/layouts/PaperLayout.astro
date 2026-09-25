@@ -1,0 +1,259 @@
+---
+import Base from './Base.astro';
+import '../styles/prose.css';
+
+interface Props {
+  title: string;
+  shortTitle?: string;
+  paperCode: string; // e.g. "PAPER A"
+  subject: string;
+  venue: string;
+  date: string;
+  version: string;
+  experiments: string;
+  description: string;
+}
+
+const {
+  title,
+  shortTitle,
+  paperCode,
+  subject,
+  venue,
+  date,
+  version,
+  experiments,
+  description
+} = Astro.props;
+---
+
+<Base title={shortTitle || title} description={description} activeNav="papers">
+  <article class="paper-container">
+    <header class="paper-header">
+      <div class="paper-badges">
+        <span class="badge-code">{paperCode}</span>
+        <span class="badge-subject">{subject}</span>
+        <span class="badge-venue">TARGET: {venue}</span>
+      </div>
+
+      <h1 class="paper-title">{title}</h1>
+
+      <div class="paper-meta-grid">
+        <div class="meta-cell">
+          <span class="meta-label">AUTHORS</span>
+          <span class="meta-data">Celestrium Collaboration &bull; Sub-Surface</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-label">DATE &bull; VERSION</span>
+          <span class="meta-data">{date} &bull; v{version}</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-label">TIED EXPERIMENTS</span>
+          <span class="meta-data">{experiments}</span>
+        </div>
+        <div class="meta-cell">
+          <span class="meta-label">REPRODUCIBILITY</span>
+          <span class="meta-data">HERMETIC &bull; SEED 42 &bull; H100 AUDITED</span>
+        </div>
+      </div>
+
+      <div class="incomplete-rule"></div>
+    </header>
+
+    <div class="prose">
+      <slot />
+    </div>
+
+    <section class="paper-citation-section">
+      <div class="incomplete-rule"></div>
+      <div class="citation-box">
+        <div class="citation-head">
+          <span class="citation-label">// BIBTEX CITATION RECORD</span>
+          <button type="button" id="copy-bib-btn" class="copy-bib-btn" title="Copy BibTeX to clipboard">
+            <span id="copy-btn-text">[COPY BIBTEX 📋]</span>
+          </button>
+        </div>
+        <pre class="citation-pre"><code id="bib-code">{`@article{celestrium2026_${paperCode.toLowerCase().replace(/[^a-z0-9]/g, '_')},
+  title={{${title}}},
+  author={{Celestrium Collaboration and Sub-Surface}},
+  journal={{${venue}}},
+  year={2026},
+  eprint={astro-ph.CO/2609.xxxxx},
+  note={Experiments: ${experiments}}
+}`}</code></pre>
+      </div>
+    </section>
+
+    <script is:inline>
+      (function() {
+        var btn = document.getElementById('copy-bib-btn');
+        var code = document.getElementById('bib-code');
+        var btnText = document.getElementById('copy-btn-text');
+        if (!btn || !code || !btnText) return;
+        btn.addEventListener('click', function() {
+          navigator.clipboard.writeText(code.textContent || '').then(function() {
+            btnText.textContent = '[COPIED TO CLIPBOARD ✓]';
+            setTimeout(function() {
+              btnText.textContent = '[COPY BIBTEX 📋]';
+            }, 2000);
+          }).catch(function() {
+            btnText.textContent = '[ERROR COPYING]';
+          });
+        });
+      })();
+    </script>
+  </article>
+
+  <style>
+    .paper-container {
+      max-width: var(--content-width);
+      margin: 1.5rem auto;
+      position: relative;
+    }
+
+    @media (min-width: 900px) {
+      .paper-container {
+        max-width: calc(var(--content-width) + var(--sidenote-width) + 3rem);
+      }
+    }
+
+    .paper-header {
+      max-width: var(--content-width);
+      margin-bottom: 3rem;
+    }
+
+    .paper-badges {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+
+    .badge-code {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--color-bg);
+      background: var(--color-text);
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-subject {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-accent-cyan);
+      background: var(--color-tag-bg);
+      padding: 0.2rem 0.5rem;
+    }
+
+    .badge-venue {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--color-accent-amber);
+      background: var(--color-tag-bg);
+      padding: 0.2rem 0.5rem;
+    }
+
+    .paper-title {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 500;
+      line-height: 1.25;
+      color: var(--color-text);
+      margin-bottom: 1.8rem;
+    }
+
+    .paper-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding: 1.2rem;
+      background: var(--color-bg-subtle);
+    }
+
+    @media (max-width: 600px) {
+      .paper-meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .meta-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .meta-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--color-text-tertiary);
+      letter-spacing: 0.05em;
+    }
+
+    .meta-data {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--color-text);
+    }
+
+    .paper-citation-section {
+      max-width: var(--content-width);
+      margin: 4rem 0 2rem;
+    }
+
+    .citation-box {
+      background: var(--color-bg-subtle);
+      padding: 1.5rem;
+      border: 1px solid var(--color-border);
+    }
+
+    .citation-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .citation-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.06em;
+    }
+
+    .copy-bib-btn {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      background: var(--color-tag-bg);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      padding: 0.35rem 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .copy-bib-btn:hover {
+      background: var(--color-text);
+      color: var(--color-bg);
+    }
+
+    .citation-pre {
+      background: var(--color-code-bg);
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--color-border-subtle);
+      margin: 0;
+    }
+
+    .citation-pre code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--color-text);
+    }
+  </style>
+</Base>

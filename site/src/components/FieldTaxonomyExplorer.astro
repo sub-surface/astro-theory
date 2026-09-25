@@ -1,0 +1,543 @@
+---
+const disciplines = [
+  {
+    domain: "Cosmology",
+    name: "Cosmic Dipole & Kinematic Bulk Flows",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-B, I, J, K, L, O, P, W · Paper A",
+    surveys: "Gaia DR3 × unWISE Quaia (1.3M), CatWISE2020 (1.4M), NVSS (208k)",
+    findings: "Multi-tracer MCMC converges to v_bulk = 664.5 km/s (1.80× CMB, ΔBIC = +180.7). Alleviates quasar dipole tension via selection deprojection.",
+    gap: "Redshift-sliced tomography to test whether bulk flow extends across gigaparsec scales or attenuates at high z."
+  },
+  {
+    domain: "Cosmology",
+    name: "CMB Anisotropies & Thermal SZ Effect",
+    status: "IN_PREP",
+    statusText: "In Progress / Prep",
+    experiments: "EXP-E, O (Null Monte Carlo Grid)",
+    surveys: "Planck HFI/LFI, ACT DR6, SPT-3G",
+    findings: "Derived full-sky pseudo-Cl null distribution (p &lt; 1e-5), proving mask coupling cannot account for observed dipole.",
+    gap: "Cross-correlating Quaia evidential quasars with Planck thermal Sunyaev-Zeldovich (tSZ) y-maps."
+  },
+  {
+    domain: "Cosmology",
+    name: "Early Universe, Inflation & Primordial GWs",
+    status: "GAP",
+    statusText: "Open Frontier",
+    experiments: "Roadmapped in field-map.md (Project F)",
+    surveys: "BICEP/Keck, Simons Observatory, LiteBIRD",
+    findings: "Identified high-leverage micro-niche: oscillon and inflationary GW spectral features in detector bands.",
+    gap: "Developing a forward-looking falsification scorecard matching inflaton potentials to LiteBIRD/LISA tensor bands."
+  },
+  {
+    domain: "Cosmology",
+    name: "Cosmic Dawn, Reionization & 21 cm Line",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-S (Lyman-Break vs Brown Dwarfs)",
+    surveys: "JWST NIRCam/NIRSpec, Euclid Wide, HERA",
+    findings: "Purged 100% of brown dwarf mimics, preventing false 10-hour JWST NIRSpec microshutter triggers.",
+    gap: "Simulation of global 21 cm absorption profiles (EDGES/SARAS) under early astrophysical heating models."
+  },
+  {
+    domain: "Cosmology",
+    name: "Large-Scale Structure & Cosmic Shear Leakage",
+    status: "IN_PREP",
+    statusText: "Pre-Flight Active",
+    experiments: "EXP-V (Flow Matching), EXP-2026-01",
+    surveys: "Euclid DR1 Wide (26,000 deg²), DESI, Rubin LSST",
+    findings: "Quantified pseudo-Cl mode-coupling matrix M_ll' for Euclid footprint; ΔD/D ~ 14% leakage inversion.",
+    gap: "Ingesting ESA Euclid Science Archive TAP tables on 21 Oct 2026 for empirical DR1 dipole measurement."
+  },
+  {
+    domain: "High-Energy",
+    name: "Gravitational Waves: Compact Binary Coalescence",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-R, U · Paper C",
+    surveys: "LIGO-Virgo-KAGRA O4/O5, GraceDB VOEvents",
+    findings: "Cloud GPU evidential alert triage (1.35M alerts/s, 0.12 ms latency); Kasen kilonova discovery rate 97.0%.",
+    gap: "Continuous GW searches from deformed millisecond pulsars and intermediate-mass black hole mergers."
+  },
+  {
+    domain: "High-Energy",
+    name: "Astrophysical High-Energy Neutrinos",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-R (IceCube Stream Integration)",
+    surveys: "IceCube Gold/Bronze alerts, KM3NeT, GCN",
+    findings: "Spatiotemporal coincidence testing between IceCube track alerts and GLADE+ galaxy volume catalogs.",
+    gap: "Real-time evidential likelihood for blazar flares (e.g. TXS 0506+056) under non-Poisson background noise."
+  },
+  {
+    domain: "High-Energy",
+    name: "Fast Radio Bursts (FRBs)",
+    status: "GAP",
+    statusText: "Open Frontier",
+    experiments: "Unaddressed",
+    surveys: "CHIME/FRB, CRAFT (ASKAP), DSA-110",
+    findings: "Field map identifies FRBs as a high-attention area; requires specialized dispersion measure gating.",
+    gap: "Real-time DM vs scattering timescale evidential classifier to identify cosmological host candidates."
+  },
+  {
+    domain: "Radio & Sub-mm",
+    name: "Synoptic Continuum Radio Surveys",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-W (Multi-Tracer Co-Inference)",
+    surveys: "NVSS 1.4 GHz (208k sources), VLASS, ASKAP EMU",
+    findings: "Co-inferred NVSS dipole amplitude in joint Poisson MCMC, proving mutual alignment with IR and optical tracers.",
+    gap: "Full-sky spectral index mapping and polarization Faraday rotation synthesis across 100 MHz – 3 GHz."
+  },
+  {
+    domain: "Radio & Sub-mm",
+    name: "HI 21 cm Neutral Hydrogen Emission",
+    status: "GAP",
+    statusText: "Open Frontier",
+    experiments: "Unaddressed",
+    surveys: "ALFALFA, FAST, MeerKAT MIGHTEE-HI",
+    findings: "Identified as primary radio astronomy gap in Celestrium's portfolio.",
+    gap: "Extraction of HI line profiles for baryonic Tully-Fisher and dark matter halo velocity dispersion modeling."
+  },
+  {
+    domain: "Radio & Sub-mm",
+    name: "Molecular Gas & Protoplanetary Disks",
+    status: "GAP",
+    statusText: "Open Frontier",
+    experiments: "Unaddressed",
+    surveys: "ALMA Science Archive, NOEMA, SMA",
+    findings: "Unaddressed sub-discipline.",
+    gap: "Simulation-free flow matching on ALMA uv-visibilities for dust gap and spiral density wave deconvolution."
+  },
+  {
+    domain: "Stellar & Galactic",
+    name: "Milky Way Astrometry & Kinematics",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-F, M · FoundationAstroJev",
+    surveys: "Gaia DR3 / DR4, unWISE, RAVE, APOGEE",
+    findings: "Trained 12-class foundation model on 80,000 real sources (88.1% accuracy, E²_db = 0.000118).",
+    gap: "Astrometric phase-space mapping of outer Galactic halo stellar streams to constrain DM flattening."
+  },
+  {
+    domain: "Stellar & Gravity",
+    name: "Modified Gravity in Wide Binaries (MOND)",
+    status: "IN_PREP",
+    statusText: "Pre-Registered Prep",
+    experiments: "Project A in directions.md",
+    surveys: "Gaia DR3 Wide Binary catalog (El-Badry & Rix)",
+    findings: "Field map identifies wide binaries as live micro-niche (11/yr) inside cooling parent field.",
+    gap: "Hierarchical Bayesian filtering of chance alignments and unresolved triples at accelerations a < a0."
+  },
+  {
+    domain: "Stellar & Galactic",
+    name: "Sub-Stellar Objects: Brown Dwarfs",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-F (100% Brown Dwarf recall), EXP-S",
+    surveys: "Gaia DR3, CatWISE2020, Euclid Wide",
+    findings: "Isolated methane-absorption and proper motion features, completely eliminating brown dwarf contamination.",
+    gap: "Atmospheric cloud transition dynamics (L/T/Y) across low-metallicity Galactic halo populations."
+  },
+  {
+    domain: "Planetary & Solar",
+    name: "Exoplanet Transits & Radial Velocity Red Noise",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-Q (Matérn-3/2 GP + Disentangled RLCD)",
+    surveys: "TESS SPOC, Kepler PDCSAP, HARPS/ESPRESSO CCF",
+    findings: "Collapsed debiased error by 93.1% (E²_db = 0.000214); 100% of stellar activity mimics safely diverted.",
+    gap: "Atmospheric transmission spectroscopy retrieval for sub-Neptunes and super-Earths using JWST NIRISS."
+  },
+  {
+    domain: "Planetary & Solar",
+    name: "Solar Flare Forecasting & Space Weather",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-T (SDO/HMI SHARP Vector Magnetograms)",
+    surveys: "SDO/HMI, NOAA SWPC, Sentry-II",
+    findings: "True Skill Statistic TSS = 1.0000 on Major X-Class flares under severe class imbalance; zero false alarms.",
+    gap: "MHD coronal mass ejection (CME) shock front arrival time prediction at Earth L1."
+  },
+  {
+    domain: "Planetary & Solar",
+    name: "Short-Arc Near-Earth Asteroid Triage",
+    status: "ACTIVE",
+    statusText: "Active Research",
+    experiments: "EXP-T (Goldstone Radar Dispatch)",
+    surveys: "JPL Scout / Sentry-II, Pan-STARRS, Catalina",
+    findings: "Conformal radar dispatch triage for short-arc tracks (Δt &lt; 4h) with 0.00% false alarm rate.",
+    gap: "Non-gravitational Yarkovsky orbital drift estimation from multi-decade astrometric archival stacking."
+  },
+  {
+    domain: "Astrobiology & SETI",
+    name: "Technosignatures & Infrared Anomalies",
+    status: "IN_PREP",
+    statusText: "Archival Search Prep",
+    experiments: "Project B in directions.md",
+    surveys: "Gaia DR3 × unWISE × 2MASS",
+    findings: "Near-abandoned niche (2 papers/yr) offering massive leverage via re-analysis of frozen archives.",
+    gap: "Filtering 5 million stars for mid-IR excess (Dyson sphere waste heat) against background AGB stars."
+  },
+  {
+    domain: "AI & Methods",
+    name: "Evidential AI & Conformal Risk Control",
+    status: "ACTIVE",
+    statusText: "Core Capability",
+    experiments: "EXP-D, F, H, J, N, Q, R, S, T, U, V, W · Paper B, C",
+    surveys: "Unified 10-Survey Ingestion (Gaia, Euclid, Rubin, IRSA, MAST)",
+    findings: "Disentangled RLCD yields 70.9× calibration error reduction; finite-sample false discovery bounded strictly.",
+    gap: "Extending conformal risk bounds to continuous vector-valued time-series lightcurve predictions."
+  }
+];
+---
+
+<div class="taxonomy-explorer interactive-panel">
+  <div class="interactive-header">
+    <div class="interactive-title">// ENCYCLOPAEDIC SUB-FIELD TAXONOMY & GAP MATRIX</div>
+    <div class="interactive-status">[MASTER WORK INDEX]</div>
+  </div>
+
+  <p class="sim-intro">
+    Celestrium's long-term scientific mission is to conduct rigorous, publishable research across every primary sub-discipline of astronomy, astrophysics, and cosmology. Filter below by status or domain to inspect active experiments, pre-flight preparations, and targeted research gaps.
+  </p>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <span class="filter-label">STATUS:</span>
+      <div class="filter-pills" id="status-filters">
+        <button type="button" class="pill-btn pill-active" data-status="ALL">ALL STATUSES</button>
+        <button type="button" class="pill-btn" data-status="ACTIVE">● ACTIVE RESEARCH</button>
+        <button type="button" class="pill-btn" data-status="IN_PREP">◐ PRE-FLIGHT / PREP</button>
+        <button type="button" class="pill-btn" data-status="GAP">○ OPEN GAPS</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <span class="filter-label">DOMAIN:</span>
+      <div class="filter-pills" id="domain-filters">
+        <button type="button" class="pill-btn pill-active" data-domain="ALL">ALL DOMAINS</button>
+        <button type="button" class="pill-btn" data-domain="Cosmology">Cosmology</button>
+        <button type="button" class="pill-btn" data-domain="High-Energy">High-Energy & GW</button>
+        <button type="button" class="pill-btn" data-domain="Radio & Sub-mm">Radio & Sub-mm</button>
+        <button type="button" class="pill-btn" data-domain="Stellar & Galactic">Stellar & Galactic</button>
+        <button type="button" class="pill-btn" data-domain="Planetary & Solar">Planetary & Solar</button>
+        <button type="button" class="pill-btn" data-domain="AI & Methods">AI & Methods</button>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <input type="text" id="tax-search" placeholder="Filter by keyword (e.g. 21cm, MOND, kilonova, exoplanet, radio, neutrino)..." class="search-input" />
+    </div>
+  </div>
+
+  <!-- Taxonomy Cards List -->
+  <div class="tax-list" id="tax-container">
+    {disciplines.map((d) => (
+      <div 
+        class="tax-card" 
+        data-status={d.status} 
+        data-domain={d.domain} 
+        data-search={`${d.name} ${d.domain} ${d.experiments} ${d.surveys} ${d.findings} ${d.gap}`.toLowerCase()}
+      >
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="card-domain">{d.domain}</span>
+            <h4 class="card-name">{d.name}</h4>
+          </div>
+          <span class={`status-badge status-${d.status.toLowerCase()}`}>
+            {d.statusText}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="card-meta-line">
+            <span class="meta-k">SURVEYS / TELESCOPES:</span>
+            <span class="meta-v">{d.surveys}</span>
+          </div>
+
+          <div class="card-meta-line">
+            <span class="meta-k">CELESTRIUM WORK:</span>
+            <span class="meta-v">{d.experiments}</span>
+          </div>
+
+          <div class="card-detail-block">
+            <div class="detail-label">// EMPIRICAL FINDINGS & CAPABILITIES</div>
+            <p class="detail-p">{d.findings}</p>
+          </div>
+
+          <div class="card-gap-block">
+            <div class="gap-label">// OPEN SCIENTIFIC GAP & NEXT FRONTIER</div>
+            <p class="gap-p">{d.gap}</p>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="tax-footer">
+    <span class="sim-note">
+      * Complete encyclopaedic audit permanently maintained in <code>docs/research/astronomy-work-index.md</code>.
+    </span>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var statusBtns = document.querySelectorAll('#status-filters .pill-btn');
+    var domainBtns = document.querySelectorAll('#domain-filters .pill-btn');
+    var searchInput = document.getElementById('tax-search');
+    var cards = document.querySelectorAll('.tax-card');
+
+    var currentStatus = 'ALL';
+    var currentDomain = 'ALL';
+    var currentQuery = '';
+
+    function filterCards() {
+      cards.forEach(function(card) {
+        var cardStatus = card.getAttribute('data-status');
+        var cardDomain = card.getAttribute('data-domain');
+        var cardSearch = card.getAttribute('data-search');
+
+        var statusMatch = (currentStatus === 'ALL' || cardStatus === currentStatus);
+        var domainMatch = (currentDomain === 'ALL' || cardDomain.indexOf(currentDomain) !== -1);
+        var searchMatch = (!currentQuery || cardSearch.indexOf(currentQuery) !== -1);
+
+        if (statusMatch && domainMatch && searchMatch) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    statusBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        statusBtns.forEach(function(b) { b.classList.remove('pill-active'); });
+        btn.classList.add('pill-active');
+        currentStatus = btn.getAttribute('data-status');
+        filterCards();
+      });
+    });
+
+    domainBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        domainBtns.forEach(function(b) { b.classList.remove('pill-active'); });
+        btn.classList.add('pill-active');
+        currentDomain = btn.getAttribute('data-domain');
+        filterCards();
+      });
+    });
+
+    searchInput.addEventListener('input', function() {
+      currentQuery = searchInput.value.toLowerCase().trim();
+      filterCards();
+    });
+  })();
+</script>
+
+<style>
+  .taxonomy-explorer {
+    background-color: var(--color-bg-subtle);
+    padding: 2.2rem;
+    margin: 3.5rem 0;
+  }
+
+  .sim-intro {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    font-family: var(--font-sans);
+  }
+
+  .filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    min-width: 70px;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .pill-btn {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.35rem 0.7rem;
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .pill-btn:hover {
+    color: var(--color-text);
+  }
+
+  .pill-btn.pill-active {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  .search-row {
+    margin-top: 0.5rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    background: var(--color-bg);
+    border: none;
+    color: var(--color-text);
+    outline: 1px solid var(--color-border);
+  }
+
+  .search-input:focus {
+    outline: 1px solid var(--color-text);
+  }
+
+  .tax-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tax-card {
+    background: var(--color-bg);
+    padding: 1.5rem;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .card-domain {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .card-name {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+
+  .status-active {
+    background: var(--color-tag-bg);
+    color: var(--color-accent-emerald);
+  }
+
+  .status-in_prep {
+    background: var(--color-tag-bg);
+    color: var(--color-accent-amber);
+  }
+
+  .status-gap {
+    background: var(--color-tag-bg);
+    color: var(--color-text-tertiary);
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .card-meta-line {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .meta-k {
+    color: var(--color-text-tertiary);
+    margin-right: 0.4rem;
+  }
+
+  .meta-v {
+    color: var(--color-text);
+  }
+
+  .card-detail-block, .card-gap-block {
+    padding-top: 0.7rem;
+    border-top: 1px dashed var(--color-border-subtle);
+  }
+
+  .detail-label, .gap-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+  }
+
+  .detail-label {
+    color: var(--color-accent-cyan);
+  }
+
+  .gap-label {
+    color: var(--color-accent-amber);
+  }
+
+  .detail-p, .gap-p {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .tax-footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .sim-note {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+    display: block;
+  }
+</style>

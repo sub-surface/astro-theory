@@ -27,3 +27,8 @@ scratch/
 *.egg-info/
 build/
 dist/
+
+# website
+site/node_modules/
+site/dist/
+site/.astro/

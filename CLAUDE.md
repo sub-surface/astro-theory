@@ -13,7 +13,8 @@ Read this first when picking up work in this repo.
 3. **Observatory Follow-Up & ToO Dispatch**: Autonomous Multi-Tier Target-of-Opportunity serialization (`celestrium/too_protocol.py`) for Gemini 8m GMOS and LCOGT 1m networks.
 
 **Primary Living Ledgers**:
-- Experiments Ledger: [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) (All experiments EXP-2026-A through T).
+- Field Work Index: [`docs/research/astronomy-work-index.md`](./docs/research/astronomy-work-index.md) (Master taxonomy of sub-fields, active experiments, and gaps).
+- Experiments Ledger: [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) (All experiments EXP-2026-A through W).
 - Literature Convergence & Novelty Matrix: [`docs/research/literature-convergence-and-novel-results.md`](./docs/research/literature-convergence-and-novel-results.md).
 - Active Roadmap: [`docs/roadmap.md`](./docs/roadmap.md).
 

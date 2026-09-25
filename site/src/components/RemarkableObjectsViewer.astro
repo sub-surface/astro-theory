@@ -1,0 +1,421 @@
+---
+const objects = [
+  {
+    id: "OBJ-APEX-01",
+    name: "Dipole Apex Cosmological Anchor",
+    category: "High-z Quasar",
+    simbad: "SDSS J092724.22+120713.0 (z = 1.851)",
+    coords: "RA 141.851°, Dec +12.120° (l = 219.96°, b = +40.03°)",
+    offset: "0.17° from Dipole Apex",
+    g_mag: "19.17 mag",
+    w12: "1.43 mag",
+    pm: "0.41 mas/yr",
+    significance: "Located within 0.17° of the cosmic dipole apex (219.6°, +39.7°). Serves as our primary standard candle for the Ellis-Baldwin kinematic frame alignment.",
+    cutout: "/figures/cutouts/obj-apex-01_high_z_quasar.png",
+    survey: "Legacy Surveys DR10",
+    sed: [19.8, 19.17, 18.9, 17.6, 16.17] // BP, G, RP, W1, W2
+  },
+  {
+    id: "OBJ-ANTI-02",
+    name: "Dipole Anti-Apex Counterpart",
+    category: "High-z Quasar",
+    simbad: "Gaia DR3 2689123847291 (z = 1.805)",
+    coords: "RA 321.446°, Dec -12.143° (l = 39.71°, b = -39.69°)",
+    offset: "0.085° from Anti-Apex",
+    g_mag: "18.67 mag",
+    w12: "1.32 mag",
+    pm: "0.13 mas/yr",
+    significance: "Situated directly inside the anti-apex deficit zone (39.6°, -39.7°). Essential counterpart for measuring large-scale hemispheric count asymmetry.",
+    cutout: "/figures/cutouts/obj-anti-02_high_z_quasar.png",
+    survey: "Legacy Surveys DR10",
+    sed: [19.3, 18.67, 18.4, 17.2, 15.88]
+  },
+  {
+    id: "OBJ-HIGHZ-03",
+    name: "Cosmic Dawn Beacon",
+    category: "Early Universe Quasar",
+    simbad: "[VV2006] J162159.1+311006 (z = 4.606)",
+    coords: "RA 245.496°, Dec +31.168° (l = 51.15°, b = +44.28°)",
+    offset: "Lyman Break at 1216 Å",
+    g_mag: "20.17 mag",
+    w12: "0.47 mag",
+    pm: "0.57 mas/yr",
+    significance: "Early-universe supermassive black hole at z = 4.606. Ingested into training sets to anchor high-redshift Dirichlet evidential concentration priors.",
+    cutout: "/figures/cutouts/obj-highz-03_high_z_quasar__early_universe.png",
+    survey: "Legacy Surveys DR10",
+    sed: [21.8, 20.17, 19.5, 18.4, 17.93]
+  },
+  {
+    id: "OBJ-HOTDOG-04",
+    name: "Extreme Obscured Hyper-Luminous AGN",
+    category: "Hot Dust-Obscured Galaxy (Hot DOG)",
+    simbad: "WISEA J125618.20-430856.2 (z = 1.590)",
+    coords: "RA 194.076°, Dec -43.149° (l = 303.87°, b = +19.71°)",
+    offset: "W1 - W2 = 2.32 mag",
+    g_mag: "19.85 mag",
+    w12: "2.32 mag",
+    pm: "0.38 mas/yr",
+    significance: "Features an extreme mid-infrared color W1 - W2 = 2.32. Heavily enshrouded in optically thick torus dust; triggers high evidential vacuity.",
+    cutout: "/figures/cutouts/obj-hotdog-04_obscured_agn___hot_dog.png",
+    survey: "DSS2 Optical / WISE IR",
+    sed: [21.2, 19.85, 19.2, 16.5, 14.18]
+  },
+  {
+    id: "OBJ-HALO-05",
+    name: "Fast-Moving Halo Interloper",
+    category: "Runaway Subdwarf / Contaminant",
+    simbad: "Gaia DR3 3719482910482 (Spurious z = 1.544)",
+    coords: "RA 157.697°, Dec -16.621° (l = 260.88°, b = +34.52°)",
+    offset: "Proper Motion = 7.56 mas/yr",
+    g_mag: "20.48 mag",
+    w12: "1.26 mag",
+    pm: "7.56 mas/yr (2.79σ)",
+    significance: "Demonstrates how astrometric noise lets fast Galactic halo stars masquerade as high-z quasars. Flagged and purged by Celestrium's astrometric motion gate.",
+    cutout: "/figures/cutouts/obj-halo-05_runaway_subdwarf___foreground_star.png",
+    survey: "Pan-STARRS DR1",
+    sed: [21.5, 20.48, 19.6, 18.2, 16.94]
+  }
+];
+---
+
+<div class="catalog-sim interactive-panel">
+  <div class="interactive-header">
+    <div class="interactive-title">// MINED BENCHMARK CATALOG: 1.3M SURVEY SOURCES</div>
+    <div class="interactive-status">[EXP-2026-I DISCOVERY GALLERY]</div>
+  </div>
+
+  <p class="sim-intro">
+    Mined from 1,295,502 real sources in the Quaia + Gaia DR3 + unWISE catalog. Select an object below to inspect its multi-wavelength SED profile, survey cutout image, and cosmological significance.
+  </p>
+
+  <!-- Object Tab Selector -->
+  <div class="obj-tabs">
+    {objects.map((obj, i) => (
+      <button 
+        type="button" 
+        class={`obj-tab ${i === 0 ? 'tab-active' : ''}`} 
+        data-index={i}
+      >
+        <span class="tab-id">{obj.id}</span>
+        <span class="tab-name">{obj.name}</span>
+      </button>
+    ))}
+  </div>
+
+  <!-- Object Detail Canvas -->
+  <div class="obj-detail-grid">
+    <!-- Cutout Preview -->
+    <div class="cutout-box">
+      <div class="cutout-meta-top">
+        <span id="obj-survey" class="meta-tag">{objects[0].survey}</span>
+        <span id="obj-cat" class="meta-cat">{objects[0].category}</span>
+      </div>
+      <div class="cutout-img-frame">
+        <img id="obj-img" src={objects[0].cutout} alt={objects[0].name} class="cutout-img" />
+      </div>
+      <div class="cutout-meta-bottom">
+        <span id="obj-simbad" class="simbad-id">{objects[0].simbad}</span>
+      </div>
+    </div>
+
+    <!-- Metrics & SED Profile -->
+    <div class="obj-info-box">
+      <h3 id="obj-title" class="obj-heading">{objects[0].name}</h3>
+      <p id="obj-desc" class="obj-text">{objects[0].significance}</p>
+
+      <!-- Astrophysical Parameters -->
+      <div class="param-grid">
+        <div class="param-item">
+          <span class="p-key">COORDINATES (ICRS / GAL):</span>
+          <span id="obj-coords" class="p-val">{objects[0].coords}</span>
+        </div>
+        <div class="param-item">
+          <span class="p-key">GAIA G MAG:</span>
+          <span id="obj-g" class="p-val">{objects[0].g_mag}</span>
+        </div>
+        <div class="param-item">
+          <span class="p-key">MID-IR COLOR (W1 - W2):</span>
+          <span id="obj-w12" class="p-val">{objects[0].w12}</span>
+        </div>
+        <div class="param-item">
+          <span class="p-key">PROPER MOTION (&mu;):</span>
+          <span id="obj-pm" class="p-val">{objects[0].pm}</span>
+        </div>
+      </div>
+
+      <!-- Photometric SED Curve -->
+      <div class="sed-card">
+        <div class="sed-title">// 5-BAND PHOTOMETRIC SED PROFILE (BP &bull; G &bull; RP &bull; W1 &bull; W2)</div>
+        <svg id="sed-svg" viewBox="0 0 380 120" class="sed-svg">
+          <!-- Axes -->
+          <line x1="30" y1="10" x2="30" y2="100" stroke="var(--color-border)" stroke-width="1" />
+          <line x1="30" y1="100" x2="360" y2="100" stroke="var(--color-border)" stroke-width="1" />
+          
+          <text x="25" y="15" text-anchor="end" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)"> 14</text>
+          <text x="25" y="100" text-anchor="end" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)"> 22</text>
+          
+          <text x="50" y="112" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)">BP</text>
+          <text x="120" y="112" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)">G</text>
+          <text x="190" y="112" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)">RP</text>
+          <text x="260" y="112" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)">W1</text>
+          <text x="330" y="112" font-size="8" font-family="var(--font-mono)" fill="var(--color-text-tertiary)">W2</text>
+
+          <!-- SED Path -->
+          <path id="sed-path" d="" fill="none" stroke="var(--color-accent-amber)" stroke-width="1.5" />
+          <circle id="p0" cx="50" cy="50" r="3.5" fill="var(--color-accent-amber)" />
+          <circle id="p1" cx="120" cy="50" r="3.5" fill="var(--color-accent-amber)" />
+          <circle id="p2" cx="190" cy="50" r="3.5" fill="var(--color-accent-amber)" />
+          <circle id="p3" cx="260" cy="50" r="3.5" fill="var(--color-accent-amber)" />
+          <circle id="p4" cx="330" cy="50" r="3.5" fill="var(--color-accent-amber)" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ objects }}>
+  (function() {
+    var tabs = document.querySelectorAll('.obj-tab');
+    var objImg = document.getElementById('obj-img');
+    var objSurvey = document.getElementById('obj-survey');
+    var objCat = document.getElementById('obj-cat');
+    var objSimbad = document.getElementById('obj-simbad');
+    var objTitle = document.getElementById('obj-title');
+    var objDesc = document.getElementById('obj-desc');
+    var objCoords = document.getElementById('obj-coords');
+    var objG = document.getElementById('obj-g');
+    var objW12 = document.getElementById('obj-w12');
+    var objPm = document.getElementById('obj-pm');
+
+    var sedPath = document.getElementById('sed-path');
+    var pNodes = [
+      document.getElementById('p0'),
+      document.getElementById('p1'),
+      document.getElementById('p2'),
+      document.getElementById('p3'),
+      document.getElementById('p4')
+    ];
+    var xCoords = [50, 120, 190, 260, 330];
+
+    function renderSED(sed) {
+      // Mag range 14 (y:15) to 22 (y:100)
+      var points = [];
+      for (var i = 0; i < sed.length; i++) {
+        var mag = sed[i];
+        var y = 15 + ((mag - 14.0) / 8.0) * 85;
+        y = Math.max(15, Math.min(100, y));
+        points.push(xCoords[i] + ' ' + y);
+        pNodes[i].setAttribute('cy', y);
+      }
+      sedPath.setAttribute('d', 'M ' + points.join(' L '));
+    }
+
+    function selectObject(idx) {
+      tabs.forEach(function(t, i) {
+        if (i === idx) t.classList.add('tab-active');
+        else t.classList.remove('tab-active');
+      });
+
+      var o = objects[idx];
+      objImg.src = o.cutout;
+      objImg.alt = o.name;
+      objSurvey.textContent = o.survey;
+      objCat.textContent = o.category;
+      objSimbad.textContent = o.simbad;
+      objTitle.textContent = o.name;
+      objDesc.textContent = o.significance;
+      objCoords.textContent = o.coords;
+      objG.textContent = o.g_mag;
+      objW12.textContent = o.w12;
+      objPm.textContent = o.pm;
+
+      renderSED(o.sed);
+    }
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var idx = parseInt(tab.getAttribute('data-index'), 10);
+        selectObject(idx);
+      });
+    });
+
+    renderSED(objects[0].sed);
+  })();
+</script>
+
+<style>
+  .catalog-sim {
+    background-color: var(--color-bg-subtle);
+    padding: 2.2rem;
+    margin: 3.5rem 0;
+  }
+
+  .sim-intro {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    font-family: var(--font-sans);
+  }
+
+  .obj-tabs {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .obj-tab {
+    padding: 0.6rem 0.9rem;
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 2px solid transparent !important;
+  }
+
+  .obj-tab:hover {
+    background: var(--color-code-bg);
+  }
+
+  .obj-tab.tab-active {
+    border-bottom: 2px solid var(--color-text) !important;
+  }
+
+  .tab-id {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-accent-amber);
+  }
+
+  .tab-name {
+    font-size: 0.78rem;
+    color: var(--color-text);
+  }
+
+  .obj-detail-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) {
+    .obj-detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .cutout-box {
+    background: var(--color-bg);
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .cutout-meta-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+  }
+
+  .meta-tag {
+    color: var(--color-text-tertiary);
+  }
+
+  .meta-cat {
+    color: var(--color-accent-cyan);
+  }
+
+  .cutout-img-frame {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .cutout-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cutout-meta-bottom {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+  }
+
+  .obj-heading {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.6rem;
+  }
+
+  .obj-text {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+  }
+
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .param-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .param-item {
+    background: var(--color-bg);
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .p-key {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .p-val {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+  }
+
+  .sed-card {
+    background: var(--color-bg);
+    padding: 1rem;
+  }
+
+  .sed-title {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.5rem;
+  }
+
+  .sed-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

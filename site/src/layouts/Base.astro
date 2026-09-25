@@ -1,0 +1,366 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  activeNav?: string;
+}
+
+const { 
+  title, 
+  description = 'Celestrium — Operational astrophysics research instrument, evidential deep learning, and multi-messenger validation.',
+  activeNav = 'home'
+} = Astro.props;
+
+const pageTitle = title ? `${title} — Celestrium` : 'Celestrium — Astrophysical Intelligence Engine';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{pageTitle}</title>
+    <script is:inline>
+      (function() {
+        var theme = localStorage.getItem('celestrium-theme');
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand-zone">
+          <a href="/" class="brand-link">
+            <span class="brand-title">CELESTRIUM</span>
+            <span class="brand-subtitle">// ASTROPHYSICAL INTELLIGENCE</span>
+          </a>
+          <div class="header-telemetry-cluster">
+            <span class="system-status"><span class="status-pip"></span>SYS:ONLINE</span>
+            <span class="astro-clock-badge" title="Live Julian Date (Astronomical Time)">
+              <span class="clock-label">JD</span> <span id="live-jd">2461309.0800</span>
+            </span>
+          </div>
+        </div>
+
+        <nav class="site-nav">
+          <a href="/" class={activeNav === 'home' ? 'nav-active' : ''}>Overview</a>
+          <a href="/papers/" class={activeNav === 'papers' ? 'nav-active' : ''}>Papers</a>
+          <a href="/catalog/" class={activeNav === 'catalog' ? 'nav-active' : ''}>Catalog</a>
+          <a href="/taxonomy/" class={activeNav === 'taxonomy' ? 'nav-active' : ''}>Taxonomy & Gaps</a>
+          <a href="/about/" class={activeNav === 'about' ? 'nav-active' : ''}>About</a>
+          <button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle OLED dark / light mode">
+            <span class="theme-icon-light">☀</span>
+            <span class="theme-icon-dark">☽</span>
+          </button>
+        </nav>
+      </div>
+      <div class="incomplete-rule header-rule"></div>
+    </header>
+
+    <main class="site-main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="ascii-break">
+        <span>+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +</span>
+      </div>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">CELESTRIUM RESEARCH WING</div>
+          <p class="footer-desc">Sub-Surface Astrophysical Intelligence Engine. Autonomous theory workshop, multi-messenger validation, and Target-of-Opportunity follow-up.</p>
+        </div>
+        <div class="footer-col">
+          <div class="footer-heading">NAVIGATION</div>
+          <ul class="footer-links">
+            <li><a href="/">Instrument Overview</a></li>
+            <li><a href="/papers/">Research Manuscripts (A, B, C, D)</a></li>
+            <li><a href="/catalog/">Remarkable Objects Catalog</a></li>
+            <li><a href="/taxonomy/">All-Astronomy Field Taxonomy</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-heading">STANDARDS & METRICS</div>
+          <ul class="footer-metrics">
+            <li><span class="metric-key">DATA INGESTED:</span> <span class="metric-val"&gt; 2.86M sources</span></li>
+            <li><span class="metric-key">CALIBRATION:</span> <span class="metric-val">E²_db = 0.000118</span></li>
+            <li><span class="metric-key">DECISION LATENCY:</span> <span class="metric-val"&gt; 0.12 ms</span></li>
+            <li><span class="metric-key">FOLLOW-UP TOOs:</span> <span class="metric-val">Gemini 8m + LCOGT</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; {new Date().getFullYear()} Celestrium Collaboration &bull; Operating under sub-surface / astro-theory</span>
+        <span class="footer-tech">ASTRO &bull; DIRICHLET &bull; RLCD &bull; CONFORMAL RISK</span>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function() {
+        var btn = document.getElementById('theme-toggle');
+        if (btn) {
+          btn.addEventListener('click', function() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('celestrium-theme', next);
+          });
+        }
+        function updateJD() {
+          var jd = (new Date().getTime() / 86400000.0) + 2440587.5;
+          var el = document.getElementById('live-jd');
+          if (el) el.textContent = jd.toFixed(4);
+        }
+        updateJD();
+        setInterval(updateJD, 1000);
+      })();
+    </script>
+
+    <style>
+      .site-header {
+        max-width: calc(var(--content-width) + var(--sidenote-width) + 5rem);
+        margin: 0 auto;
+        padding: 2.2rem 2rem 0;
+      }
+
+      .header-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+      }
+
+      .brand-zone {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .brand-link {
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .brand-title {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 1.15rem;
+        letter-spacing: 0.12em;
+        color: var(--color-text);
+      }
+
+      .brand-subtitle {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        color: var(--color-text-secondary);
+        letter-spacing: 0.08em;
+        margin-top: 0.1rem;
+      }
+
+      .header-telemetry-cluster {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .system-status {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--color-accent-emerald);
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--color-tag-bg);
+        padding: 0.2rem 0.5rem;
+      }
+
+      .astro-clock-badge {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--color-text-secondary);
+        background: var(--color-tag-bg);
+        padding: 0.2rem 0.5rem;
+        letter-spacing: 0.04em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .clock-label {
+        color: var(--color-accent-cyan);
+        font-weight: 600;
+      }
+
+      .status-pip {
+        width: 6px;
+        height: 6px;
+        background: var(--color-accent-emerald);
+        display: inline-block;
+      }
+
+      .site-nav {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+      }
+
+      .site-nav a {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-secondary);
+        text-decoration: none;
+        position: relative;
+        padding-bottom: 0.2rem;
+      }
+
+      .site-nav a:hover, .site-nav a.nav-active {
+        color: var(--color-text);
+      }
+
+      .site-nav a.nav-active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--color-text);
+      }
+
+      #theme-toggle {
+        font-size: 1rem;
+        padding: 0.3rem 0.6rem;
+        color: var(--color-text-secondary);
+        background: var(--color-tag-bg);
+      }
+
+      #theme-toggle:hover {
+        color: var(--color-text);
+      }
+
+      [data-theme="light"] .theme-icon-dark { display: none; }
+      [data-theme="dark"] .theme-icon-light { display: none; }
+
+      .header-rule {
+        margin: 1.5rem 0 0;
+      }
+
+      .site-main {
+        max-width: calc(var(--content-width) + var(--sidenote-width) + 5rem);
+        margin: 0 auto;
+        padding: 2rem 2rem 5rem;
+        min-height: 70vh;
+      }
+
+      .site-footer {
+        max-width: calc(var(--content-width) + var(--sidenote-width) + 5rem);
+        margin: 0 auto;
+        padding: 2rem 2rem 4rem;
+        color: var(--color-text-secondary);
+        font-size: 0.85rem;
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1.5fr;
+        gap: 3rem;
+        margin-bottom: 2.5rem;
+      }
+
+      @media (max-width: 860px) {
+        .footer-grid {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+        }
+      }
+
+      .footer-brand {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: var(--color-text);
+        margin-bottom: 0.6rem;
+      }
+
+      .footer-desc {
+        font-size: 0.82rem;
+        line-height: 1.6;
+        color: var(--color-text-secondary);
+      }
+
+      .footer-heading {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        color: var(--color-text);
+        margin-bottom: 0.8rem;
+      }
+
+      .footer-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .footer-links a {
+        font-size: 0.82rem;
+        color: var(--color-text-secondary);
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        color: var(--color-text);
+      }
+
+      .footer-metrics {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+      }
+
+      .metric-key {
+        color: var(--color-text-tertiary);
+        margin-right: 0.4rem;
+      }
+
+      .metric-val {
+        color: var(--color-text);
+      }
+
+      .footer-bottom {
+        padding-top: 1.5rem;
+        border-top: 1px dashed var(--color-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.78rem;
+        color: var(--color-text-tertiary);
+      }
+
+      .footer-tech {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+      }
+    </style>
+  </body>
+</html>

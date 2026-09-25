@@ -1,0 +1,229 @@
+.prose {
+  max-width: var(--content-width);
+  font-size: 1.05rem;
+  line-height: var(--line-height);
+  color: var(--color-text);
+}
+
+/* Drop cap */
+.prose > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  float: left;
+  font-size: 3.8em;
+  line-height: 0.8;
+  margin-right: 0.12em;
+  margin-top: 0.08em;
+  color: var(--color-text);
+}
+
+/* Headings */
+.prose h1, .prose h2, .prose h3,
+.prose h4, .prose h5, .prose h6 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-top: 3.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.28;
+}
+
+.prose h1 { font-size: 2.2rem; }
+.prose h2 { 
+  font-size: 1.6rem; 
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+.prose h2::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: var(--color-text-secondary);
+  margin-top: 0.5rem;
+}
+
+.prose h3 { font-size: 1.28rem; }
+.prose h4 { font-size: 1.1rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.9rem; }
+.prose h5 { font-size: 1rem; }
+.prose h6 { font-size: 0.85rem; color: var(--color-text-secondary); font-family: var(--font-mono); }
+
+/* Paragraphs */
+.prose p {
+  margin-bottom: 1.5rem;
+  font-family: var(--font-serif);
+  color: var(--color-text);
+}
+
+.prose p.lead {
+  font-size: 1.18rem;
+  line-height: 1.8;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  margin: 2.5rem 0;
+  padding: 0.5rem 0 0.5rem 2rem;
+  border-left: 1px solid var(--color-text-secondary);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.prose blockquote p {
+  margin-bottom: 0.5rem;
+}
+
+.prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Lists */
+.prose ul, .prose ol {
+  margin-bottom: 1.75rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-serif);
+}
+
+.prose li::marker {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* Code */
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background-color: var(--color-code-bg);
+  padding: 0.15em 0.4em;
+}
+
+.prose pre {
+  background-color: var(--color-code-bg);
+  padding: 1.5rem;
+  overflow-x: auto;
+  margin: 2rem 0;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+/* Figure display with academic context */
+.prose figure {
+  margin: 3rem 0;
+  display: block;
+}
+
+.prose figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  background-color: var(--color-bg-subtle);
+}
+
+.prose figcaption {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  margin-top: 0.9rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--color-border);
+}
+
+.prose figcaption .fig-num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-right: 0.4rem;
+}
+
+/* Sidenotes */
+.sidenote-ref {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-sidenote);
+  cursor: default;
+  margin-left: 0.15em;
+}
+
+.sidenote {
+  float: right;
+  clear: right;
+  width: var(--sidenote-width);
+  margin-right: calc(-1 * var(--sidenote-width) - 2.5rem);
+  margin-bottom: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-sidenote);
+  position: relative;
+}
+
+.sidenote-number {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-right: 0.3em;
+  color: var(--color-text);
+}
+
+.sidenote-toggle {
+  display: none;
+}
+
+.sidenote-toggle-label {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-sidenote);
+  cursor: pointer;
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .sidenote {
+    width: 200px;
+    margin-right: calc(-1 * 200px - 1.5rem);
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .sidenote-ref {
+    display: none;
+  }
+
+  .sidenote-toggle-label {
+    display: inline;
+  }
+
+  .sidenote {
+    display: none;
+    float: none;
+    width: 100%;
+    margin: 0.75rem 0 1.25rem 0;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-bg-subtle);
+    font-size: 0.82rem;
+  }
+
+  .sidenote-toggle:checked + .sidenote-toggle-label + .sidenote {
+    display: block;
+  }
+}

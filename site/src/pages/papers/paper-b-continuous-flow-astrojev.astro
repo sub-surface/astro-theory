@@ -1,0 +1,91 @@
+---
+import PaperLayout from '../../layouts/PaperLayout.astro';
+import EvidentialPlayground from '../../components/EvidentialPlayground.astro';
+---
+
+<PaperLayout
+  paperCode="PAPER B"
+  subject="astro-ph.IM · cs.LG"
+  venue="Monthly Notices of the Royal Astronomical Society (MNRAS) / ApJ"
+  title="Continuous-Flow Foundation AstroJev: Simulation-Free Latent SED Matching and Disentangled RLCD Calibration for Multi-Survey Astronomy"
+  shortTitle="Paper B — Continuous-Flow Foundation AstroJev"
+  date="September 2026"
+  version="2.0"
+  experiments="EXP-2026-F, H, M, V"
+  description="Continuous-Flow Foundation AstroJev combines simulation-free conditional flow matching for SED zero-point recovery with Disentangled RLCD evidential calibration."
+>
+  <!-- Abstract Lead -->
+  <p class="lead">
+    Next-generation wide-field sky surveys (<em>Gaia</em> DR3, <em>unWISE</em>, Rubin LSST, <em>Euclid</em>, and DESI) will collectively map billions of celestial sources across disparate optical, near-infrared, and mid-infrared passbands. Machine learning classifiers deployed across these multi-instrument archives face two fundamental challenges: (1) systematic instrumental zero-point drift (&Delta;m_zp &sim; 0.03 mag) and synthetic filter passband transformations distorting Spectral Energy Distributions (SEDs), and (2) overconfident miscalibration under heteroscedastic observational noise, which triggers costly false-alarm follow-up cascades.
+  </p>
+
+  <!-- Interactive Model Embed -->
+  <h2>Interactive Model: Evidential UQ & Decision Gating</h2>
+  <p>
+    Adjust the observational parameters below to inspect how FoundationAstroJev decomposes aleatoric data noise from epistemic model vacuity and prevents false overconfidence.
+  </p>
+  <EvidentialPlayground />
+
+  <h2>1. Introduction & Physical Motivation</h2>
+  <p>
+    In observational astrophysics, measurement noise is inherently <strong>heteroscedastic</strong>: faint stars and high-redshift quasars have orders of magnitude larger photometric and astrometric uncertainties than bright calibration standards. Traditional softmax classifiers ignore this structure, taking only point-estimate feature vectors x = &mu; and producing point-estimate posterior probabilities p = Softmax(z).
+  </p>
+  <p>
+    Under noisy measurements, softmax architectures generate catastrophic overconfidence: faint, noisy foreground stars whose colors randomly fluctuate into the quasar locus are assigned high confidence (p &gt; 0.95), contaminating cosmological tracer catalogs.
+  </p>
+
+  <figure>
+    <img src="/figures/rlcd_decision_calibration_benchmark.png" alt="RLCD Decision Calibration Benchmark" />
+    <figcaption>
+      <span class="fig-num">[Fig. 01]</span>
+      <strong>Disentangled RLCD Calibration Benchmark:</strong>
+      Comparing Standard Greedy (Argmax), Linear Brier scoring, and Rewarding Doubt (TUM 2026 logarithmic betting rule). Rewarding doubt improves the Stanford debiased squared calibration error E&sup2;_db by 70.9-fold (0.000266 vs 0.01888), eliminating the positive variance bias of traditional binned ECE.
+    </figcaption>
+  </figure>
+
+  <h2>2. Continuous Normalizing Flows for Latent SED Invariance</h2>
+  <p>
+    To resolve cross-instrument zero-point offsets, we introduce Continuous-Flow Foundation AstroJev. The architecture employs simulation-free Conditional Flow Matching (CFM) to learn an optimal transport velocity field v_&theta;(z_t, t, c) mapping base Gaussian noise into an invariant 32-dimensional latent SED manifold z_1 &isin; R³².
+  </p>
+
+  <figure>
+    <img src="/figures/experiment_v_flow_cross_calibration.png" alt="Continuous Flow Cross Calibration" />
+    <figcaption>
+      <span class="fig-num">[Fig. 02]</span>
+      <strong>Continuous-Flow Matching Cross-Calibration:</strong>
+      Cross-instrument zero-point recovery across Euclid DR1 (I_E, Y, J, H), DESI Legacy DR10 (g, r, z), and Rubin LSST (u, g, r, i, z, y). The CFM network achieves an accuracy of RMSE = 0.0365 mag (MAE = 0.0293 mag), successfully disentangling instrumental filter variations from physical astrophysical SEDs.
+    </figcaption>
+  </figure>
+
+  <h2>3. Scaled Cloud Benchmark & Focal-Plane Allocation</h2>
+  <p>
+    When deployed on serverless cloud GPU infrastructure (NVIDIA H100 SXM5), the architecture achieves an inference throughput of 254,515 sources per second. We deployed the model across a simulated DESI 5,000-fiber focal plane under Conformal Risk Control (&alpha;_risk = 0.02).
+  </p>
+
+  <figure>
+    <img src="/figures/experiment_v_modal_scaled_cross_calibration.png" alt="Modal Scaled Cross Calibration" />
+    <figcaption>
+      <span class="fig-num">[Fig. 03]</span>
+      <strong>High-Throughput GPU Allocation Performance:</strong>
+      DESI 5,000-fiber focal-plane allocation triaged across 40,000 real survey phenomena on cloud GPU. The model achieves 90.4% High-z Quasar Recall (2,982.2 fiber-hours) while safely purging 50.7% of contaminant foreground stars with only 3.23% false allocations.
+    </figcaption>
+  </figure>
+
+  <h2>4. Spatial Coordinate Invariance & Sed Disentanglement</h2>
+  <p>
+    A critical vulnerability in astronomical deep learning is spatial memorization, where models memorize coordinate boundaries rather than intrinsic physics. We conducted a strict hemispheric holdout audit (training on Galactic North b &gt; +10&deg; and evaluating on Galactic South b &lt; -10&deg;).
+  </p>
+
+  <figure>
+    <img src="/figures/foundation_spatial_holdout_generalization.png" alt="Spatial Holdout Generalization" />
+    <figcaption>
+      <span class="fig-num">[Fig. 04]</span>
+      <strong>Spatial Hold-Out Generalization and Coordinate Ablation:</strong>
+      Evaluating top-1 accuracy between full spatial inputs and strictly coordinate-ablated inputs (l, b &equiv; 0). The generalization delta is only 0.09%, proving that FoundationAstroJev's predictions are governed by intrinsic astrophysical SED properties rather than spatial memorization.
+    </figcaption>
+  </figure>
+
+  <blockquote>
+    By parameterizing Dirichlet concentration priors &alpha; and enforcing proper scoring rules, Celestrium guarantees zero naked predictions across billions of survey detections.
+  </blockquote>
+</PaperLayout>

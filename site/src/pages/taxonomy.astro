@@ -1,0 +1,138 @@
+---
+import Base from '../layouts/Base.astro';
+import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
+---
+
+<Base title="All-Astronomy Field Taxonomy & Gap Matrix" activeNav="taxonomy">
+  <div class="tax-page-header">
+    <span class="ansi-tag">[INDEX:FIELD-TAXONOMY]</span>
+    <span class="ansi-tag">ENCYCLOPAEDIC MAP</span>
+    <h1 class="page-title">Astronomy Field Taxonomy & Scientific Gap Matrix</h1>
+    <p class="page-desc">
+      A foundational requirement of the Celestrium mission is clear taxonomic delineation of astronomy fields—separating radio astronomy, sub-millimeter science, high-energy astrophysics, stellar dynamics, and planetary science from global cosmology. Below is our complete encyclopaedic index of all recognized sub-disciplines, cataloging Celestrium's active experiments and defining the open scientific frontiers ("gaps") we intend to conquer.
+    </p>
+    <div class="incomplete-rule"></div>
+  </div>
+
+  <section class="delineation-overview">
+    <div class="section-kicker">// TWO-AXIS DELINEATION FRAMEWORK</div>
+    <h2 class="section-title">Physical Scale & Multi-Messenger Domains</h2>
+
+    <div class="axes-grid">
+      <div class="axis-card">
+        <h3 class="axis-title">[AXIS 1] Physical Scale & Structure</h3>
+        <ul class="axis-list">
+          <li><strong>Solar & Astrodynamic (~10⁻⁶ – 10⁻⁴ pc):</strong> Solar magnetograms, flare forecasting, Near-Earth Object (NEO) short-arc orbit determination.</li>
+          <li><strong>Stellar & Exoplanetary (~10⁻⁴ – 10 pc):</strong> Habitable transit detection, radial velocity red-noise GP disentanglement, asteroseismology.</li>
+          <li><strong>Galactic & Interstellar (~1 – 10⁵ pc):</strong> Milky Way kinematics, Gaia astrometry, wide-binary MOND tests, brown dwarfs.</li>
+          <li><strong>Extragalactic & AGN (~10⁵ – 10⁸ pc):</strong> Active Galactic Nuclei, quasar engines, galaxy clusters, host galaxy morphology.</li>
+          <li><strong>Cosmological Horizon (~10⁸ – 10¹⁰ pc):</strong> Cosmological principle, quasar dipole, cosmic dawn, BAO, reionization.</li>
+        </ul>
+      </div>
+
+      <div class="axis-card">
+        <h3 class="axis-title">[AXIS 2] Observational Messengers</h3>
+        <ul class="axis-list">
+          <li><strong>Coherent & Line Radio:</strong> NVSS 1.4 GHz continuum, HI 21 cm emission, ALMA sub-mm molecular gas, CHIME/FRBs.</li>
+          <li><strong>Optical & Infrared:</strong> Gaia DR3 astrometry, unWISE mid-IR, Rubin LSST time-domain alerts, Euclid DR1 Wide NIR.</li>
+          <li><strong>High-Energy Photons:</strong> SDO solar EUV, Swift/Fermi GRBs, eROSITA X-ray clusters, CTA gamma-ray sources.</li>
+          <li><strong>Gravitational Waves:</strong> LIGO-Virgo-KAGRA compact binary coalescences (BNS, BBH, NSBH), continuous GWs.</li>
+          <li><strong>Astrophysical Neutrinos:</strong> IceCube Gold/Bronze track events, diffuse cosmic neutrino background.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <FieldTaxonomyExplorer />
+</Base>
+
+<style>
+  .tax-page-header {
+    max-width: var(--content-width);
+    margin-bottom: 2.5rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 1rem 0 1.2rem;
+  }
+
+  .page-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .delineation-overview {
+    margin: 3rem 0;
+  }
+
+  .section-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+  }
+
+  .axes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+
+  @media (max-width: 860px) {
+    .axes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .axis-card {
+    background: var(--color-bg-subtle);
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .axis-title {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: 0.04em;
+  }
+
+  .axis-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .axis-list li {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+
+  .axis-list li strong {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+</style>
