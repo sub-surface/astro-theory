@@ -57,7 +57,7 @@ def imaging_panel(ctx, target, fov):
 
 @capability(
     name="imaging.poster", kind="image", wing="imaging", cost="network",
-    params={"target": TARGET, "fov": Param("float", 8.0),
+    params={"target": TARGET, "fov": Param("float", 8.0, help="arcmin; 0 = auto"),
             "width": Param("int", 1920), "height": Param("int", 1080),
             "style": Param("enum", "clean", STYLES)},
     summary="Wallpaper-grade render of a target.",
@@ -66,6 +66,7 @@ def imaging_panel(ctx, target, fov):
 def imaging_poster(ctx, target, fov, width, height, style):
     from .. import cutouts
     found = resolve(ctx, target)
+    fov = _fov(found, fov)
     ctx.progress(f"poster {found.display_name} {width}×{height} ({style})")
     path = cutouts.poster(found.ra, found.dec, fov_arcmin=fov, width=width,
                           height=height, style=style,

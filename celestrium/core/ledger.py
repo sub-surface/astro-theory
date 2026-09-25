@@ -70,6 +70,11 @@ CREATE INDEX IF NOT EXISTS ix_run_study        ON run(study);
 """
 
 
+def _like_escape(text: str) -> str:
+    """Make `text` match literally inside a LIKE pattern (ESCAPE '!')."""
+    return text.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+
+
 class Ledger:
     def __init__(self, path: Optional[Path] = None):
         self.path = Path(path) if path else paths.LEDGER_DB
@@ -145,9 +150,12 @@ class Ledger:
             return exact
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT * FROM artifact WHERE id LIKE ? ORDER BY created DESC LIMIT 2",
-                (f"{ref}%",)).fetchall()
-            if not rows:
+                "SELECT * FROM artifact WHERE id LIKE ? ESCAPE '!'"
+                " ORDER BY created DESC LIMIT 2",
+                (f"{_like_escape(ref)}%",)).fetchall()
+            # Zero matches, or an ambiguous prefix: refuse rather than guess —
+            # `forget` acts on whatever this returns.
+            if len(rows) != 1:
                 return None
             return self._row_to_artifact(rows[0], conn)
 

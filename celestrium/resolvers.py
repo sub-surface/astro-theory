@@ -61,11 +61,17 @@ def bibliography(name: str, limit: int = 10):
     Per-object bibliography moved to SIMBAD's TAP tables (ref/has_ref/ident);
     the old query_bibobj goes the *other* way (objects in a given paper).
     """
-    q = (f"SELECT TOP {limit} bibcode, title "
+    q = (f"SELECT TOP {int(limit)} bibcode, title "
          "FROM ref JOIN has_ref ON ref.oidbib = has_ref.oidbibref "
          "JOIN ident ON has_ref.oidref = ident.oidref "
-         f"WHERE id = '{name}'")
+         f"WHERE id = {adql_string(name)}")
     return Simbad.query_tap(q)
+
+
+def adql_string(value: str) -> str:
+    """An ADQL string literal: quotes doubled, so "Barnard's Star" is a name,
+    not a syntax error (or an injection)."""
+    return "'" + str(value).replace("'", "''") + "'"
 
 
 def extragalactic(name: str):
@@ -131,6 +137,7 @@ def dynamic(name: str):
 # --------------------------------------------------------------------------- #
 # Target Data Models & Layered Resolution
 # --------------------------------------------------------------------------- #
+import math
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -250,28 +257,30 @@ def resolve_target(
     if req.coordinates is not None:
         return _resolve_coordinates(req.coordinates, nearby_fn)
 
-    if req.target_text.lower() in ("sun", "sol"):
-        return ResolvedTarget(
-            display_name="The Sun", aliases=(), ra=float("nan"), dec=float("nan"),
-            otype="Sun", object_class="solar", confidence=1.0, match_kind="exact"
-        )
-
+    # A target without a finite position is not resolved: every caller does
+    # arithmetic on ra/dec. (The Sun is no special case — Horizons id 10 gives
+    # it a real, current position via `dynamic`.)
     rows = _safe(identify_fn, req.target_text)
     if rows is not None and len(rows) >= 1:
-        return _target_from_row(rows[0], "exact", alternatives=_alternatives(rows[1:]))
+        found = _target_from_row(rows[0], "exact", alternatives=_alternatives(rows[1:]))
+        if _has_position(found):
+            return found
 
     if dynamic_fn is not None:
         dyn = _safe(dynamic_fn, req.target_text)
         if dyn is not None and len(dyn) >= 1:
-            if str(dyn[0].get("ra")) == "nan":
-                return _target_from_row(dyn[0], "ambiguous", alternatives=_alternatives(dyn[1:]))
-            return _target_from_row(dyn[0], "ephemeris", alternatives=_alternatives(dyn[1:]))
+            # Ambiguous Horizons names come back with nan coordinates.
+            found = _target_from_row(dyn[0], "ephemeris", alternatives=_alternatives(dyn[1:]))
+            if _has_position(found):
+                return found
 
     if search_fn is not None:
         hits = _safe(search_fn, req.target_text)
         if hits is not None and len(hits) >= 1:
             kind = "ambiguous" if len(hits) > 1 else "relaxed"
-            return _target_from_row(hits[0], kind, alternatives=_alternatives(hits[1:]))
+            found = _target_from_row(hits[0], kind, alternatives=_alternatives(hits[1:]))
+            if _has_position(found):
+                return found
 
     return None
 
@@ -301,6 +310,10 @@ def _target_from_row(row, match_kind, *, ra=None, dec=None,
         confidence=_MATCH_CONFIDENCE.get(match_kind, 0.5), match_kind=match_kind,
         alternatives=alternatives,
     )
+
+
+def _has_position(target: ResolvedTarget) -> bool:
+    return math.isfinite(target.ra) and math.isfinite(target.dec)
 
 
 def _row_fields(row):
