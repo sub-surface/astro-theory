@@ -159,9 +159,11 @@ class FoundationAstroJev(nn.Module):
 
         # Physical In-Flight Error Jittering (differentiable augmentation)
         if apply_jitter and self.training:
-            # First 6 observables correspond to the 6 physical uncertainties
+            # sigma = [sig_g, sig_bprp, sig_w1, sig_w1w2, sig_pm, ruwe] maps onto
+            # mu cols [g, bp_rp, w1, w1_w2, pm] = [0, 1, 3, 4, 5]; RUWE is a fit-quality
+            # statistic, not an error bar, so it jitters nothing.
             jitter_sigma = torch.zeros_like(mu)
-            jitter_sigma[:, :NUM_UNCERTAINTIES] = sigma.clamp(min=1e-5, max=5.0)
+            jitter_sigma[:, [0, 1, 3, 4, 5]] = sigma[:, :5].clamp(min=1e-5, max=5.0)
             eps = torch.randn_like(mu)
             x_in = mu + eps * jitter_sigma * jitter_scale
         else:

@@ -290,8 +290,17 @@ def train_model(
         val_out = model(X_val.to(device))
         val_probs = val_out["choice_probs"].cpu().numpy()
         val_conf = val_out["confidence"].cpu().numpy()
-        residuals = val_out["residuals"]
-        sparsity = val_out["sparsity"]
+        sparsity = float(val_out["sparsity"])
+        # AstroJev.forward keeps its KM loop sync-free and leaves "residuals" empty,
+        # so replay the loop here to record the per-iteration step norm ||T(h) - h||.
+        x_ctx = model.encoder(X_val.to(device))
+        h = x_ctx
+        residuals = []
+        for k in range(model.n_iter):
+            gamma_k = 1.0 / (1.0 + 0.2 * (k + 1))
+            t_h = model.km_block(h, x_ctx)
+            residuals.append(float(torch.norm(t_h - h, p=2, dim=-1).mean()))
+            h = (1.0 - gamma_k) * h + gamma_k * t_h
 
     metrics = evaluate_calibration(val_probs, y_val.numpy(), n_bins=10)
     top1 = np.argmax(val_probs, axis=-1)

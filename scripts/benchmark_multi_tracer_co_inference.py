@@ -48,6 +48,7 @@ from celestrium.multi_tracer import (
     MultiTracerDataset,
     MultiTracerLikelihood,
     MultiTracerMCMCEngine,
+    check_nested_model_comparison,
     MultiTracerConformalFilter,
     unit_vector_to_lb,
     get_cmb_beta_vector,
@@ -118,6 +119,9 @@ def run_benchmark():
     print(f"  * Acceptance Fraction: {mcmc_dec['acceptance_fraction']:.1%}")
     print(f"  * BIC(H_2): {mcmc_dec['bic']:.1f}")
     print(f"  * Delta-BIC (H_2 - H_1): {delta_bic_dec:+.1f}")
+    nesting_check = check_nested_model_comparison(mcmc_unified, mcmc_dec)
+    if nesting_check["nesting_violated"]:
+        print("  * WARNING: max lnL(H_2) < max lnL(H_1) for nested models; H_2 sampler not converged, Delta-BIC unreliable.")
 
     # Extract individual dipole amplitudes from H_2
     flat_dec = mcmc_dec["flat_chain"]
@@ -189,6 +193,7 @@ def run_benchmark():
                 "aic": mcmc_dec["aic"],
                 "max_ll": mcmc_dec["max_log_posterior"],
                 "delta_bic_vs_H1": delta_bic_dec,
+                "nesting_violated": nesting_check["nesting_violated"],
             }
         },
         "unified_bulk_velocity": b_sum,
