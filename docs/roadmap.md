@@ -405,6 +405,28 @@ Phase 7 executes a sequenced experimental program organized by scientific promis
 - **Weekly (Sundays 00:00 UTC)**: Automated calibration drift audit ($\hat{E}^2_{\text{db}} \le 0.005$) and archive TAP health pings.
 - **Monthly (1st of month)**: Incremental model fine-tuning on newly verified spectroscopic samples and budget reconciliation.
 
+## Phase 8 — Web Presentation Wing, Living Manuscripts & Cloudflare Edge Deployment
+
+Celestrium's public face and interactive research portal live at **[`astro.subsurfaces.net`](https://astro.subsurfaces.net)**.
+
+1. **Editorial Architecture & Philosophy (`site/`)**:
+   - Built on Astro 6 with dual light (pure white canvas) and dark (OLED true-black `#000000`) modes.
+   - Minimalist Swiss high-design typography (Lora serif, Inter sans, JetBrains Mono) with strictly zero border radius (`border-radius: 0 !important;`) and delicate hairline gradient dividers.
+   - Real-time client-side astronomical telemetry: live Julian Date (JD) clock, online system pip, and interactive coordinate readouts.
+2. **Interactive Research Simulators**:
+   - `DipoleSimulator.astro`: Celestial sphere projection illustrating harmonic decoupling and Quaia selection function deprojection.
+   - `EvidentialPlayground.astro`: Dirichlet parameter exploration, epistemic vacuity $u_{\rm epi}$, and automated ToO telescope gating.
+   - `MultiMessengerTiling.astro`: Kasen kilonova dual-epoch reddening curves and active 3D GW tiling vs greedy 2D scheduling.
+   - `RemarkableObjectsViewer.astro`: SED flux fits and multi-mission cutouts for 5 benchmark objects extracted from 1.3M sources.
+   - `FieldTaxonomyExplorer.astro`: Interactive two-axis explorer mapping all 23 astronomical sub-disciplines, active experiments, and 5 targeted gaps.
+3. **Living Pre-Registered Articles (Papers A, B, C, D)**:
+   - Formatted research manuscripts with embedded interactive models, context around 19 publication figures, and one-click BibTeX citation copying.
+4. **Cloudflare Edge Pipeline & Social Metadata**:
+   - Edge delivery via Cloudflare Workers with static assets serving custom domain `astro.subsurfaces.net`.
+   - Failsafe automated compilation in `wrangler.toml` (`[build] command = "npm --prefix site install && npm --prefix site run build"`) integrated with root npm workspaces.
+   - Bespoke 1200×675 OpenGraph social cards for the platform and individual paper routes.
+   - Contextual astronomical vector SVG favicon (`favicon.svg`) and multi-size icon suite (`apple-touch-icon.png`, `favicon.ico`, `favicon.png`).
+
 ## Fun polish backlog
 
 These are intentionally non-core, low-risk cockpit treats to add between heavier

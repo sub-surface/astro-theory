@@ -33,9 +33,11 @@ celestrium/                 Core instrument package
   too_protocol.py           Turnkey ToO protocol serializers (Gemini GMOS, LCOGT)
   tap.py                    Unified Table Access Protocol client (pyvo + driver fallback)
   cli.py                    Headless Typer CLI interface (run with --json)
+site/                       Interactive research platform & living manuscripts (Astro, OLED, https://astro.subsurfaces.net)
 docs/research/              Pre-registered proposals, experiment indexes, and literature dossiers
-tests/                      Hermetic test suite (184+ tests, 100% network-independent)
+tests/                      Hermetic test suite (231 passing tests, 100% network-independent)
 modal_app.py                Distributed GPU cloud training & triage service (Modal)
+wrangler.toml               Cloudflare Workers deployment config with automated [build] command
 ```
 
 ---
@@ -73,7 +75,7 @@ modal_app.py                Distributed GPU cloud training & triage service (Mod
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (currently 200 passing tests).
+- Verify regularly: `python -m pytest` (currently 231 passing tests).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.
@@ -85,6 +87,7 @@ modal_app.py                Distributed GPU cloud training & triage service (Mod
 
 - **Local Machine**: Windows 11 host (PowerShell), NVIDIA GeForce RTX 2060 (6 GB VRAM). Fast local iteration and unit testing.
 - **Modal Cloud Compute**: Active grant balance ~$22.16 USD. Use for scaled H100 SXM5 multi-GPU training, large-scale Monte Carlo runs, and broker streaming workers (`modal run modal_app.py`).
+- **Cloudflare Edge Deployment**: Web platform deployed to Cloudflare Workers with static assets serving [https://astro.subsurfaces.net](https://astro.subsurfaces.net). Automated builds via `wrangler.toml` (`[build] command = "npm --prefix site install && npm --prefix site run build"`). Custom OpenGraph suite and SVG/ICO favicons live at edge.
 
 ---
 

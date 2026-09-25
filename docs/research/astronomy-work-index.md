@@ -2,6 +2,7 @@
 
 **Status**: Living Index & Master Sub-Field Map  
 **Curator**: Celestrium Collaboration (`sub-surface/astro-theory`)  
+**Interactive Web Portal**: [https://astro.subsurfaces.net/taxonomy/](https://astro.subsurfaces.net/taxonomy/)  
 **Scope**: Complete encyclopaedic taxonomy of astronomy, astrophysics, and cosmology sub-fields; auditing all current Celestrium research (EXP-2026-A through W, Papers A–D, catalogs) and mapping open scientific frontiers ("gaps") for future investigations.
 
 ---

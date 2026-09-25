@@ -1,5 +1,8 @@
 <h1 align="center">✦ Celestrium ✦</h1>
 <p align="center"><em>A three-wing computational astrophysics instrument and calibrated evidential decision engine.</em></p>
+<p align="center">
+  <a href="https://astro.subsurfaces.net/"><strong>🌐 Interactive Research Platform: astro.subsurfaces.net</strong></a>
+</p>
 
 ---
 
@@ -55,6 +58,27 @@ All pre-registered experiments in [`docs/research/experiment-index.md`](./docs/r
 
 ---
 
+## 🌐 Interactive Research Platform & Living Manuscripts
+
+Celestrium's interactive web platform is deployed live at **[`astro.subsurfaces.net`](https://astro.subsurfaces.net)**. Built with an editorial pure-white canvas and OLED true-black mode, strictly zero border radius, delicate hairline dividers, and live astronomical Julian Date clock telemetry.
+
+- **5 Interactive Simulations**:
+  - `DipoleSimulator`: Real-time celestial sphere harmonic decoupling, galactic dust cuts, and Quaia selection function deprojection.
+  - `EvidentialPlayground`: Dirichlet concentration parameters, epistemic vacuity $u_{\rm epi}$, and GMOS/LCOGT decision gating.
+  - `MultiMessengerTiling`: Dual-epoch Kasen kilonova reddening curves, active 3D GW tiling vs greedy 2D scheduling.
+  - `RemarkableObjectsViewer`: Multi-band SED fits and multi-wavelength archival cutouts across 1.3M sources.
+  - `FieldTaxonomyExplorer`: Two-axis interactive exploration of all 23 astronomy sub-disciplines and 5 research gaps.
+- **4 Living Pre-Registered Manuscripts**:
+  - [Paper A](https://astro.subsurfaces.net/papers/paper-a-cosmic-dipole/): *Systematics-Aware Measurement of the Cosmological Dipole* (2.86M sources)
+  - [Paper B](https://astro.subsurfaces.net/papers/paper-b-continuous-flow-astrojev/): *Continuous-Flow Foundation AstroJev* (Simulation-free CFM & RLCD)
+  - [Paper C](https://astro.subsurfaces.net/papers/paper-c-autonomous-followup-mdp/): *Autonomous Target-of-Opportunity Triage & Active 3D MDPs*
+  - [Paper D](https://astro.subsurfaces.net/papers/paper-d-euclid-dr1-forecast/): *Euclid DR1 Kinematic & Clustered Dipole Forecast*
+- **Social Media & Metadata**:
+  - Bespoke 1200×675 OpenGraph social share cards tailored to each individual paper.
+  - Vector SVG and multi-resolution astronomical favicon suite.
+
+---
+
 ## Technical Standards & Guarantees
 
 1. **Zero Naked Predictions**:
@@ -78,8 +102,21 @@ git clone https://github.com/sub-surface/astro-theory.git
 cd astro-theory
 pip install -e .
 
-# Run the 216 hermetic unit tests (100% offline, ~48s)
+# Run the 231 hermetic unit tests (100% offline, ~50s)
 python -m pytest
+```
+
+### Web Platform Development & Cloudflare Deployment
+
+```bash
+# Start local development server (with live Astro HMR)
+npm run dev --prefix site
+
+# Build production static bundle (generates site/dist)
+npm run build
+
+# Deploy directly to Cloudflare Workers
+npx wrangler deploy
 ```
 
 ### CLI Command Patterns
@@ -136,14 +173,22 @@ celestrium/
   caps/                  # Capability plugins (archives, objects, imaging, lit, analysis)
   cli.py                 # Unified Typer CLI presenter (--json everywhere)
 
+site/                    # Interactive web platform & living manuscripts (astro.subsurfaces.net)
+  src/components/        # 5 interactive simulators (Dipole, Evidential, Tiling, Objects, Taxonomy)
+  src/layouts/           # Base and PaperLayout with dynamic OpenGraph & Swiss typography
+  src/pages/papers/      # Living portals for Papers A, B, C, D
+  public/                # Static assets, 5 bespoke OG share cards, vector SVG & ICO favicons
+
 docs/
   research/
+    astronomy-work-index.md # Complete encyclopaedic taxonomy of all 23 astronomy sub-disciplines
     experiment-index.md  # Complete research ledger with benchmarks and artifacts
     literature-convergence-and-novel-results.md # Literature matrix & 6 novel frontiers
     figures/             # Publication-grade figures for all benchmarks
 
 scripts/                 # Standalone reproducible benchmark and Modal cloud deployment scripts
-tests/                   # 216 hermetic unit tests (test_multi_tracer, test_continuous_flow, etc.)
+tests/                   # 231 hermetic unit tests (test_multi_tracer, test_continuous_flow, etc.)
+wrangler.toml            # Cloudflare Workers deployment config with automated [build] command
 ```
 
 ---
