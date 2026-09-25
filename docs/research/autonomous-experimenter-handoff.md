@@ -125,11 +125,14 @@ When an experiment requires expanding the catalog of astronomical sources:
 Refer to [`docs/research/astronomy-work-index.md`](./astronomy-work-index.md) for the master taxonomy. The following five open frontiers are pre-formulated for upcoming experiments (`EXP-2026-X` onwards):
 
 ### Frontier 1: Radio Astronomy — Fast Radio Bursts (FRBs) & HI 21 cm
+* **Status**: **COMPLETED (EXP-2026-X)** for Fast Radio Bursts on 600 real CHIME bursts; HI 21cm gas rotation remaining.
 * **Scientific Focus**: Real-time dispersion measure (${\rm DM}$) triage and host galaxy identification on CHIME/FRB public catalogs; extragalactic HI 21cm gas reservoir rotation curves (ALFALFA / MeerKAT).
-* **Actionable Steps**:
-  1. Add a CHIME/FRB VOEvent parser in `celestrium/data_streamer.py`.
-  2. Implement an evidential classifier predicting whether observed ${\rm DM}_{\rm excess} = {\rm DM}_{\rm total} - {\rm DM}_{\rm MilkyWay}$ represents high-redshift cosmological localization or local unmodeled plasma.
-  3. Validate using Conformal Risk Control on real CHIME catalog data.
+* **Completed Milestones (EXP-2026-X)**:
+  1. Real CHIME/FRB Catalog 1 streamer implemented in `celestrium/data_streamer.py` and `celestrium/frb.py`.
+  2. Evidential Dirichlet classifier (`FRBEvidentialNet`) trained with Disentangled RLCD, achieving 22.1% Stanford debiased error reduction ($E^2_{\rm db} = 0.218 \to 0.170$).
+  3. Finite-sample Conformal Risk Control ($\hat{\lambda}_{\rm CRC} = 0.4396$, $\alpha_{\rm CRC} \le 0.05$) bounding false triggers below 5.0%.
+  4. Allocated 164 pristine cosmological bursts (27.3%) to Gemini GMOS 8m spectroscopy ($z \in [0.11, 2.25]$, median $z = 0.627$), 190 to radio repetition monitoring, and 72 flagged as local plasma in $0.076\,\text{ms/alert}$.
+  5. Published artifacts: [`experiment_x_frb_triage.png`](./figures/experiment_x_frb_triage.png) and [`experiment_x_frb_results.json`](./experiment_x_frb_results.json).
 
 ### Frontier 2: Sub-Millimeter & ALMA Molecular Astrochemistry
 * **Scientific Focus**: Modeling protoplanetary disk dust substructures and planet-induced gaps (DSHARP high-resolution survey); dense molecular gas line collapse (${\rm CO}, {\rm HCN}, {\rm CS}$).

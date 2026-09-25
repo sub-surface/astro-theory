@@ -55,6 +55,7 @@ All pre-registered experiments in [`docs/research/experiment-index.md`](./docs/r
 | **EXP-2026-Q: Exoplanet Transit & Doppler Triage** | HARPS/ESPRESSO RVs + Kepler/TESS Light Curves | Matérn-3/2 GP + CCF Activity Indicators | Binned ECE dropped $58.5\%$ ($5.96\% \to \mathbf{2.47\%}$). **$0.00\%$ false triggers** on 2,000 pure starspot mimics (100% doubt-routed to activity monitoring). |
 | **EXP-2026-T: Solar Flare & Short-Arc NEO Triage** | SDO/HMI SHARP + JPL Scout Asteroid Trajectories | Dirichlet Evidential Net + Radar Gate | $\text{TSS} = \mathbf{1.0000}$, $\text{HSS} = \mathbf{1.0000}$, False Alarm Rate = **$0.00\%$** ($\le 2.0\%$ bound). 74 Major X-class flares and 62 NEO impactors intercepted. |
 | **EXP-2026-U: Active-Evidential 3D GW Tiling MDP** | O4 BNS Skymaps + GLADE+ 3D Galaxies + Kasen (2017) | Finite-Horizon Autonomous MDP | **$97.0\%$ Kilonova Discovery** (+8.0% over greedy 2D), **$97.0\%$ dual-band color confirmation**, $3.17\,\text{h}$ discovery horizon ($0.56\,\text{h}$ faster). |
+| **EXP-2026-X: Fast Radio Burst Evidential Triage** | 600 real bursts (CHIME/FRB Catalog 1) | Evidential Dirichlet Net + Macquart Cosmology + Conformal Risk Control | **$22.1\%$ Stanford debiased error reduction** ($E^2_{\rm db} = 0.218 \to 0.170$). **164 pristine bursts (27.3%)** allocated to Gemini GMOS 8m spectroscopy ($z \in [0.11, 2.25]$, median $z = 0.627$). $0.076\,\text{ms/alert}$ latency. |
 
 ---
 
