@@ -27,6 +27,8 @@ from __future__ import annotations
 import json
 import math
 import os
+import warnings
+import zlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -143,6 +145,7 @@ class MultiTracerDataset:
         self.npix = 12 * nside * nside
         self.b_cut_deg = b_cut_deg
         self.surveys: Dict[str, TracerSurvey] = {}
+        self.mock_surveys: List[str] = []
 
     @classmethod
     def load_from_cache_or_catalogs(
@@ -155,6 +158,7 @@ class MultiTracerDataset:
     ) -> "MultiTracerDataset":
         """Loads cached HEALPix maps if available; otherwise aggregates raw catalogs."""
         dataset = cls(nside=nside, b_cut_deg=b_cut_deg)
+        dataset.mock_surveys = []
         if cache_path is None:
             cache_path = root_dir / "data" / "cache" / f"multi_tracer_nside{nside}_bcut{int(b_cut_deg)}.npz"
 
@@ -228,7 +232,7 @@ class MultiTracerDataset:
                 alpha_index=TRACER_DEFAULTS["quaia"]["alpha"]
             )
         else:
-            # Fallback mock for hermetic testing
+            dataset._warn_mock("quaia")
             dataset.surveys["quaia"] = dataset._create_mock_survey("quaia", nside, galactic_mask)
 
         # 2. CatWISE2020 AGNs
@@ -285,6 +289,7 @@ class MultiTracerDataset:
                 alpha_index=TRACER_DEFAULTS["catwise"]["alpha"]
             )
         else:
+            dataset._warn_mock("catwise")
             dataset.surveys["catwise"] = dataset._create_mock_survey("catwise", nside, galactic_mask)
 
         # 3. NVSS 1.4 GHz Radio
@@ -322,7 +327,18 @@ class MultiTracerDataset:
                 alpha_index=TRACER_DEFAULTS["nvss"]["alpha"]
             )
         else:
+            dataset._warn_mock("nvss")
             dataset.surveys["nvss"] = dataset._create_mock_survey("nvss", nside, galactic_mask)
+
+        # Never persist synthetic mock maps to the real-data cache path.
+        if dataset.mock_surveys:
+            warnings.warn(
+                f"[MultiTracer] Not writing cache {cache_path}: surveys {dataset.mock_surveys} "
+                "are synthetic mocks, not real catalog data.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return dataset
 
         # Save cache
         cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -342,10 +358,21 @@ class MultiTracerDataset:
 
         return dataset
 
+    def _warn_mock(self, name: str) -> None:
+        """Record and loudly warn that a survey fell back to a synthetic mock."""
+        self.mock_surveys.append(name)
+        warnings.warn(
+            f"[MultiTracer] Catalog for '{name}' not found; substituting a SYNTHETIC mock survey. "
+            "Results using this dataset are not real-data results.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+
     def _create_mock_survey(self, name: str, nside: int, base_mask: np.ndarray) -> TracerSurvey:
         """Hermetic synthetic mock generator for rapid pytest test isolation."""
         npix = 12 * nside * nside
-        rng = np.random.default_rng(hash(name) % 10000)
+        # zlib.crc32 is stable across processes (built-in hash() of str is salted per process)
+        rng = np.random.default_rng(zlib.crc32(name.encode("utf-8")) % 10000)
         u_cmb = lb_to_unit_vector(np.array([CMB_APEX_L_DEG]), np.array([CMB_APEX_B_DEG]))[0]
         
         hp = HEALPix(nside=nside, order="ring")
@@ -554,6 +581,38 @@ class MultiTracerLikelihood:
         if not np.isfinite(ll):
             return -np.inf
         return lp + ll
+
+
+def check_nested_model_comparison(
+    result_h1: Dict[str, Any],
+    result_h2: Dict[str, Any],
+    tol: float = 1e-6,
+) -> Dict[str, Any]:
+    """Compare 'unified' (H_1) against 'decoupled' (H_2) run_mcmc results.
+
+    H_1 is nested in H_2 (D_i = k_i * beta, same gamma prior), so the true maximum
+    of the H_2 log-posterior must be >= that of H_1. run_mcmc reports the best
+    *sampled* value, so a violation means the H_2 sampler did not reach its maximum
+    (not converged) and any BIC/AIC difference built on it is unreliable.
+    """
+    lnl_h1 = float(result_h1["max_log_posterior"])
+    lnl_h2 = float(result_h2["max_log_posterior"])
+    violated = lnl_h2 < lnl_h1 - tol
+    if violated:
+        warnings.warn(
+            f"NESTED-MODEL VIOLATION: max lnL(H_2)={lnl_h2:.3f} < max lnL(H_1)={lnl_h1:.3f}. "
+            "H_1 is nested in H_2, so the H_2 sampler has not converged; "
+            "the Delta-BIC/Delta-AIC between these runs is not trustworthy.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return {
+        "max_log_posterior_h1": lnl_h1,
+        "max_log_posterior_h2": lnl_h2,
+        "delta_bic_h2_minus_h1": float(result_h2["bic"] - result_h1["bic"]),
+        "delta_aic_h2_minus_h1": float(result_h2["aic"] - result_h1["aic"]),
+        "nesting_violated": bool(violated),
+    }
 
 
 # --------------------------------------------------------------------------- #

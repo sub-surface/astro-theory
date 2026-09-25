@@ -32,8 +32,17 @@ _FUNCS = {
     "sqrt": np.sqrt, "isfinite": np.isfinite, "isnan": np.isnan,
     "sin": np.sin, "cos": np.cos, "tan": np.tan,
     "deg2rad": np.deg2rad, "rad2deg": np.rad2deg,
-    "minimum": np.minimum, "maximum": np.maximum, "where": np.where,
+    "minimum": np.minimum, "maximum": np.maximum, "where": np.ma.where,
 }
+
+
+def _column_values(col):
+    """A column as an array; masked columns stay masked so their masked
+    entries (whose fill data is arbitrary, often 0) never satisfy a test."""
+    mask = getattr(col, "mask", None)
+    if mask is not None and np.any(mask):
+        return np.ma.asarray(col)
+    return np.asarray(col)
 
 
 def _safe_eval(expr: str, table) -> np.ndarray:
@@ -48,7 +57,7 @@ def _safe_eval(expr: str, table) -> np.ndarray:
     except SyntaxError as exc:
         raise ValueError(f"cannot parse filter expression: {exc}") from exc
 
-    names = {name: np.asarray(table[name]) for name in table.colnames}
+    names = {name: _column_values(table[name]) for name in table.colnames}
     for node in ast.walk(tree):
         if not isinstance(node, _ALLOWED_NODES):
             raise ValueError(
@@ -65,8 +74,10 @@ def _safe_eval(expr: str, table) -> np.ndarray:
 
     mask = eval(compile(tree, "<filter>", "eval"),  # noqa: S307 — allowlisted above
                 {"__builtins__": {}}, {**names, **_FUNCS})
+    if isinstance(mask, np.ma.MaskedArray):
+        mask = mask.filled(False)             # masked row -> not kept
     mask = np.asarray(mask)
-    if mask.dtype != bool or mask.shape[0] != len(table):
+    if mask.dtype != bool or mask.ndim != 1 or mask.shape[0] != len(table):
         raise ValueError(f"filter expression must yield one boolean per row; "
                          f"got {mask.dtype} shape {mask.shape}")
     return mask

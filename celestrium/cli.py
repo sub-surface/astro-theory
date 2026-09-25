@@ -208,11 +208,11 @@ def ledger(cap: Optional[str] = typer.Option(None, help="filter by capability pr
     store = k.ledger
 
     if stats:
-        summary = store.summary()
+        summary = store.stats()
         _emit(summary, lambda: console.print(
-            f"{summary['artifacts']} artifacts   {summary['runs']} runs   "
-            f"{summary['edges']} edges   {summary['studies']} studies\n"
-            f"kinds: {summary['kinds']}"))
+            f"{summary['artifacts']} artifacts   {summary['runs']} runs "
+            f"({summary['cache_hits']} cached)   {summary['bytes']} bytes on disk\n"
+            f"kinds: {summary['by_kind']}"))
         return
 
     if lineage:
@@ -224,14 +224,15 @@ def ledger(cap: Optional[str] = typer.Option(None, help="filter by capability pr
               lambda: console.print(k.methods(target.id)))
         return
 
-    artifacts = store.list_artifacts(cap=cap, kind=kind, study=study, limit=limit)
+    artifacts = store.search(cap=cap, kind=kind, study=study, limit=limit)
     rows = [a.to_dict() for a in artifacts]
 
     def render():
         table = RichTable("id", "cap", "kind", "label", "bytes",
                           title=f"ledger (last {len(artifacts)})")
         for a in artifacts:
-            table.add_row(f"[cyan]{a.id[:8]}[/]", a.cap, a.kind, a.label[:40], str(a.bytes))
+            table.add_row(f"[cyan]{a.id[:8]}[/]", a.cap, a.kind, a.label[:40],
+                          str(a.meta.get("bytes", "")))
         console.print(table)
     _emit(rows, render)
 
@@ -476,7 +477,7 @@ def dossier(target: str):
 def field(ra: float, dec: float, fov: float = typer.Option(12.0)):
     """Generate a field packet for sky coordinates."""
     try:
-        art = _run("object.field", position=f"{ra} {dec}", fov=fov)
+        art = _run("object.field", target=f"{ra} {dec}", fov=fov)
     except Exception as e:
         raise _fail(e)
     _emit(art.to_dict(), lambda: console.print(f"field packet -> [green]{art.path}[/]"))
@@ -492,12 +493,30 @@ def atlas_targets(limit: int = typer.Option(6)):
     _emit(art.to_dict(), lambda: console.print(f"atlas -> [green]{art.path}[/]"))
 
 
+_POSTER_SIZES = {"720p": (1280, 720), "1080p": (1920, 1080),
+                 "1440p": (2560, 1440), "4k": (3840, 2160), "2160p": (3840, 2160)}
+
+
+def _poster_size(resolution: str) -> tuple:
+    """'1080p' / '4k' / 'WIDTHxHEIGHT' -> (width, height)."""
+    key = resolution.strip().lower()
+    if key in _POSTER_SIZES:
+        return _POSTER_SIZES[key]
+    m = re.fullmatch(r"(\d+)\s*x\s*(\d+)", key)
+    if not m:
+        raise ValueError(f"resolution {resolution!r}: use "
+                         f"{', '.join(_POSTER_SIZES)} or WIDTHxHEIGHT")
+    return int(m.group(1)), int(m.group(2))
+
+
 @app.command(rich_help_panel=IMAGING)
-def poster(target: str, resolution: str = typer.Option("1080p"),
+def poster(target: str, resolution: str = typer.Option("1080p", help="720p|1080p|1440p|4k or WIDTHxHEIGHT"),
            style: str = typer.Option("label"), fov: Optional[float] = typer.Option(None)):
     """Generate a high-res poster render for a target."""
     try:
-        art = _run("imaging.poster", target=target, resolution=resolution, style=style, fov=fov or 0.0)
+        width, height = _poster_size(resolution)
+        art = _run("imaging.poster", target=target, width=width, height=height,
+                   style=style, fov=fov or 0.0)
     except Exception as e:
         raise _fail(e)
     _emit(art.to_dict(), lambda: console.print(f"poster -> [green]{art.path}[/]"))
@@ -533,10 +552,10 @@ def sample(recipe: str = typer.Argument(..., help="named recipe")):
 def feed(key: str = typer.Argument(..., help="neo|satellite|transient"),
          refresh: bool = typer.Option(False, "--refresh")):
     """Run a live sky feed."""
-    cap_map = {"neo": "feeds.neos", "satellite": "feeds.satellites", "transient": "feeds.transients"}
-    cap = cap_map.get(key.lower(), f"feeds.{key}")
+    cap = f"feed.{key.lower()}"
     try:
-        art = _run(cap, refresh=refresh)
+        # refresh is a kernel option (bypass the cache), not a capability param.
+        art = _kernel().run(cap, {}, refresh=refresh, emit=_printer())
         tab = _load(art.id)
     except Exception as e:
         raise _fail(e)
@@ -550,7 +569,10 @@ def feed(key: str = typer.Argument(..., help="neo|satellite|transient"),
 def match(source: str, catalog: str, radius: float = 5.0, save: Optional[str] = None):
     """CDS cross-match audit between a table or recipe and a VizieR catalog."""
     try:
-        art = _run("tabular.xmatch", table=source, catalog=catalog, radius_arcsec=radius)
+        table_ref = source
+        if source in SAMPLE_RECIPES:      # a recipe name -> its sample table
+            table_ref = _run("archive.sample", recipe=source).id
+        art = _run("table.xmatch", table=table_ref, catalog=catalog, radius_arcsec=radius)
         tab = _load(art.id)
         if save:
             candidates.save(save, tab, origin=f"match {source} {catalog}")
@@ -751,7 +773,7 @@ def export(target: str, out: Optional[str] = None):
     """Export a table artifact or candidate list to CSV."""
     from . import paths
     table = None
-    if candidates.exists(target):
+    if candidates.find_record(target) is not None:
         table = candidates.load(target)
     else:
         k = _kernel()
@@ -771,7 +793,7 @@ def export(target: str, out: Optional[str] = None):
 @app.command(rich_help_panel=WORKFLOWS)
 def candidates_cmd():
     """List saved candidate lists."""
-    lists = candidates.lists()
+    lists = [r["name"] for r in candidates.latest()]
     _emit({"lists": lists}, lambda: console.print(f"saved candidate lists: {', '.join(lists)}"))
 
 

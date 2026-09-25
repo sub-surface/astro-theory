@@ -65,7 +65,8 @@ class Context:
 
     def __init__(self, kernel: "Kernel", cap: Capability, params: dict,
                  artifact_id_: str, run_id: str, study: Optional[str],
-                 emit: Callable, cancel: Optional[threading.Event]):
+                 emit: Callable, cancel: Optional[threading.Event],
+                 listener: Optional[Callable] = None):
         self.kernel = kernel
         self.ledger = kernel.ledger
         self.cap = cap
@@ -74,6 +75,10 @@ class Context:
         self.run_id = run_id
         self.study = study
         self._emit = emit
+        # The caller's own listener, *without* kernel.on_event folded in —
+        # child runs fan on_event back in themselves, so handing them `emit`
+        # would deliver every child event to on_event twice.
+        self._listener = listener
         self._cancel = cancel
         self.children: list = []
         self.notes: list = []
@@ -100,7 +105,7 @@ class Context:
     def child(self, cap_name: str, /, **params) -> Artifact:
         """Run another capability as part of this one; records a lineage edge."""
         art = self.kernel.run(cap_name, params, study=self.study,
-                              emit=self._emit, cancel=self._cancel)
+                              emit=self._listener, cancel=self._cancel)
         self.children.append(art.id)
         return art
 
@@ -184,7 +189,10 @@ class Kernel:
             if art is None:
                 raise ParamError(f"{cap_name}.{key}: no artifact {ref!r} in the ledger")
             bound[key] = art.id            # canonicalise prefix → full id
-            resolved.append(art.id)
+            # `repro` hands back meta["_inputs"], which already holds these
+            # ids — appending again would change the hash.
+            if art.id not in resolved:
+                resolved.append(art.id)
         return artifact_id(cap_name, bound, tuple(resolved)), bound, tuple(resolved)
 
     def is_cached(self, cap_name: str, params: Optional[dict] = None,
@@ -219,6 +227,7 @@ class Kernel:
             emit: Optional[Callable] = None,
             cancel: Optional[threading.Event] = None) -> Artifact:
         cap = get_cap(cap_name)
+        listener = emit
         emit = ev.fan_out(emit, self.on_event)
         run_id = uuid.uuid4().hex[:12]
 
@@ -241,9 +250,11 @@ class Kernel:
 
         attempts = len(RETRY_BACKOFFS) + 1 if cap.cost == "network" else 1
         ctx = last_error = None
+        error_trace = ""
         payload = None
         for attempt in range(1, attempts + 1):
-            ctx = Context(self, cap, bound, aid, run_id, study, emit, cancel)
+            ctx = Context(self, cap, bound, aid, run_id, study, emit, cancel,
+                          listener=listener)
             try:
                 payload = cap.fn(ctx, **bound)
                 last_error = None
@@ -258,6 +269,7 @@ class Kernel:
                 raise
             except Exception as exc:                          # noqa: BLE001
                 last_error = exc
+                error_trace = traceback.format_exc(limit=4)[-2000:]
                 if attempt < attempts:
                     emit(ev.Event(ev.PROGRESS, run_id, cap_name,
                                   f"retry {attempt}/{attempts - 1}: {exc}",
@@ -272,7 +284,7 @@ class Kernel:
             self.ledger.record_run(run_id=run_id, cap=cap_name, params=bound,
                                    status="failed", started=started,
                                    finished=now_utc(), ms=elapsed,
-                                   error=traceback.format_exc(limit=4)[-2000:],
+                                   error=error_trace,
                                    study=study)
             raise CapabilityError(cap_name, last_error) from last_error
 

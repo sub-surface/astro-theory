@@ -81,8 +81,16 @@ def run_full_multimessenger_benchmark() -> Dict[str, Any]:
         num_classes=ckpt.get("num_classes", NUM_MM_CLASSES),
     )
     model.load_state_dict(ckpt["model_state_dict"])
-    crc_info = ckpt.get("crc_calibration", {"lambda_hat": 0.895, "empirical_risk": 0.032})
-    crc_lambda = 0.895
+    crc_info = ckpt.get("crc_calibration")
+    if crc_info and crc_info.get("lambda_hat") is not None:
+        crc_lambda = float(crc_info["lambda_hat"])
+        if crc_info.get("feasible") is False:
+            print(f"  WARNING: checkpoint CRC calibration was infeasible; lambda_hat = {crc_lambda:.4f} "
+                  f"carries no risk guarantee.")
+    else:
+        crc_lambda = 0.895
+        print(f"  WARNING: checkpoint has no crc_calibration.lambda_hat; falling back to "
+              f"uncalibrated crc_lambda = {crc_lambda}.")
 
     engine = MultiMessengerTriageEngine(
         model=model,
@@ -100,7 +108,9 @@ def run_full_multimessenger_benchmark() -> Dict[str, Any]:
 
     print(f"  Tested {null_audit['n_fields_tested']} empty-sky error fields ({null_audit['total_unassociated_candidates']:,} candidates)")
     print(f"  Gemini 8m False Alarms: {null_audit['gemini_false_alarms']} "
-          f"(Empirical False Alarm Rate = {null_audit['empirical_false_alarm_rate']*100:.3f}%)")
+          f"(Per-Candidate False Alarm Rate = {null_audit['per_candidate_false_alarm_rate']*100:.3f}%)")
+    print(f"  Fields With Any False Discovery: {null_audit['fields_with_false_discovery']} / {null_audit['n_fields_tested']} "
+          f"(Empirical FDR = {null_audit['empirical_fdr']*100:.1f}%)")
     print(f"  LCOGT 1m Screenings Triggered: {null_audit['lcogt_screenings']}")
     print(f"  Auto-Cataloged Known SNe: {null_audit['auto_cataloged']}")
     print(f"  Passed Null Criterion (FDR <= 5%): {null_audit['null_hypothesis_satisfied']} (in {t_null1:.2f}s)")
@@ -236,7 +246,8 @@ def run_full_multimessenger_benchmark() -> Dict[str, Any]:
             "mean_triage_latency_ms": float(np.mean([r["mean_latency_ms"] for r in inj_res["results"]])),
             "target_conformal_fdr_bound": 0.05,
             "calibrated_crc_lambda": float(crc_lambda),
-            "empty_sky_empirical_fdr": float(null_audit["empirical_false_alarm_rate"]),
+            "empty_sky_empirical_fdr": float(null_audit["empirical_fdr"]),
+            "empty_sky_per_candidate_false_alarm_rate": float(null_audit["per_candidate_false_alarm_rate"]),
             "spatiotemporal_scrambling_p_value": float(scramble_res["empirical_p_value"]),
             "gemini_recovery_at_140mpc": float(next(r["gemini_recovery_rate"] for r in inj_res["results"] if r["distance_mpc"] == 140.0)),
             "total_yield_at_200mpc": float(next(r["total_detection_efficiency"] for r in inj_res["results"] if r["distance_mpc"] == 200.0)),

@@ -632,7 +632,8 @@ class RealMultiMessengerStreamer:
                 out = []
                 for ev in events:
                     s_id = ev.get("superevent_id", "MS_LIVE")
-                    t_0 = float(ev.get("t_0", 60400.0) / 86400.0 + 40587.0)
+                    from .multimessenger import gps_to_mjd
+                    t_0 = gps_to_mjd(ev["t_0"]) if ev.get("t_0") is not None else 60400.0
                     out.append({
                         "superevent_id": s_id,
                         "ra_deg": float(self.rng.uniform(160.0, 220.0)),
@@ -906,7 +907,7 @@ class RealMultiMessengerStreamingDataset(IterableDataset):
         self.batch_size = batch_size
 
     def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
-        from .multimessenger import extract_multimessenger_features, MM_CLASS_TO_IDX
+        from .multimessenger import extract_multimessenger_features, mm_class_index
         feat_buf = []
         label_buf = []
 
@@ -916,7 +917,7 @@ class RealMultiMessengerStreamingDataset(IterableDataset):
         ):
             for cand in cands:
                 f = extract_multimessenger_features(cand, gw, nu)
-                l = MM_CLASS_TO_IDX.get(cand.true_class, 0)
+                l = mm_class_index(cand.true_class)
                 feat_buf.append(f)
                 label_buf.append(l)
 

@@ -52,7 +52,7 @@ wrangler.toml               Cloudflare Workers deployment config with automated 
   - Dirichlet posterior standard deviation: $\sigma_k = \sqrt{\frac{p_k(1 - p_k)}{S + 1}}$
   - 95% Credible Interval: $[p_k - 1.96\sigma_k, p_k + 1.96\sigma_k]$ (clamped to $[0, 1]$)
   - Conformal prediction set: $C_\lambda(X) = \{ k : p_k \ge 1 - \hat{\lambda}_{\rm CRC} \}$
-  - Epistemic vacuity: $u_{\rm epi} = K / (S + K)$
+  - Epistemic vacuity: $u_{\rm epi} = K / S$ with $S = \sum_k \alpha_k$
 - **Gating Policy**: High-cost follow-up (e.g. 8m GMOS spectroscopy `GEMINI_RAPID_TOO`) requires $p_{\rm target} \ge \hat{\lambda}_{\rm CRC}$ **AND** $u_{\rm epi} \le 0.35$ **AND** lower bound $p - 1.96\sigma \ge 0.40$.
 - **Reward Doubt**: Ambiguous or high-vacuity targets must route to low-cost robotic screening (`LCOGT_SCREENING_TOO`) to collapse uncertainty before spending scarce 8m aperture time.
 

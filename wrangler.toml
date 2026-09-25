@@ -2,14 +2,14 @@ name = "astro"
 compatibility_date = "2024-12-01"
 
 [build]
-command = "npm --prefix site install && npm --prefix site run build"
+command = "npm --prefix site ci && npm --prefix site run build"
 
 [observability.logs]
 enabled = true
 
 [assets]
 directory = "./site/dist"
-not_found_handling = "single-page-application"
+not_found_handling = "404-page"
 
 [[routes]]
 pattern = "astro.subsurfaces.net"

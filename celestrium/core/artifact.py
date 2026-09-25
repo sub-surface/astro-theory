@@ -51,7 +51,11 @@ def jsonable(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, str)):
         return value
     if isinstance(value, float):
-        # JSON has no NaN/Infinity; keep them representable as strings.
+        # JSON has no NaN/Infinity. NaN means "no value" -> null (a "nan"
+        # string would read back as text in a numeric field); +-inf stay
+        # representable as strings.
+        if math.isnan(value):
+            return None
         return value if math.isfinite(value) else str(value)
     if isinstance(value, Path):
         return value.as_posix()

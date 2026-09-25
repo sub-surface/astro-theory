@@ -163,11 +163,11 @@ def run_dipole_injection_benchmark(
                 true_alm = np.linalg.pinv(K) @ pseudo_alm
 
             # Dipole vector components from l=1 real Y_lm:
-            # Y_{1,-1} ~ y, Y_{1,0} ~ z, Y_{1,1} ~ x
-            # Since a_1m = D * sqrt(4*pi/3), we recover D via D = a_1m * sqrt(3/(4*pi))
+            # Y_{1,-1} = -sqrt(3/4pi) y, Y_{1,0} = sqrt(3/4pi) z, Y_{1,1} = -sqrt(3/4pi) x
+            # (Condon-Shortley phase), so D_x = -a_{1,1} sqrt(3/(4*pi)), D_y = -a_{1,-1} sqrt(3/(4*pi))
             norm_fact = math.sqrt(3.0 / (4.0 * math.pi))
-            dx_dec = true_alm[3] * norm_fact  # m=+1
-            dy_dec = true_alm[1] * norm_fact  # m=-1
+            dx_dec = -true_alm[3] * norm_fact  # m=+1
+            dy_dec = -true_alm[1] * norm_fact  # m=-1
             dz_dec = true_alm[2] * norm_fact  # m=0
 
             dec_vec = np.array([dx_dec, dy_dec, dz_dec])
@@ -220,7 +220,7 @@ def run_dipole_injection_benchmark(
                 palm = omega_pix * (Y.T @ (mask_plane.astype(float) * dm))
                 talm = np.linalg.pinv(K) @ palm
                 norm_f = math.sqrt(3.0 / (4.0 * math.pi))
-                v = np.array([talm[3]*norm_f, talm[1]*norm_f, talm[2]*norm_f])
+                v = np.array([-talm[3]*norm_f, -talm[1]*norm_f, talm[2]*norm_f])
                 res_list.append(np.linalg.norm(v))
         frac_errors.append(float(np.std(res_list) / d_fiducial))
 
@@ -276,8 +276,8 @@ def run_dipole_injection_benchmark(
     for i, d_val in enumerate(d_injected_values[2:]):
         ax4.scatter(recovered_l_mean[i+2], recovered_b_mean[i+2], color="#1f77b4", s=60 + i*15, alpha=0.8,
                     label=f"$D={d_val}$" if i in [0, 2, 5] else None)
-    ax4.set_xlim(180, 360)
-    ax4.set_ylim(0, 90)
+    ax4.set_xlim(0, 360)
+    ax4.set_ylim(-90, 90)
     ax4.set_xlabel("Galactic Longitude $l$ (deg)", fontsize=11)
     ax4.set_ylabel("Galactic Latitude $b$ (deg)", fontsize=11)
     ax4.set_title("Panel 4: Reconstructed Dipole Apex Direction", fontsize=12, fontweight="bold")

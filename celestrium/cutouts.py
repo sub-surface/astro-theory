@@ -194,15 +194,15 @@ def fetch_direct_cutout(hips, ra, dec, fov_arcmin, max_pix=2048):
     import matplotlib.image as mpimg
 
     fov_arcsec = fov_arcmin * 60.0
+    if not fov_arcsec > 0:              # 0/negative/nan FOV: nothing to cut
+        return None
 
     if "DESI-Legacy-Surveys" in hips:
-        size = int(fov_arcsec / 0.262)
-        size = min(size, max_pix)
+        size = max(1, min(int(fov_arcsec / 0.262), max_pix))
         scale = fov_arcsec / size
         url = f"https://www.legacysurvey.org/viewer/jpeg-cutout?ra={ra}&dec={dec}&pixscale={scale:.4f}&size={size}"
     elif "SDSS" in hips:
-        size = int(fov_arcsec / 0.396)
-        size = min(size, max_pix)
+        size = max(1, min(int(fov_arcsec / 0.396), max_pix))
         scale = fov_arcsec / size
         url = f"https://skyserver.sdss.org/dr18/SkyServerWS/ImgCutout/getjpeg?ra={ra}&dec={dec}&scale={scale:.4f}&width={size}&height={size}"
     else:
@@ -341,6 +341,8 @@ def poster(ra, dec, fov_arcmin=8.0, hips=None, width=1920, height=1080,
     style='clean' writes only the image; 'label' adds a small caption; 'science'
     adds a caption plus a subtle centre marker. Returns the saved path.
     """
+    if not fov_arcmin or not fov_arcmin > 0:
+        raise ValueError(f"poster needs a positive fov_arcmin, got {fov_arcmin!r}")
     candidates = [(hips, "requested HiPS")] if hips else color_hips_candidates(dec)
     OUT.mkdir(parents=True, exist_ok=True)
     out = out or OUT / f"poster_{ra:.4f}_{dec:+.4f}_{width}x{height}.jpg"
@@ -384,7 +386,8 @@ def poster(ra, dec, fov_arcmin=8.0, hips=None, width=1920, height=1080,
     dpi = 100
     fig = plt.figure(figsize=(width / dpi, height / dpi), dpi=dpi)
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.imshow(img, origin="lower", aspect="auto")
+    # JPEG/hips2fits-jpg arrays are row 0 = top; origin='lower' flipped them.
+    ax.imshow(img, aspect="auto")
     ax.set_axis_off()
     if label and style in {"label", "science"}:
         ax.text(0.025, 0.045, label, transform=ax.transAxes,

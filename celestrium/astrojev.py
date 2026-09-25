@@ -10,6 +10,7 @@ A first-principles, non-autoregressive decision model combining:
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 import torch
@@ -89,7 +90,8 @@ def tsallis_score_reward(
 ) -> torch.Tensor:
     """Tsallis alpha-divergence strictly proper scoring rule.
 
-    S_alpha(p, y) = [alpha / (alpha - 1)] * p_y^(alpha - 1) - [1 / (alpha - 1)] * sum_k p_k^alpha - 1
+    S_alpha(p, y) = [alpha / (alpha - 1)] * p_y^(alpha - 1) - sum_k p_k^alpha - 1
+    (the sum term carries no 1/(alpha - 1) factor; with it the rule is improper for alpha != 2).
     Interpolates continuously between Log Score (alpha -> 1) and Brier Score (alpha = 2).
     For alpha in (1, 2], polynomial bounded gradients prevent logit divergence on corrupted spectra.
     """
@@ -103,7 +105,7 @@ def tsallis_score_reward(
     sum_p_alpha = torch.sum(p_clamped ** alpha, dim=-1)
 
     term1 = (alpha / (alpha - 1.0)) * (p_y ** (alpha - 1.0))
-    term2 = (1.0 / (alpha - 1.0)) * sum_p_alpha
+    term2 = sum_p_alpha
     return term1 - term2 - 1.0
 
 
@@ -490,9 +492,14 @@ def conformal_evidential_calibrate(
     p_true = probs[np.arange(n), labels]
     nonconf_scores = (1.0 - p_true) + lambda_epi * u_epi
 
-    # Conformal quantile level: ceil((n + 1) * (1 - alpha_error)) / n
-    level = min(1.0, math.ceil((n + 1) * (1.0 - alpha_error)) / n)
-    q_hat = float(np.quantile(nonconf_scores, level, method="higher"))
+    # Conformal quantile level: ceil((n + 1) * (1 - alpha_error)) / n.
+    # If that rank exceeds n, the calibration set is too small for the requested
+    # coverage and the valid threshold is +inf (predict all classes).
+    rank = math.ceil((n + 1) * (1.0 - alpha_error))
+    if rank > n:
+        q_hat = float("inf")
+    else:
+        q_hat = float(np.quantile(nonconf_scores, rank / n, method="higher"))
 
     # Compute empirical coverage on calibration set
     sets = conformal_predict_sets(probs, u_epi, q_hat=q_hat, lambda_epi=lambda_epi)
@@ -575,7 +582,9 @@ def conformal_risk_control_calibrate(
     (contamination rate of non-target contaminants in target_class selection) satisfies:
         E[FDR] <= alpha_risk with finite-sample guarantee under exchangeability.
 
-    Returns calibrated threshold lambda_hat and empirical risk statistics.
+    Returns calibrated threshold lambda_hat and empirical risk statistics. The
+    ``feasible`` key is False when no threshold selects any sample while meeting
+    the risk bound (the returned lambda_hat then selects nothing; a warning is issued).
     """
     n = len(labels)
     if n == 0:
@@ -590,6 +599,7 @@ def conformal_risk_control_calibrate(
     best_lambda = 1.0
     best_risk = 0.0
     best_retention = 0.0
+    best_n_selected = 0
 
     for lam in candidate_lambdas:
         selected = target_probs >= lam
@@ -608,7 +618,18 @@ def conformal_risk_control_calibrate(
             best_lambda = float(lam)
             best_risk = float(risk)
             best_retention = float(n_selected / n)
+            best_n_selected = n_selected
             break
+
+    feasible = best_n_selected > 0
+    if not feasible:
+        warnings.warn(
+            f"conformal_risk_control_calibrate: no threshold selects any sample of class "
+            f"{target_class} with adjusted risk <= alpha_risk={alpha_risk} (n={n}); "
+            f"lambda_hat={best_lambda} selects nothing.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     return {
         "lambda_hat": best_lambda,
@@ -617,6 +638,7 @@ def conformal_risk_control_calibrate(
         "sample_retention": best_retention,
         "n_samples": n,
         "target_class": target_class,
+        "feasible": feasible,
     }
 
 

@@ -19,7 +19,7 @@ Key Features:
    - 4-Class Dirichlet Evidential Network:
      ["Exoplanet_Candidate", "Stellar_Activity_Mimic", "Eclipsing_Binary_Blend", "Instrumental_Artifact"]
    - Analytical Dirichlet posterior standard deviations sigma_k and 95% Credible Intervals.
-   - Epistemic vacuity u_epi = K / (S + K) and BALD mutual information.
+   - Epistemic vacuity u_epi = K / S (S = sum_k alpha_k) and BALD mutual information.
 
 3. Disentangled RLCD Calibration (TUM 2026 / Rewarding Doubt):
    - Frozen representation trunk during calibration fine-tuning.

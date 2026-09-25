@@ -195,8 +195,10 @@ def deconvolve_dipole(
     l_raw = float(np.degrees(np.arctan2(vec_raw[1], vec_raw[0])) % 360.0)
     b_raw = float(np.degrees(np.arcsin(np.clip(vec_raw[2] / max(amp_raw, 1e-12), -1.0, 1.0))))
 
-    # Error estimation via Poisson shot noise propagation
-    cov_pseudo = (omega_pix / max(total_counts, 1.0)) * K
+    # Error estimation via Poisson shot noise propagation.
+    # Var(delta_p) = 1 / (nbar * w_p) with nbar = N_tot / sum(w), so
+    # Cov(c_pseudo) = omega_pix^2 * sum_p w_p^2 Var(delta_p) Y Y^T = omega_pix * (sum(w) / N_tot) * K.
+    cov_pseudo = (omega_pix * total_eff_pix / max(total_counts, 1.0)) * K
     cov_c = inv_K @ cov_pseudo @ inv_K.T
     sigma_D = float(y1_factor * np.sqrt(np.trace(cov_c[idx_l1, :][:, idx_l1]) / 3.0))
 

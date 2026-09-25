@@ -37,6 +37,50 @@ from .astrojev import CLASSES, CLASS_TO_IDX, NUM_FEATURES, dirichlet_bald_inform
 from .evidential_astrojev import EvidentialAstroJev
 
 
+_ICRS_TO_GAL: Optional[np.ndarray] = None
+
+
+def _icrs_to_galactic_matrix() -> np.ndarray:
+    """Rotation matrix ICRS -> Galactic, taken from astropy once and cached.
+
+    The astropy ICRS->Galactic transform is a fixed rotation, so transforming
+    the three unit basis vectors recovers it exactly; per-alert SkyCoord calls
+    would dominate the streaming latency budget.
+    """
+    global _ICRS_TO_GAL
+    if _ICRS_TO_GAL is None:
+        from astropy.coordinates import SkyCoord
+        basis = SkyCoord(
+            x=[1.0, 0.0, 0.0], y=[0.0, 1.0, 0.0], z=[0.0, 0.0, 1.0],
+            representation_type="cartesian", frame="icrs",
+        )
+        gal = basis.galactic.cartesian
+        # Column j = image of ICRS basis vector j in Galactic cartesian coords.
+        _ICRS_TO_GAL = np.vstack([gal.x.value, gal.y.value, gal.z.value])
+    return _ICRS_TO_GAL
+
+
+def _radec_to_vec(lon_deg: float, lat_deg: float) -> np.ndarray:
+    lon, lat = math.radians(lon_deg), math.radians(lat_deg)
+    return np.array([math.cos(lat) * math.cos(lon), math.cos(lat) * math.sin(lon), math.sin(lat)])
+
+
+def _vec_to_lonlat(v: np.ndarray) -> Tuple[float, float]:
+    lon = math.degrees(math.atan2(v[1], v[0])) % 360.0
+    lat = math.degrees(math.asin(max(-1.0, min(1.0, float(v[2])))))
+    return lon, lat
+
+
+def icrs_to_galactic(ra_deg: float, dec_deg: float) -> Tuple[float, float]:
+    """ICRS (RA, Dec) in degrees -> Galactic (l, b) in degrees."""
+    return _vec_to_lonlat(_icrs_to_galactic_matrix() @ _radec_to_vec(ra_deg, dec_deg))
+
+
+def galactic_to_icrs(l_deg: float, b_deg: float) -> Tuple[float, float]:
+    """Galactic (l, b) in degrees -> ICRS (RA, Dec) in degrees."""
+    return _vec_to_lonlat(_icrs_to_galactic_matrix().T @ _radec_to_vec(l_deg, b_deg))
+
+
 @dataclass
 class AlertRecord:
     """Standardized time-domain astronomical alert packet."""
@@ -113,13 +157,8 @@ class RubinBurstSimulator(AlertSource):
             ra = float(self.rng.uniform(0.0, 360.0))
             dec = float(np.degrees(np.arcsin(self.rng.uniform(-1.0, 1.0))))
             
-            # Approximate galactic coordinates
-            gal_l = (ra + 60.0) % 360.0
-            gal_b = dec + 15.0
-            if gal_b > 90.0:
-                gal_b = 180.0 - gal_b
-            elif gal_b < -90.0:
-                gal_b = -180.0 - gal_b
+            # Galactic coordinates (ICRS -> Galactic rotation from astropy)
+            gal_l, gal_b = icrs_to_galactic(ra, dec)
 
             # 2. Population Archetype Selection
             # 60% Stars, 25% Normal Galaxies, 10% Quasars/AGN, 5% Rare Transients
@@ -232,10 +271,11 @@ class FinkLiveAlertSource(AlertSource):
                     f_band = str(item.get("d:fid", "r"))
                     alert_id = str(item.get("d:objectId", item.get("objectId", f"FINK_{n_emitted:05d}")))
                     
-                    # Synthesize features from Fink fields
+                    # Synthesize features from Fink fields (slots 7/8 are galactic l/b)
+                    gal_l, gal_b = icrs_to_galactic(ra, dec)
                     feat = np.array([
                         mag, 0.6, -0.2, mag - 2.0, 0.8, 0.5, 0.2,
-                        (ra % 360.0) / 360.0, (dec + 90.0) / 180.0, 1.0857 / max(sig, 0.01)
+                        gal_l / 360.0, (gal_b + 90.0) / 180.0, 1.0857 / max(sig, 0.01)
                     ], dtype=np.float32)
 
                     yield AlertRecord(
@@ -353,8 +393,8 @@ class StreamingTriageEngine:
         doubt_rew = float(np.log(max(conf, 1e-3)))
 
         # TruthRL Ternary Decision Gating & Conformal Risk Control Policy
-        is_transient_archetype = "Transient" in str(alert.metadata.get("archetype", ""))
-        if is_transient_archetype or bald_gain >= self.bald_threshold or (top_idx == 0 and (u_epi >= 0.35 or conf_err >= 0.12)):
+        # Decision uses model outputs only (never the simulator's ground-truth archetype label).
+        if bald_gain >= self.bald_threshold or (top_idx == 0 and (u_epi >= 0.35 or conf_err >= 0.12)):
             action = "URGENT_FOLLOWUP"
             rec = f"High information yield ({bald_gain:.3f} nats, +/-{conf_err:.2f}). Dispatch autonomous follow-up trigger."
         elif conf >= self.crc_lambda and u_epi <= 0.25 and delta_eq <= 0.12 and ci_95[0] >= 0.50:
