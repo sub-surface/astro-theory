@@ -37,7 +37,7 @@ celestrium/                 Core instrument package
   cli.py                    Headless Typer CLI interface (run with --json)
 site/                       Interactive research platform & living manuscripts (Astro, OLED, https://astro.subsurfaces.net)
 docs/research/              Pre-registered proposals, experiment indexes, and literature dossiers
-tests/                      Hermetic test suite (244 passing tests, 100% network-independent)
+tests/                      Hermetic test suite (247 passing tests, 100% network-independent)
 modal_app.py                Distributed GPU cloud training & triage service (Modal)
 wrangler.toml               Cloudflare Workers deployment config with automated [build] command
 ```
@@ -77,7 +77,7 @@ wrangler.toml               Cloudflare Workers deployment config with automated 
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (currently 244 passing tests).
+- Verify regularly: `python -m pytest` (currently 247 passing tests).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.

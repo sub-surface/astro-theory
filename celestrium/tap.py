@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from typing import Optional, List
 import pyvo
+import requests
+
+from .net import DEFAULT_TIMEOUT, set_timeout
 
 ENDPOINTS = {
     "gaia":       "https://gea.esac.esa.int/tap-server/tap",
@@ -29,17 +32,35 @@ AVAILABILITY = {
 }
 
 
-class TAPClient:
-    """A clean, reusable client for any IVOA TAP service."""
+class TimeoutSession(requests.Session):
+    """Requests session enforcing a default network timeout on all HTTP calls."""
 
-    def __init__(self, endpoint_url: str):
+    def __init__(self, timeout: float = DEFAULT_TIMEOUT, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.timeout = timeout
+
+    def request(self, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.timeout
+        return super().request(*args, **kwargs)
+
+
+class TAPClient:
+    """A clean, reusable client for any IVOA TAP service with configurable timeouts."""
+
+    def __init__(self, endpoint_url: str, timeout: float = DEFAULT_TIMEOUT):
         self.endpoint_url = endpoint_url
+        self.timeout = timeout
         self._service: Optional[pyvo.dal.TAPService] = None
 
     @property
     def service(self) -> pyvo.dal.TAPService:
         if self._service is None:
-            self._service = pyvo.dal.TAPService(self.endpoint_url)
+            try:
+                session = TimeoutSession(timeout=self.timeout)
+                self._service = pyvo.dal.TAPService(self.endpoint_url, session=session)
+            except TypeError:
+                self._service = pyvo.dal.TAPService(self.endpoint_url)
         return self._service
 
     def query(self, adql: str):
@@ -55,17 +76,20 @@ class TAPClient:
         return [t for t in tables if sub in t.lower()]
 
 
-def _query_driver(archive: str, adql: str):
+def _query_driver(archive: str, adql: str, timeout: float = DEFAULT_TIMEOUT):
     """Attempt specialized astroquery driver if available, else raise."""
     if archive == "gaia":
         from astroquery.gaia import Gaia
+        set_timeout(Gaia, int(timeout))
         job = Gaia.launch_job_async(adql)
         return job.get_results()
     elif archive == "irsa":
         from astroquery.ipac.irsa import Irsa
+        set_timeout(Irsa, int(timeout))
         return Irsa.query_tap(adql).to_table()
     elif archive == "euclid":
         from astroquery.esa.euclid import Euclid
+        set_timeout(Euclid, int(timeout))
         job = Euclid.launch_job(adql)
         return job.get_results()
     elif archive == "heasarc":

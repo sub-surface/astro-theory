@@ -77,3 +77,71 @@ def test_object_watch_produces_table(monkeypatch, tmp_path):
     tab = k.load(art.id)
     assert len(tab) == 1
     assert tab["main_id"][0] == "ZTF20abc"
+
+
+def test_object_highenergy_produces_table(monkeypatch, tmp_path):
+    monkeypatch.setattr(resolvers, "resolve_target", _fake_resolve)
+    from celestrium import heasarc
+    monkeypatch.setattr(heasarc, "tap_query", lambda *args, **kwargs: None)
+    
+    k = Kernel(Ledger(tmp_path / "test.db"))
+    art = k.run("object.highenergy", {"target": "M87", "catalog": "chanmaster", "radius_deg": 0.2})
+    
+    assert art.kind == "table"
+    tab = k.load(art.id)
+    assert len(tab) > 0
+    assert "obsid" in tab.colnames
+    assert ("name" in tab.colnames) or ("target_name" in tab.colnames)
+
+
+def test_object_exoplanets_produces_table(monkeypatch, tmp_path):
+    def _fake_trappist_resolve(target):
+        return resolvers.ResolvedTarget(
+            display_name="TRAPPIST-1",
+            aliases=("2MASS J23062928-0502285",),
+            ra=346.622,
+            dec=-5.041,
+            otype="M*",
+            object_class="star",
+            confidence=1.0,
+            match_kind="exact",
+        )
+    monkeypatch.setattr(resolvers, "resolve_target", _fake_trappist_resolve)
+    import requests
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(requests.ConnectionError("offline")))
+    
+    k = Kernel(Ledger(tmp_path / "test.db"))
+    art = k.run("object.exoplanets", {"target": "TRAPPIST-1"})
+    
+    assert art.kind == "table"
+    tab = k.load(art.id)
+    assert len(tab) >= 4
+    assert "pl_name" in tab.colnames
+    assert "pl_orbper" in tab.colnames
+
+
+def test_object_transits_produces_table(monkeypatch, tmp_path):
+    def _fake_trappist_resolve(target):
+        return resolvers.ResolvedTarget(
+            display_name="TRAPPIST-1",
+            aliases=("2MASS J23062928-0502285",),
+            ra=346.622,
+            dec=-5.041,
+            otype="M*",
+            object_class="star",
+            confidence=1.0,
+            match_kind="exact",
+        )
+    monkeypatch.setattr(resolvers, "resolve_target", _fake_trappist_resolve)
+    import requests
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(requests.ConnectionError("offline")))
+    
+    k = Kernel(Ledger(tmp_path / "test.db"))
+    art = k.run("object.transits", {"target": "TRAPPIST-1"})
+    
+    assert art.kind == "table"
+    tab = k.load(art.id)
+    assert len(tab) > 0
+    assert "pl_name" in tab.colnames
+    assert "transit_midpoint_mjd" in tab.colnames
+    assert "duration_hours" in tab.colnames

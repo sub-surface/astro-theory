@@ -163,10 +163,11 @@
       timeLine.setAttribute('x1', xPos);
       timeLine.setAttribute('x2', xPos);
 
-      // Kasen magnitude scaling
+      // Kasen magnitude scaling with physical distance modulus Delta mu = 5*log10(d / 100 Mpc)
       var distMod = 5.0 * Math.log10((d * 1e6) / 10.0);
-      var magG = 18.0 + 1.1 * Math.pow(t / 12.0, 0.8) + (distMod - 37.0) * 0.4;
-      var magZ = 18.5 + 0.4 * Math.pow(t / 24.0, 0.7) + (distMod - 37.0) * 0.4;
+      var deltaMu = distMod - 35.0; // Reference distance 100 Mpc (mu_0 = 35.0)
+      var magG = 18.0 + 1.1 * Math.pow(t / 12.0, 0.8) + deltaMu;
+      var magZ = 18.5 + 0.4 * Math.pow(t / 24.0, 0.7) + deltaMu;
 
       // Coordinate y in SVG (17 mag = y:20, 23 mag = y:170)
       var yG = 20 + ((magG - 17.0) / 6.0) * 150;

@@ -11,7 +11,7 @@ class DummyTableEntry:
 
 
 class DummyService:
-    def __init__(self, endpoint):
+    def __init__(self, endpoint, *args, **kwargs):
         self.endpoint = endpoint
         self.tables = [
             DummyTableEntry("gaiadr3.gaia_source"),

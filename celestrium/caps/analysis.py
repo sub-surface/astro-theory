@@ -742,18 +742,37 @@ def conformal_risk_control_cap(ctx, catalog, alpha_risk, model_checkpoint):
     from ..experiments import quaia_pseudo_cl
 
     # Calibrate risk control on Quaia / synthetic benchmark
-    # Use synthetic calibrated distribution if real FITS not present
-    cat_path = Path(catalog)
-    if cat_path.is_file():
-        # Load and run quick calibration
-        pass
-
     import numpy as np
-    rng = np.random.default_rng(42)
-    n = 2000
-    labels = rng.binomial(1, 0.5, n)
-    qso_probs = np.where(labels == 0, rng.beta(6, 2, n), rng.beta(1, 5, n))
-    probs = np.column_stack([qso_probs, 1.0 - qso_probs])
+
+    cat_path = Path(catalog)
+    probs = None
+    labels = None
+    if cat_path.is_file():
+        try:
+            if cat_path.suffix.lower() in (".fits", ".fit"):
+                from astropy.io import fits
+                with fits.open(str(cat_path), memmap=True) as hdul:
+                    data = hdul[1].data
+                    cols = [c.lower() for c in data.names] if hasattr(data, "names") else []
+                    if "p_qso" in cols and "label" in cols:
+                        qso_p = np.asarray(data["p_qso"][:50000], dtype=np.float64)
+                        lbl = np.asarray(data["label"][:50000], dtype=np.int64)
+                        probs = np.column_stack([qso_p, 1.0 - qso_p])
+                        labels = lbl
+            elif cat_path.suffix.lower() in (".npz",):
+                np_data = np.load(str(cat_path))
+                if "probs" in np_data and "labels" in np_data:
+                    probs = np.asarray(np_data["probs"], dtype=np.float64)
+                    labels = np.asarray(np_data["labels"], dtype=np.int64)
+        except Exception as exc:
+            ctx.progress(f"Notice: catalog {catalog} parsing failed ({exc}); falling back to benchmark.")
+
+    if probs is None or labels is None:
+        rng = np.random.default_rng(42)
+        n = 2000
+        labels = rng.binomial(1, 0.5, n)
+        qso_probs = np.where(labels == 0, rng.beta(6, 2, n), rng.beta(1, 5, n))
+        probs = np.column_stack([qso_probs, 1.0 - qso_probs])
 
     res = conformal_risk_control_calibrate(probs, labels, alpha_risk=alpha_risk, target_class=0)
     ctx.progress(f"Conformal Risk Control: lambda_hat = {res['lambda_hat']:.4f} "
