@@ -23,9 +23,28 @@ from celestrium.multimessenger import (
 )
 
 
-def test_real_astro_data_streamer():
-    streamer = RealAstroDataStreamer(chunk_size=1000, sample_noise=True, seed=42)
-    assert len(streamer.active_backends) > 0
+def test_real_astro_data_streamer(tmp_path):
+    # The real catalogs under data/ are gitignored, so use a small npz fixture
+    # to keep this test hermetic on a fresh clone.
+    rng = np.random.default_rng(0)
+    n = 50
+    npz_path = tmp_path / "phenomena.npz"
+    np.savez(
+        npz_path,
+        mu=rng.normal(size=(n, 10)).astype(np.float32),
+        sigma=rng.uniform(0.01, 0.3, (n, 6)).astype(np.float32),
+        mask=np.ones((n, 6), np.float32),
+        labels=rng.integers(0, 12, n),
+    )
+    streamer = RealAstroDataStreamer(
+        npz_dataset_path=npz_path,
+        gaia_cache_path=None,
+        quaia_fits_path=None,
+        chunk_size=1000,
+        sample_noise=True,
+        seed=42,
+    )
+    assert streamer.active_backends == ["npz_dataset"]
     records = list(streamer.stream_records(limit=10))
     assert len(records) == 10
 

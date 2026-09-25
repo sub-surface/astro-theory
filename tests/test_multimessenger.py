@@ -28,6 +28,7 @@ from celestrium.multimessenger import (
     analytical_dirichlet_bald,
     calibrate_conformal_risk_control,
     MultiMessengerTriageEngine,
+    train_multimessenger_model,
     run_empty_sky_null_audit,
     run_spatiotemporal_scrambling_mc,
     fetch_gracedb_alert,
@@ -207,7 +208,11 @@ def test_end_to_end_multimessenger_triage():
         inject_kilonova=True,
         seed=101,
     )
-    engine = MultiMessengerTriageEngine(alpha_crc=0.05, crc_lambda=0.65)
+    # Train a small model: the engine's default checkpoint is gitignored, and a
+    # randomly initialized net cannot be expected to flag the injected kilonova.
+    torch.manual_seed(0)
+    model = train_multimessenger_model(n_train=1200, n_val=300, epochs=5, save_path=None, device="cpu")["model"]
+    engine = MultiMessengerTriageEngine(model=model, alpha_crc=0.05, crc_lambda=0.65, device="cpu")
     results = engine.triage_candidates(cands, gw, nu)
 
     assert len(results) == len(cands)
