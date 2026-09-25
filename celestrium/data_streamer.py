@@ -934,3 +934,21 @@ class RealMultiMessengerStreamingDataset(IterableDataset):
                 torch.from_numpy(np.array(label_buf, dtype=np.int64)),
             )
 
+
+# --------------------------------------------------------------------------- #
+# 6. Real CHIME/FRB Transit Radio Burst Streamer
+# --------------------------------------------------------------------------- #
+class CHIMEFRBStreamer:
+    """Streams Fast Radio Burst observations from CHIME/FRB Catalog 1."""
+
+    def __init__(self, catalog_path: Optional[str | Path] = "data/chime_frb_catalog1.npz", seed: int = 42):
+        from .frb import RealCHIMEFRBStreamer
+        self._inner = RealCHIMEFRBStreamer(data_path=catalog_path, seed=seed)
+
+    def __len__(self) -> int:
+        return len(self._inner)
+
+    def stream_bursts(self):
+        """Yield FRBBurstRecord objects."""
+        return self._inner.stream_bursts()
+

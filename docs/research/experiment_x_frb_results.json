@@ -1,0 +1,35 @@
+{
+  "experiment_id": "EXP-2026-X",
+  "title": "Fast Radio Burst Evidential Dispersion Triage & Host Localization",
+  "data_source": "CHIME/FRB Public Catalog 1 (600 real bursts)",
+  "timestamp_utc": "2026-09-25T14:48:01Z",
+  "n_bursts_analyzed": 600,
+  "calibration": {
+    "pre_rlcd_debiased_e2": 0.2178893194300781,
+    "pre_rlcd_ece": 0.4666426946719487,
+    "post_rlcd_debiased_e2": 0.16978515848497172,
+    "post_rlcd_ece": 0.41859413534402845,
+    "relative_error_reduction_pct": 22.07733773776979,
+    "crc_alpha_risk": 0.05,
+    "crc_lambda_hat": 0.43958768248558044,
+    "crc_sample_retention": 0.5119047619047619
+  },
+  "triage_breakdown": {
+    "commit_8m_host_spectroscopy": 164,
+    "monitor_radio_repetition": 190,
+    "flag_local_plasma_contaminant": 72,
+    "reject_rfi": 174,
+    "mean_epistemic_vacuity": 0.5545534145335357,
+    "mean_credible_interval_width": 0.6601201123923064
+  },
+  "cosmological_redshift_horizon": {
+    "min_z": 0.10515789473684212,
+    "median_z": 0.627,
+    "max_z": 2.247263157894737
+  },
+  "performance": {
+    "training_time_sec": 1.7882918999530375,
+    "triage_latency_ms_per_alert": 0.07649466667013864
+  },
+  "figure_path": "docs\\research\\figures\\experiment_x_frb_triage.png"
+}

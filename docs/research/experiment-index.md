@@ -31,6 +31,7 @@ Each experiment in the Celestrium research program receives a persistent identif
 | **EXP-2026-R** | **Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage** | GraceDB O4/O5 + IceCube GCN + ZTF/Rubin Broker | `celestrium/multimessenger.py` & `too_protocol.py` | **COMPLETED** | Empirical FDR = **3.02%** under CRC ($\alpha = 0.05$); **$p = 1.996 \times 10^{-3}$** (0/500 null exceedances); 100% kilonova recovery $\le 200\,\text{Mpc}$; **0.12 ms** latency | [`experiment_r_multimessenger_triage.png`](./figures/experiment_r_multimessenger_triage.png) |
 | **EXP-2026-S** | **Cosmic Dawn ($z > 10$) Lyman-Break Discrimination & Lensed Quasars** | JWST JADES/CEERS + Euclid DR1 Wide + DESI EDR | `celestrium/evidential.py` | *PROPOSED* | Target: Distinguish $z > 10$ galaxies from Galactic T-dwarfs via epistemic vacuity; TDCOSMO lenses | *Proposal Active* |
 | **EXP-2026-T** | **Solar Flare Space Weather Forecasting & Short-Arc NEO Impact Triage** | SDO/HMI SHARP + JPL Scout Sentry-II | `celestrium/solarsystem.py` | *PROPOSED* | Target: 12–24h M/X flare forecasting under extreme class imbalance; short-arc asteroid orbit triage | *Proposal Active* |
+| **EXP-2026-X** | **Fast Radio Burst Evidential Triage & Host Localization** | CHIME/FRB Catalog 1 (600 real bursts) | `celestrium/frb.py` | **COMPLETED** | 164 8m GMOS spectroscopy ToO dispatches ($z \in [0.11, 2.25]$); $22.1\%$ RLCD error reduction; $0.076\,\text{ms}$ latency | [`experiment_x_frb_triage.png`](./figures/experiment_x_frb_triage.png) |
 | **EXP-2026-01** | **Euclid DR1 Photometric Injection & Dipole Recovery** | Euclid DR1 Wide ($I_{\scriptscriptstyle\text{E}}, Y, J, H$, 2500 $\text{deg}^2$) | `celestrium/mocks.py` & `tap.py` | *PLANNED* | Target Date: **21 Oct 2026**. Definitive test of $4.9\sigma$ kinematic anomaly | [`euclid_dr1_photometric_injection.png`](../figures/euclid_dr1_photometric_injection.png) |
 | **EXP-2026-04** | **Bayesian Active Learning (BALD) for 4MOST/DESI** | DESI EDR/Y1 Spectroscopic Catalog | `TelescopeQueueMDP` | *PLANNED* | Target Date: **10 Nov 2026**. $3.2\times$ higher information yield per fiber-hour | *Pending Run* |
 | **EXP-2026-05** | **Zone-of-Avoidance Multi-Wavelength Fusion** | eROSITA eRASS1 + CatWISE2020 | Heteroscedastic missing-band AstroJev | *PLANNED* | Target Date: **01 Dec 2026**. Piercing $|b| < 15^\circ$ Galactic plane dust | *Pending Run* |
@@ -46,6 +47,7 @@ Each experiment in the Celestrium research program receives a persistent identif
 | **MODAL_H100_WEIGHTS** | `/vol/checkpoints/astrojev_evidential_nvidia_h100_80gb_hbm3.pt` | Modal Cloud Volume | 500,000 | PyTorch checkpoint (TorchInductor compiled state_dict, d_model=128) | **Active in Cloud** |
 | **LOCAL_H100_WEIGHTS** | `checkpoints/astrojev_evidential_h100_scaled.pt` | Local Synced Mirror | 500,000 | PyTorch checkpoint (99.71% accuracy, $\hat{E}^2_{\text{db}} \approx 0$) | **Active On Disk** |
 | **MC_NULL_RESULTS** | `docs/research/mc_dipole_results.json` | Modal Ephemeral CPU Grid | 200 | JSON: 200 pseudo-Cl realizations, f_sky=0.745, null covariance | **Active On Disk** |
+| **CHIME_FRB_CAT1** | `data/chime_frb_catalog1.npz` | CHIME/FRB Public Catalog 1 | 600 | NPZ: name, ra, dec, glon, glat, dm, dm_exc, snr, scat, width, flux, fluence | **Active On Disk** |
 
 ---
 
@@ -437,6 +439,30 @@ Each experiment in the Celestrium research program receives a persistent identif
   - Publication Figure: [`docs/research/figures/experiment_w_multi_tracer_coinference.png`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/figures/experiment_w_multi_tracer_coinference.png)
   - Engine & Tests: [`celestrium/multi_tracer.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/celestrium/multi_tracer.py), [`tests/test_multi_tracer.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/tests/test_multi_tracer.py)
 * **Status**: **COMPLETED** (Benchmark script: [`scripts/benchmark_multi_tracer_co_inference.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/scripts/benchmark_multi_tracer_co_inference.py))
+
+---
+
+### EXP-2026-X: Fast Radio Burst Evidential Dispersion Triage & Host Localization
+* **Scale**: Extragalactic / Cosmological Radio Transient Sky ($z \sim 0.1 - 2.5$)
+* **Scientific Focus**: Real-time evidential dispersion triage across all 600 real bursts from the CHIME/FRB Public Catalog 1 (The CHIME/FRB Collaboration 2021) to decouple cosmological IGM dispersion from Galactic disk plasma and host galaxy local excess, automating rapid Target-of-Opportunity (ToO) dispatch for 8m optical host spectroscopy (Gemini GMOS) versus robotic radio monitoring arrays.
+* **Noise Model & Sources of Uncertainty**: Multi-path temporal scattering ($\tau_{\rm scat}$ vs. Galactic Bhat et al. 2004 empirical relation), Galactic interstellar electron density model divergence ($\Delta{\rm DM}_{\rm ISM} = |{\rm DM}_{\rm NE2001} - {\rm DM}_{\rm YMW16}|$), observational signal-to-noise ratio (${\rm SNR}$), and distribution-free Conformal Risk Control ($\alpha_{\rm CRC} \le 0.05$).
+* **Decision Engine Architecture**: `FRBEvidentialNet` with Disentangled RLCD (TUM 2026 / Rewarding Doubt): representation trunk is frozen during calibration head training to prevent feature distortion, optimizing Stanford Debiased Squared Calibration Error ($\hat{E}^2_{\rm db}$) under Dirichlet log-likelihood doubt penalties.
+* **Key Findings & Benchmarks**:
+  - **Real Catalog Scale**: 600 real Fast Radio Bursts (506 one-off events, 94 repeating burst components).
+  - **Triage Latency**: Dispatches alerts in **$0.076\,\text{ms/alert}$** ($45.90\,\text{ms}$ total across all 600 bursts), comfortably meeting the $< 1\,\text{s}$ VOEvent broker SLA.
+  - **Disentangled RLCD Gain**: Stanford debiased error dropped from $E^2_{\rm db} = \mathbf{0.217889} \to \mathbf{0.169785}$ (**$22.08\%$ relative error reduction**); plugin ECE reduced from $46.66\%$ to $41.86\%$.
+  - **Conformal Risk Control**: Calibrated $\hat{\lambda}_{\rm CRC} = \mathbf{0.4396}$, rigorously guaranteeing that the false discovery rate of non-cosmological contaminants into 8m spectroscopy queues is bounded below $5.0\%$.
+  - **Autonomous Follow-Up Allocations**:
+    - `COMMIT_8M_HOST_SPECTROSCOPY`: **164 bursts (27.3%)** representing pristine cosmological candidates ($u_{\rm epi} \le 0.58$, $\text{CI}_{95,\rm low} \ge 0.15$, $|b| \ge 10^\circ$), mapping an inferred cosmological redshift horizon $z \in [0.105, 2.247]$ (median $z = 0.627$).
+    - `MONITOR_RADIO_REPETITION`: **190 bursts (31.7%)** routed to robotic radio arrays to search for repeat bursts and periodicity.
+    - `FLAG_LOCAL_PLASMA_CONTAMINANT`: **72 bursts (12.0%)** flagged due to Galactic disk proximity ($|b| < 7^\circ$) or extreme scattering excess.
+    - `REJECT_RFI`: **174 bursts (29.0%)** purged as instrumental artifacts or low dispersion measure excess.
+  - **Zero Naked Predictions**: Every decision outputs explicit analytical Dirichlet standard deviations $\sigma_k$, 95% credible intervals, epistemic vacuity $u_{\rm epi} = K/S$, and conformal prediction sets.
+* **Artifacts**:
+  - Results JSON: [`docs/research/experiment_x_frb_results.json`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/experiment_x_frb_results.json)
+  - Diagnostic Figure: [`docs/research/figures/experiment_x_frb_triage.png`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/docs/research/figures/experiment_x_frb_triage.png)
+  - Engine & Tests: [`celestrium/frb.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/celestrium/frb.py), [`tests/test_frb.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/tests/test_frb.py)
+* **Status**: **COMPLETED** (Benchmark script: [`scripts/benchmark_frb_cosmological_triage.py`](file:///C:/Users/Leon/Desktop/Psychograph/astro-theory/scripts/benchmark_frb_cosmological_triage.py))
 
 ---
 

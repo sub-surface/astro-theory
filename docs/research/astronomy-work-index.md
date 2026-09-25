@@ -54,7 +54,7 @@ Legend:
 | | **BNS Kilonovae & Kasen Radiative Transfer** | DECam, Rubin LSST, Gemini GMOS | `● ACTIVE` | EXP-R, U; Paper C; `too_protocol.py` | Lanthanide-rich opacities, viewing-angle dependencies, blue vs red components |
 | | **Astrophysical Neutrinos & Point Sources** | IceCube, KM3NeT, GCN alerts | `● ACTIVE` | EXP-R (IceCube Gold/Bronze triage) | Blazar neutrino flares (TXS 0506+056), diffuse neutrino background |
 | | **Gamma-Ray Bursts (Prompt & Afterglows)** | Fermi GBM/LAT, Swift BAT, SVOM | `● ACTIVE` | EXP-A (Fink/Rubin broker stream) | Short vs long GRB jet structures, early reverse shock emission |
-| | **Fast Radio Bursts (FRBs)** | CHIME/FRB, CRAFT, DSA-110 | `○ OPEN GAP` | Mentioned in `field-map.md` | Real-time dispersion measure (DM) triage, magnetar flare mechanisms |
+| | **Fast Radio Bursts (FRBs)** | CHIME/FRB, CRAFT, DSA-110 | `● ACTIVE` | EXP-X; `celestrium/frb.py` | Real-time dispersion measure (DM) triage, Macquart relation, 8m ToO dispatch |
 | | **Tidal Disruption Events (TDEs) & FBOTs** | ZTF, Rubin, Swift, eROSITA | `● ACTIVE` | EXP-N (Multi-tier scheduling) | Relativistic vs non-relativistic TDE outflows, optical-to-X-ray transition |
 | **IV. RADIO & SUB-MILLIMETER** | **Synoptic Continuum Radio Surveys** | NVSS 1.4 GHz, VLASS, ASKAP EMU | `● ACTIVE` | EXP-W (Multi-tracer co-inference) | Polarization catalogs, spectral index mapping across $100\,{\rm MHz} - 10\,{\rm GHz}$ |
 | | **HI 21 cm Neutral Hydrogen Emission** | ALFALFA, FAST, MeerKAT MIGHTEE | `○ OPEN GAP` | Unaddressed | Galaxy rotation curves, baryonic Tully-Fisher, cosmic HI density $\Omega_{\rm HI}$ |
@@ -140,18 +140,30 @@ Legend:
 * **Key Findings**:
   - EXP-T: Achieved True Skill Statistic $\text{TSS} = 1.0000$ and False Alarm Rate $0.00\%$ under Conformal Risk Control, dispatching 74 global space weather alerts and 62 planetary defense radar recoveries.
 
+### 3.6 Sector VI: Radio Astronomy & Fast Radio Bursts (EXP-X)
+* **Active Thrust**: Real-time evidential dispersion triage and autonomous Target-of-Opportunity (ToO) dispatch across the CHIME/FRB Public Catalog 1 (600 real bursts).
+* **Data Ingested**:
+  - CHIME/FRB Catalog 1 (600 real bursts: 506 one-off, 94 repeating components).
+  - Multi-path temporal scattering and NE2001/YMW16 Galactic electron density excess.
+* **Key Findings**:
+  - EXP-X: Disentangled RLCD calibration achieved a **22.1% relative reduction** in Stanford debiased error ($E^2_{\rm db} = 0.217889 \to 0.169785$) with frozen representation trunk.
+  - Conformal Risk Control ($\hat{\lambda}_{\rm CRC} = 0.4396$, $\alpha_{\rm CRC} \le 0.05$) bounded false discovery rates into follow-up queues.
+  - Allocated **164 pristine cosmological bursts (27.3%)** to Gemini GMOS 8m spectroscopy across an inferred redshift horizon $z \in [0.105, 2.247]$ (median $z = 0.627$), routed 190 repeaters (31.7%) to robotic radio monitoring, and flagged 72 local Galactic plasma contaminants (12.0%) in **$0.076\,\text{ms/alert}$**.
+  - Retained explicit analytical Dirichlet standard deviations $\sigma_k$, 95% credible intervals, and epistemic vacuity $u_{\rm epi}$ across every alert (Zero Naked Predictions).
+
 ---
 
 ## 4. Comprehensive Gap Analysis: The Unconquered Frontiers
 
 To fulfill the long-term mission of contributing across all domains of astronomy, the following sub-fields represent clear scientific gaps ready for formulation into future Celestrium experiments (`EXP-2026-X+`):
 
-### Gap 1: Radio Astronomy — 21 cm Neutral Hydrogen & Fast Radio Bursts
+### Gap 1: Radio Astronomy — 21 cm Neutral Hydrogen
+* **Status**: **PARTIALLY CONQUERED** (Fast Radio Burst dispersion triage completed in EXP-2026-X; HI 21 cm neutral gas remaining).
 * **Sub-fields**:
   1. **Galactic & Extragalactic HI 21 cm**: Tracing gas reservoirs, rotation curves, and the baryonic Tully-Fisher relation using ALFALFA and MeerKAT data.
-  2. **Fast Radio Bursts (FRBs)**: Real-time dispersion measure (${\rm DM}$) triage and host galaxy identification on CHIME/FRB public catalogs.
-* **Target Datasets**: CHIME/FRB VOEvents, MeerKAT MIGHTEE HI cubes, ALFALFA 100% catalog.
-* **Proposed Celestrium Thrust**: Extend `celestrium/data_streamer.py` to ingest VOEvents from the CHIME broker; build a Dirichlet evidential classifier mapping DM and scattering timescale $\tau_{\rm scat}$ to cosmological redshift priors vs Galactic dispersion models.
+  2. **Fast Radio Bursts (FRBs)**: *Conquered in EXP-2026-X* (real CHIME/FRB Catalog 1 triage, Macquart cosmological redshift inversion, and Gemini GMOS 8m ToO queue dispatch).
+* **Target Datasets**: MeerKAT MIGHTEE HI cubes, ALFALFA 100% catalog, FAST 21cm surveys.
+* **Proposed Celestrium Thrust**: Ingest HI datacubes to evaluate evidential Gaussian process kinematics and baryonic mass decomposition.
 
 ### Gap 2: Sub-Millimeter & Molecular Astrochemistry
 * **Sub-fields**:
