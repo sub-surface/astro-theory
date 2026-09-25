@@ -12,6 +12,7 @@ interface Props {
   version: string;
   experiments: string;
   description: string;
+  ogImage?: string;
 }
 
 const {
@@ -23,11 +24,12 @@ const {
   date,
   version,
   experiments,
-  description
+  description,
+  ogImage
 } = Astro.props;
 ---
 
-<Base title={shortTitle || title} description={description} activeNav="papers">
+<Base title={shortTitle || title} description={description} activeNav="papers" ogImage={ogImage}>
   <article class="paper-container">
     <header class="paper-header">
       <div class="paper-badges">
