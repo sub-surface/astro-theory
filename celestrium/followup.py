@@ -60,7 +60,13 @@ def triage_sources(
     if source_ids is None:
         source_ids = [f"SRC_{i:06d}" for i in range(n_sources)]
     if coords is None:
-        coords = [(float(features[i, 7] * 360.0), float(features[i, 8] * 180.0 - 90.0)) for i in range(n_sources)]
+        # Feature slots 7/8 are normalized GALACTIC (l, b); convert back to ICRS
+        # (RA, Dec). Callers with true RA/Dec should pass `coords` directly.
+        from .stream import galactic_to_icrs
+        coords = [
+            galactic_to_icrs(float(features[i, 7] * 360.0), float(features[i, 8] * 180.0 - 90.0))
+            for i in range(n_sources)
+        ]
 
     # Load or initialize EvidentialAstroJev
     if model is None:

@@ -147,17 +147,19 @@ def build_gemini_too_request(
     
     Reference: Gemini Observatory Phase II Observing Tool (OT) Data Dictionary.
     """
-    # Coordinate sexagesimal conversion
-    ra_hours = ra_deg / 15.0
-    ra_h = int(ra_hours)
-    ra_m = int((ra_hours - ra_h) * 60.0)
-    ra_s = (ra_hours - ra_h - ra_m / 60.0) * 3600.0
+    # Coordinate sexagesimal conversion. Round the total to the displayed
+    # precision first, then split, so seconds never print as "60".
+    ra_deg = float(ra_deg) % 360.0
+    ra_cs = int(round(ra_deg / 15.0 * 360000.0)) % (24 * 360000)  # centiseconds of time
+    ra_h = ra_cs // 360000
+    ra_m = (ra_cs // 6000) % 60
+    ra_s = (ra_cs % 6000) / 100.0
 
     dec_sign = "+" if dec_deg >= 0 else "-"
-    abs_dec = abs(dec_deg)
-    dec_d = int(abs_dec)
-    dec_m = int((abs_dec - dec_d) * 60.0)
-    dec_s = (abs_dec - dec_d - dec_m / 60.0) * 3600.0
+    dec_ds = int(round(abs(dec_deg) * 36000.0))  # deciarcseconds
+    dec_d = dec_ds // 36000
+    dec_m = (dec_ds // 600) % 60
+    dec_s = (dec_ds % 600) / 10.0
 
     ra_sexagesimal = f"{ra_h:02d}:{ra_m:02d}:{ra_s:05.2f}"
     dec_sexagesimal = f"{dec_sign}{dec_d:02d}:{dec_m:02d}:{dec_s:04.1f}"

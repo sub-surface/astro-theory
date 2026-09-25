@@ -41,7 +41,7 @@ from celestrium.multimessenger import (
     fine_tune_rlcd_doubt_head,
     extract_multimessenger_features,
     MM_CLASSES,
-    MM_CLASS_TO_IDX,
+    mm_class_index,
     NUM_MM_CLASSES,
     NUM_MM_FEATURES,
 )
@@ -76,7 +76,7 @@ def run_real_stream_rlcd_benchmark():
         for gw, nu, cands in scenarios:
             for c in cands:
                 feats.append(extract_multimessenger_features(c, gw, nu))
-                labels.append(MM_CLASS_TO_IDX.get(c.true_class, 0))
+                labels.append(mm_class_index(c.true_class))
         return torch.from_numpy(np.stack(feats)).float(), torch.tensor(labels).long()
 
     train_x, train_y = extract_tensors(train_scenarios)
@@ -132,6 +132,7 @@ def run_real_stream_rlcd_benchmark():
 
     # Save calibrated RLCD checkpoint
     rlcd_ckpt_path = Path("checkpoints/multimessenger_rlcd_calibrated.pt")
+    rlcd_ckpt_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save({
         "model_state_dict": model.state_dict(),
         "calib_before": calib_pre,

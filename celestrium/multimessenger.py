@@ -32,6 +32,7 @@ from __future__ import annotations
 import json
 import math
 import time
+import warnings
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple, Iterator
@@ -59,6 +60,22 @@ MM_CLASSES = [
 ]
 MM_CLASS_TO_IDX = {c: i for i, c in enumerate(MM_CLASSES)}
 NUM_MM_CLASSES = len(MM_CLASSES)
+
+
+def mm_class_index(cls: str) -> int:
+    """Map a multi-messenger class name to its index; unknown names raise KeyError."""
+    try:
+        return MM_CLASS_TO_IDX[cls]
+    except KeyError:
+        raise KeyError(
+            f"Unknown multi-messenger class {cls!r}; expected one of {MM_CLASSES}"
+        ) from None
+
+
+def gps_to_mjd(gps_seconds: float) -> float:
+    """Convert GPS seconds (e.g. GraceDB ``t_0``) to MJD (UTC), accounting for leap seconds."""
+    from astropy.time import Time
+    return float(Time(float(gps_seconds), format="gps").utc.mjd)
 
 MM_FEATURE_NAMES = [
     "log_spatial_density",  # log10(dP/dOmega) from GW skymap
@@ -650,6 +667,7 @@ def calibrate_conformal_risk_control(
     best_lambda = 0.85
     best_risk = 0.0
     best_retention = 0.0
+    feasible = False
 
     for lam in candidate_lambdas:
         selected = target_probs >= lam
@@ -666,7 +684,24 @@ def calibrate_conformal_risk_control(
             best_risk = float(risk)
             target_retained = np.sum(selected & (is_target == 1))
             best_retention = float(target_retained / max(n_true_targets, 1))
+            feasible = True
             break
+
+    if not feasible:
+        # No threshold satisfies the risk bound: report the fallback threshold's
+        # actual empirical risk instead of a fabricated 0.0.
+        selected = target_probs >= best_lambda
+        n_selected = int(np.sum(selected))
+        if n_selected > 0:
+            best_risk = float(np.sum(selected & (is_target == 0)) / float(n_selected))
+            best_retention = float(np.sum(selected & (is_target == 1)) / max(n_true_targets, 1))
+        warnings.warn(
+            f"Conformal risk control infeasible: no threshold achieves adjusted risk <= "
+            f"{alpha_risk} on {n} calibration samples; falling back to lambda_hat={best_lambda} "
+            f"with NO risk guarantee (empirical risk {best_risk:.4f}).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     return {
         "lambda_hat": best_lambda,
@@ -675,6 +710,7 @@ def calibrate_conformal_risk_control(
         "sample_retention": best_retention,
         "n_samples": n,
         "target_class": target_class,
+        "feasible": feasible,
     }
 
 
@@ -719,10 +755,19 @@ class MultiMessengerTriageEngine:
         else:
             self.model = MultiMessengerEvidentialNet()
             ckpt_p = Path(model_checkpoint) if model_checkpoint else None
+            loaded = False
             if ckpt_p and ckpt_p.is_file():
                 ckpt = torch.load(str(ckpt_p), map_location="cpu", weights_only=False)
                 if "model_state_dict" in ckpt:
                     self.model.load_state_dict(ckpt["model_state_dict"])
+                    loaded = True
+            if not loaded:
+                warnings.warn(
+                    f"MultiMessengerTriageEngine: no model passed and no loadable checkpoint at "
+                    f"{model_checkpoint!r}; triage will run with UNTRAINED random weights.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
         self.model.to(self.device)
         self.model.eval()
         self.alpha_crc = alpha_crc
@@ -1327,11 +1372,15 @@ def run_empty_sky_null_audit(
 ) -> Dict[str, Any]:
     """Null Hypothesis 1: Empty-sky error volumes with unassociated transients.
 
-    Evaluates the empirical false discovery rate of Gemini 8m rapid ToO triggers
-    in the complete absence of a true kilonova counterpart.
+    Evaluates Gemini 8m rapid ToO triggers in the complete absence of a true
+    kilonova counterpart. Under a pure null every trigger is a false discovery,
+    so a field's FDR is 1 if it triggered at all and 0 otherwise; the empirical
+    FDR is the mean over fields (the quantity CRC bounds in expectation). The
+    per-candidate trigger fraction is reported separately as a false-alarm rate.
     """
     total_candidates = 0
     gemini_triggers = 0
+    fields_with_false_discovery = 0
     lcogt_screenings = 0
     auto_cataloged = 0
     deferred = 0
@@ -1350,17 +1399,24 @@ def run_empty_sky_null_audit(
         total_candidates += len(cands)
         results = engine.triage_candidates(cands, gw, nu)
 
+        field_triggers = 0
         for r in results:
             if r.action == "GEMINI_RAPID_TOO":
                 gemini_triggers += 1
+                field_triggers += 1
             elif r.action == "LCOGT_SCREENING_TOO":
                 lcogt_screenings += 1
             elif r.action == "AUTO_CATALOG_SNE":
                 auto_cataloged += 1
             else:
                 deferred += 1
+        if field_triggers > 0:
+            fields_with_false_discovery += 1
 
-    empirical_fdr = gemini_triggers / max(total_candidates, 1)
+    # Per-candidate false-alarm rate (a false-positive rate, NOT an FDR).
+    per_candidate_far = gemini_triggers / max(total_candidates, 1)
+    # Under the pure null each triggered field has FDP = 1, so E[FDP] = P(any trigger).
+    empirical_fdr = fields_with_false_discovery / max(n_fields, 1)
     passed_null = bool(empirical_fdr <= engine.alpha_crc)
 
     return {
@@ -1370,7 +1426,11 @@ def run_empty_sky_null_audit(
         "lcogt_screenings": lcogt_screenings,
         "auto_cataloged": auto_cataloged,
         "deferred": deferred,
-        "empirical_false_alarm_rate": float(empirical_fdr),
+        # Kept for backward compatibility: per-candidate false-alarm rate.
+        "empirical_false_alarm_rate": float(per_candidate_far),
+        "per_candidate_false_alarm_rate": float(per_candidate_far),
+        "fields_with_false_discovery": fields_with_false_discovery,
+        "empirical_fdr": float(empirical_fdr),
         "target_conformal_risk": engine.alpha_crc,
         "null_hypothesis_satisfied": passed_null,
     }
@@ -1531,7 +1591,7 @@ def fetch_gracedb_alert(
         resp = requests.get(url, timeout=timeout, headers={"Accept": "application/json"})
         if resp.status_code == 200:
             data = resp.json()
-            t_0 = float(data.get("t_0", 60400.0) / 86400.0 + 40587.0) # GPS to MJD
+            t_0 = gps_to_mjd(data["t_0"]) if data.get("t_0") is not None else 60400.0
             return GWAlertRecord(
                 superevent_id=superevent_id,
                 trigger_mjd=t_0,
