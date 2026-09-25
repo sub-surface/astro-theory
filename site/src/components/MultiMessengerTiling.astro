@@ -181,19 +181,19 @@
 
       // Strategy metrics (EXP-2026-U findings)
       if (currentStrat === 'greedy') {
-        statYield.textContent = (d &gt; 200 ? "76.0%" : "89.0%");
+        statYield.textContent = (d > 200 ? "76.0%" : "89.0%");
         statColor.textContent = "0.0%";
         statTime.textContent = "3.73 hours";
         statFa.textContent = "12.4%";
       } else if (currentStrat === 'static') {
-        statYield.textContent = (d &gt; 200 ? "42.0%" : "58.0%");
+        statYield.textContent = (d > 200 ? "42.0%" : "58.0%");
         statColor.textContent = "0.0%";
         statTime.textContent = "4.41 hours";
         statFa.textContent = "8.9%";
       } else {
         // Active-Evidential RLCD
-        statYield.textContent = (d &gt; 200 ? "92.0%" : "97.0%");
-        statColor.textContent = (d &gt; 200 ? "94.0%" : "97.0%");
+        statYield.textContent = (d > 200 ? "92.0%" : "97.0%");
+        statColor.textContent = (d > 200 ? "94.0%" : "97.0%");
         statTime.textContent = "3.17 hours";
         statFa.textContent = "0.000%";
       }
