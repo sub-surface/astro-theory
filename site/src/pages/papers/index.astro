@@ -37,6 +37,24 @@ const papers = [
     slug: "paper-d-euclid-dr1-forecast",
     metrics: "26,000 deg² · Mode-Coupling M_ll' · ±6.5% Precision",
     abstract: "Euclid Data Release 1 will map thousands of square degrees in optical and near-infrared passbands. We present a pre-flight forward-modeling analysis of Euclid DR1's capability to resolve the cosmological dipole anomaly. Utilizing our unified Table Access Protocol (TAP) discovery interface on the ESA Euclid Science Archive, we simulate the wide survey footprint and show that survey geometry induces a specific mode-coupling matrix where quadrupole and octupole fluctuations leak into the dipole at ΔD/D ~ 14%. We forecast that DR1 will measure the true kinematic dipole to ±6.5% precision."
+  },
+  {
+    code: "PAPER E",
+    subject: "astro-ph.HE · astro-ph.CO · cs.LG",
+    venue: "The Astrophysical Journal (ApJ) / MNRAS",
+    title: "Fast Radio Burst Evidential Dispersion Triage & Host Localization: Conformal Risk Control on 600 Real CHIME Bursts",
+    slug: "paper-e-frb-triage",
+    metrics: "600 Real CHIME Bursts · 22.1% Error Reduction · 164 8m GMOS Targets",
+    abstract: "We present the first end-to-end evidential Dirichlet neural decision engine deployed across all 600 real bursts from the CHIME/FRB Public Catalog 1. Decomposes cold-plasma dispersion and multi-path scattering timescales relative to Galactic electron density models and the Macquart relation. With a frozen representation trunk, doubt-rewarding Disentangled RLCD collapses Stanford debiased error by 22.1%. Non-asymptotic Conformal Risk Control bounds false discovery rates to ≤ 5%, triaging alerts in 0.076 ms and dispatching 164 pristine cosmological bursts to Gemini GMOS 8m spectroscopy across z ∈ [0.11, 2.25] (median z = 0.627)."
+  },
+  {
+    code: "PAPER F",
+    subject: "astro-ph.CO",
+    venue: "Physical Review Letters (PRL) / A&A",
+    title: "Unified Multi-Tracer Cosmological Bulk Flow Co-Inference across Optical, Infrared, and Radio Horizons",
+    slug: "paper-f-multi-tracer-bulk-flow",
+    metrics: "2,865,080 Sources · v_bulk = 664.5 km/s · ΔBIC = +180.7",
+    abstract: "To resolve the decade-long debate between independent survey systematics and physical cosmological bulk flow, we construct the first joint hierarchical Bayesian Poisson co-inference framework evaluating 2,865,080 sources simultaneously across optical (Quaia: 1.3M), mid-infrared (CatWISE: 1.4M), and radio (NVSS: 208k) bands. MCMC sampling over 25,000 steps recovers a unified bulk velocity v_bulk = 664.5 ± 188.4 km/s aligned within 16.4° of the CMB dipole apex. Decisive model evidence (ΔBIC = +180.7) rejects decoupled independent systematics in favor of a single cosmological flow."
   }
 ];
 ---
@@ -48,14 +66,16 @@ const papers = [
   ogImage="/og-image.jpg"
 >
   <div class="papers-page-header">
-    <span class="ansi-tag">[CORPUS:PEER-REVIEWED-PROSPECTS]</span>
-    <h1 class="page-title">Research Manuscripts & Interactive Articles</h1>
+    <span class="ansi-tag">[CORPUS:RESEARCH IN PREPARATION]</span>
+    <h1 class="page-title">Manuscripts withheld pending validation</h1>
     <p class="page-desc">
-      Celestrium transforms pre-registered astrophysical manuscripts into living, interactive articles. Each paper pairs the full theoretical text with embedded simulation models, auditable telemetry, and interactive figures.
+      Manuscript pages and quantitative findings are not currently released as validated results. Their source drafts remain under internal review while data provenance, label validity, independent evaluation, and reproducibility are checked.
     </p>
+    <p><a class="roadmap-link" href="/roadmap/">Review the evidence and release conditions &rarr;</a></p>
     <div class="incomplete-rule"></div>
   </div>
 
+  {false && (
   <div class="papers-container">
     {papers.map((p) => (
       <article class="paper-card">
@@ -78,6 +98,7 @@ const papers = [
       </article>
     ))}
   </div>
+  )}
 </Base>
 
 <style>
@@ -99,6 +120,12 @@ const papers = [
     font-size: 1.05rem;
     line-height: 1.7;
     color: var(--color-text-secondary);
+  }
+
+  .roadmap-link {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--color-accent-cyan);
   }
 
   .papers-container {

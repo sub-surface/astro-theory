@@ -1,19 +1,19 @@
 ---
 import Base from '../layouts/Base.astro';
-import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
 ---
 
 <Base 
-  title="All-Astronomy Field Taxonomy & Gap Matrix" 
-  description="Encyclopaedic taxonomy of astronomical sub-disciplines across physical scale and multi-messenger domains, mapping 23 active experiments and 5 open scientific gaps."
+  title="Research Scope Map In Preparation"
+  description="A draft map of astronomical research domains. Experiment status and gap assignments are under review."
   activeNav="taxonomy"
+  noindex={true}
 >
   <div class="tax-page-header">
-    <span class="ansi-tag">[INDEX:FIELD-TAXONOMY]</span>
-    <span class="ansi-tag">ENCYCLOPAEDIC MAP</span>
-    <h1 class="page-title">Astronomy Field Taxonomy & Scientific Gap Matrix</h1>
+    <span class="ansi-tag">[INDEX:RESEARCH SCOPE]</span>
+    <span class="ansi-tag">DRAFT</span>
+    <h1 class="page-title">Research scope map in preparation</h1>
     <p class="page-desc">
-      A foundational requirement of the Celestrium mission is clear taxonomic delineation of astronomy fields—separating radio astronomy, sub-millimeter science, high-energy astrophysics, stellar dynamics, and planetary science from global cosmology. Below is our complete encyclopaedic index of all recognized sub-disciplines, cataloging Celestrium's active experiments and defining the open scientific frontiers ("gaps") we intend to conquer.
+      The outline below groups common astronomical research domains by scale and observational messenger. It is not a complete taxonomy, and it does not establish that Celestrium has active or validated experiments in each area. Experiment statuses and gap assignments are being reconciled with the research ledger.
     </p>
     <div class="incomplete-rule"></div>
   </div>
@@ -49,7 +49,10 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     <div class="incomplete-rule"></div>
   </section>
 
-  <FieldTaxonomyExplorer />
+  <section class="scope-note">
+    <h2>Experiment status is under review</h2>
+    <p>Use the <a href="/roadmap/">evidence and release roadmap</a> for current validation blockers and publication conditions. This draft map is excluded from search until its entries are verified.</p>
+  </section>
 </Base>
 
 <style>
@@ -75,6 +78,26 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
 
   .delineation-overview {
     margin: 3rem 0;
+  }
+
+  .scope-note {
+    max-width: var(--content-width);
+    padding: 1.2rem;
+    border-left: 2px solid var(--color-accent-amber);
+    background: var(--color-bg-subtle);
+  }
+
+  .scope-note h2 {
+    margin-bottom: 0.4rem;
+    color: var(--color-text);
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+  }
+
+  .scope-note p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
   }
 
   .section-kicker {

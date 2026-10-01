@@ -6,13 +6,15 @@ interface Props {
   description?: string;
   activeNav?: string;
   ogImage?: string;
+  noindex?: boolean;
 }
 
 const { 
   title, 
   description = 'Celestrium — Operational astrophysics research instrument, evidential deep learning, and multi-messenger validation.',
   activeNav = 'home',
-  ogImage = '/og-image.jpg'
+  ogImage = '/og-image.jpg',
+  noindex = false
 } = Astro.props;
 
 const pageTitle = title ? `${title} — Celestrium` : 'Celestrium — Astrophysical Intelligence Engine';
@@ -26,6 +28,7 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={canonicalUrl.href} />
     <title>{pageTitle}</title>
 
@@ -82,16 +85,18 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
 
         <nav class="site-nav">
           <a href="/" class={activeNav === 'home' ? 'nav-active' : ''}>Overview</a>
+          <a href="/matrix/" class={activeNav === 'matrix' ? 'nav-active' : ''}>Matrix</a>
           <a href="/papers/" class={activeNav === 'papers' ? 'nav-active' : ''}>Papers</a>
+          <a href="/roadmap/" class={activeNav === 'roadmap' ? 'nav-active' : ''}>Roadmap</a>
           <a href="/catalog/" class={activeNav === 'catalog' ? 'nav-active' : ''}>Catalog</a>
           <a href="/taxonomy/" class={activeNav === 'taxonomy' ? 'nav-active' : ''}>Taxonomy & Gaps</a>
           <a href="/about/" class={activeNav === 'about' ? 'nav-active' : ''}>About</a>
-          <button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle OLED dark / light mode">
-            <span class="theme-icon-light">☀</span>
-            <span class="theme-icon-dark">☽</span>
-          </button>
         </nav>
       </div>
+      <button id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light and dark theme">
+        <span class="theme-icon-light" aria-hidden="true">☼</span>
+        <span class="theme-icon-dark" aria-hidden="true">☾</span>
+      </button>
       <div class="incomplete-rule header-rule"></div>
     </header>
 
@@ -112,7 +117,9 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
           <div class="footer-heading">NAVIGATION</div>
           <ul class="footer-links">
             <li><a href="/">Instrument Overview</a></li>
-            <li><a href="/papers/">Research Manuscripts (A, B, C, D)</a></li>
+            <li><a href="/matrix/">Research Matrix & Notice Board</a></li>
+            <li><a href="/papers/">Working Papers (Not Peer Reviewed)</a></li>
+            <li><a href="/roadmap/">Evidence & Release Roadmap</a></li>
             <li><a href="/catalog/">Remarkable Objects Catalog</a></li>
             <li><a href="/taxonomy/">All-Astronomy Field Taxonomy</a></li>
           </ul>
@@ -122,7 +129,7 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
           <ul class="footer-metrics">
             <li><span class="metric-key">DATA INGESTED:</span> <span class="metric-val">&gt; 2.86M sources</span></li>
             <li><span class="metric-key">CALIBRATION:</span> <span class="metric-val">E²_db = 0.000118</span></li>
-            <li><span class="metric-key">DECISION LATENCY:</span> <span class="metric-val">&gt; 0.12 ms</span></li>
+            <li><span class="metric-key">DECISION LATENCY:</span> <span class="metric-val">&lt; 0.08 ms</span></li>
             <li><span class="metric-key">FOLLOW-UP TOOs:</span> <span class="metric-val">Gemini 8m + LCOGT</span></li>
           </ul>
         </div>
@@ -151,6 +158,62 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
         }
         updateJD();
         setInterval(updateJD, 1000);
+
+        // Auto-parse wikilinks across main content
+        function parseDOMWikilinks() {
+          var wikimap = {
+            'paper a': '/papers/paper-a-cosmic-dipole/',
+            'paper-a': '/papers/paper-a-cosmic-dipole/',
+            'paper b': '/papers/paper-b-continuous-flow-astrojev/',
+            'paper-b': '/papers/paper-b-continuous-flow-astrojev/',
+            'paper c': '/papers/paper-c-autonomous-followup-mdp/',
+            'paper-c': '/papers/paper-c-autonomous-followup-mdp/',
+            'paper d': '/papers/paper-d-euclid-dr1-forecast/',
+            'paper-d': '/papers/paper-d-euclid-dr1-forecast/',
+            'paper e': '/papers/paper-e-frb-triage/',
+            'paper-e': '/papers/paper-e-frb-triage/',
+            'paper f': '/papers/paper-f-multi-tracer-bulk-flow/',
+            'paper-f': '/papers/paper-f-multi-tracer-bulk-flow/',
+            'matrix': '/matrix/',
+            'notice board': '/matrix/',
+            'research matrix': '/matrix/',
+            'catalog': '/catalog/',
+            'taxonomy': '/taxonomy/',
+            'exp-2026-x': '/papers/paper-e-frb-triage/',
+            'exp-x': '/papers/paper-e-frb-triage/',
+            'exp-2026-w': '/papers/paper-f-multi-tracer-bulk-flow/',
+            'obj-apex-01': '/catalog/#OBJ-APEX-01',
+            'obj-kilonova-02': '/catalog/#OBJ-KILONOVA-02',
+            'obj-halo-05': '/catalog/#OBJ-HALO-05',
+            'obj-highz-03': '/catalog/#OBJ-HIGHZ-03'
+          };
+
+          var main = document.querySelector('main');
+          if (!main) return;
+          var walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, null, false);
+          var nodesToReplace = [];
+          var node;
+          while (node = walker.nextNode()) {
+            if (node.nodeValue && node.nodeValue.indexOf('[[') !== -1 && node.parentNode && node.parentNode.nodeName !== 'SCRIPT' && node.parentNode.nodeName !== 'STYLE' && node.parentNode.nodeName !== 'A') {
+              nodesToReplace.push(node);
+            }
+          }
+
+          nodesToReplace.forEach(function(textNode) {
+            var text = textNode.nodeValue;
+            var regex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+            if (!regex.test(text)) return;
+            var span = document.createElement('span');
+            span.innerHTML = text.replace(regex, function(_, target, customLabel) {
+              var key = target.trim().toLowerCase();
+              var url = wikimap[key] || ('/matrix/?q=' + encodeURIComponent(target));
+              var label = customLabel || target;
+              return '<a href="' + url + '" class="wikilink" title="' + label + '">' + label + '</a>';
+            });
+            textNode.parentNode.replaceChild(span, textNode);
+          });
+        }
+        parseDOMWikilinks();
       })();
     </script>
 
@@ -159,6 +222,7 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
         max-width: calc(var(--content-width) + var(--sidenote-width) + 5rem);
         margin: 0 auto;
         padding: 2.2rem 2rem 0;
+        position: relative;
       }
 
       .header-inner {
@@ -173,6 +237,7 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
         display: flex;
         align-items: center;
         gap: 1rem;
+        padding-right: 3.25rem;
       }
 
       .brand-link {
@@ -271,14 +336,25 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
       }
 
       #theme-toggle {
-        font-size: 1rem;
-        padding: 0.3rem 0.6rem;
-        color: var(--color-text-secondary);
-        background: var(--color-tag-bg);
+        position: absolute;
+        top: 1.35rem;
+        right: 2rem;
+        display: grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        background: var(--color-bg-subtle);
+        font-size: 1.2rem;
+        line-height: 1;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
       }
 
       #theme-toggle:hover {
-        color: var(--color-text);
+        color: var(--color-accent-cyan);
+        border-color: var(--color-accent-cyan);
+        background: var(--color-bg-card);
       }
 
       [data-theme="light"] .theme-icon-dark { display: none; }
@@ -311,10 +387,46 @@ const ogImageUrl = new URL(ogImage, Astro.site || 'https://astro.subsurfaces.net
       }
 
       @media (max-width: 860px) {
+        .site-header,
+        .site-main,
+        .site-footer {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+
+        .site-header {
+          padding-top: 2.2rem;
+        }
+
+        #theme-toggle {
+          top: 0.65rem;
+          right: 1rem;
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+
+        .brand-zone {
+          width: 100%;
+          flex-wrap: wrap;
+          justify-content: space-between;
+        }
+
+        .site-nav {
+          width: 100%;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 0.65rem 1rem;
+        }
+
         .footer-grid {
           grid-template-columns: 1fr;
           gap: 2rem;
         }
+      }
+
+      :global(:focus-visible) {
+        outline: 2px solid var(--color-accent-cyan);
+        outline-offset: 3px;
       }
 
       .footer-brand {

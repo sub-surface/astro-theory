@@ -1,0 +1,23 @@
+---
+interface Props {
+  id?: string;
+  number?: string | number;
+}
+
+const { id, number } = Astro.props;
+const uniqueId = id || `sn-${Math.random().toString(36).substring(2, 9)}`;
+---
+
+<span class="sidenote-wrapper">
+  <input type="checkbox" id={uniqueId} class="sidenote-toggle" aria-label="Toggle sidenote" />
+  <label for={uniqueId} class="sidenote-toggle-label" title="Click to view sidenote">
+    {number !== undefined ? number : ''}
+  </label>
+  <span class="sidenote-ref">
+    {number !== undefined ? number : ''}
+  </span>
+  <span class="sidenote">
+    {number !== undefined && <span class="sidenote-number">[{number}] </span>}
+    <slot />
+  </span>
+</span>

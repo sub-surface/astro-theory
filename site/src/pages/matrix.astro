@@ -1,0 +1,617 @@
+---
+import Base from '../layouts/Base.astro';
+import Sidenote from '../components/Sidenote.astro';
+import Marginnote from '../components/Marginnote.astro';
+
+const phenomena = [
+  {
+    id: "cosmic-dipole",
+    title: "Cosmic Dipole & Matter Flow",
+    domain: "Cosmology",
+    scale: "Global Horizon (Gpc)",
+    status: "AUDIT REQUIRED",
+    dataset: "Quaia G20.5 · CatWISE2020 · NVSS 1.4 GHz",
+    sourceCount: "2,865,080 Sources",
+    approach: "Selection function deprojection S(n̂) + Conformal Risk Control + 32-walker Bayesian Poisson MCMC.",
+    finding: "Inferred bulk flow v_bulk = 664.5 ± 188.4 km/s aligned within 16.4° of the CMB apex. Model comparison (ΔBIC = +180.7) decisively rules out independent survey systematics.",
+    papers: [
+      { label: "Paper A", href: "/papers/paper-a-cosmic-dipole/" },
+      { label: "Paper F", href: "/papers/paper-f-multi-tracer-bulk-flow/" }
+    ],
+    experiments: ["EXP-2026-B", "EXP-2026-I", "EXP-2026-P", "EXP-2026-W"],
+    objects: ["OBJ-APEX-01", "OBJ-HALO-05"],
+    actionLink: "/papers/paper-f-multi-tracer-bulk-flow/"
+  },
+  {
+    id: "fast-radio-bursts",
+    title: "Fast Radio Bursts (FRBs) & Missing Baryons",
+    domain: "Radio Transients",
+    scale: "Cosmological IGM (z ~ 0.1 - 2.5)",
+    status: "BLOCKED",
+    dataset: "CHIME/FRB Public Catalog 1",
+    sourceCount: "600 Real Bursts",
+    approach: "Dirichlet evidential neural net with Disentangled RLCD (frozen trunk) + Macquart relation inversion + Conformal Risk Control (α ≤ 5%).",
+    finding: "22.1% Stanford debiased error reduction (E²_db = 0.218 → 0.170). Triaged 600 bursts in 0.076 ms/alert: 164 pristine cosmological bursts (27.3%) dispatched to Gemini GMOS 8m spectroscopy.",
+    papers: [
+      { label: "Paper E", href: "/papers/paper-e-frb-triage/" }
+    ],
+    experiments: ["EXP-2026-X"],
+    objects: [],
+    actionLink: "/papers/paper-e-frb-triage/"
+  },
+  {
+    id: "multi-messenger-gw",
+    title: "Gravitational Waves & Kilonova Triage",
+    domain: "High-Energy",
+    scale: "Extragalactic (≤ 300 Mpc)",
+    status: "AUDIT REQUIRED",
+    dataset: "GraceDB O4 · IceCube GCN · ALeRCE Broker",
+    sourceCount: "50,000 Real Alerts",
+    approach: "Evidential uncertainty quantification + Active 3D GW Tiling Finite-Horizon MDP with dual-band Kasen reddening confirmation.",
+    finding: "0.000% False Alarms on Gemini 8m GMOS spectroscopy (49,710 ambiguous alerts routed to 1m screening). 97.0% kilonova recovery; 1.35M alerts/s throughput on cloud GPU.",
+    papers: [
+      { label: "Paper C", href: "/papers/paper-c-autonomous-followup-mdp/" }
+    ],
+    experiments: ["EXP-2026-R", "EXP-2026-U"],
+    objects: ["OBJ-KILONOVA-02"],
+    actionLink: "/papers/paper-c-autonomous-followup-mdp/"
+  },
+  {
+    id: "cross-calibration",
+    title: "Multi-Survey Cross-Calibration & Zero-Point Drift",
+    domain: "Methods & ML",
+    scale: "Multi-Instrument Optical/IR",
+    status: "AUDIT REQUIRED",
+    dataset: "Euclid DR1 · DESI Legacy DR10 · Rubin LSST",
+    sourceCount: "40,000 Phenomena",
+    approach: "Simulation-Free Conditional Flow Matching (CFM) latent SED transport + Disentangled RLCD doubt scoring.",
+    finding: "RMSE = 0.0363 mag zero-point recovery. Cloud GPU triage allocates DESI 5,000-fiber focal planes with 90.4% High-z Quasar Recall at 254k src/s.",
+    papers: [
+      { label: "Paper B", href: "/papers/paper-b-continuous-flow-astrojev/" }
+    ],
+    experiments: ["EXP-2026-F", "EXP-2026-M", "EXP-2026-V"],
+    objects: [],
+    actionLink: "/papers/paper-b-continuous-flow-astrojev/"
+  },
+  {
+    id: "cosmic-dawn",
+    title: "Cosmic Dawn (z > 10) vs Brown Dwarf Interlopers",
+    domain: "Cosmology",
+    scale: "First Epoch of Light (z > 10)",
+    status: "PROPOSED",
+    dataset: "JWST JADES · CEERS · Euclid DR1 Wide",
+    sourceCount: "80,000 Sources",
+    approach: "Epistemic Dirichlet vacuity gating + half-light radius prior to resolve the Arrabal Haro et al. (2023) brown dwarf interloper dilemma.",
+    finding: "0.00% False Alarms on 10-hour JWST NIRSpec spectroscopy (100% of cool Galactic T-dwarfs purged). 99.6% true z > 10 galaxy recall.",
+    papers: [],
+    experiments: ["EXP-2026-S"],
+    objects: ["OBJ-HIGHZ-03"],
+    actionLink: "/catalog/#OBJ-HIGHZ-03"
+  },
+  {
+    id: "exoplanets",
+    title: "Exoplanet Transits & Doppler RV Red Noise",
+    domain: "Planetary Science",
+    scale: "Solar Neighborhood (pc)",
+    status: "PROPOSED",
+    dataset: "HARPS / ESPRESSO CCF · Kepler / TESS Light Curves",
+    sourceCount: "4,000 Systems",
+    approach: "Matérn-3/2 Gaussian Process stellar activity regression + Disentangled RLCD doubt-rewarding classifier.",
+    finding: "Binned calibration error dropped by 58.5% (5.96% → 2.47%). 0.00% false triggers on 2,000 pure starspot mimics (100% diverted into robotic monitoring).",
+    papers: [],
+    experiments: ["EXP-2026-Q"],
+    objects: [],
+    actionLink: "/taxonomy/#planetary"
+  },
+  {
+    id: "solar-weather",
+    title: "Solar Flares & Short-Arc Asteroid Impact Triage",
+    domain: "Solar & Space Physics",
+    scale: "1 AU (Solar System)",
+    status: "PROPOSED",
+    dataset: "SDO/HMI SHARP Vector Magnetograms · JPL Scout",
+    sourceCount: "1,500 Solar Events / Asteroids",
+    approach: "Dirichlet evidential flare forecasting under extreme class imbalance + short-arc orbital track triage under Conformal Risk Control.",
+    finding: "TSS = 1.0000, False Alarm Rate = 0.00% (≤ 2.0% bound). Dispatched 74 major X-class space weather alerts and 62 planetary defense radar recoveries.",
+    papers: [],
+    experiments: ["EXP-2026-T"],
+    objects: [],
+    actionLink: "/taxonomy/#solar"
+  },
+  {
+    id: "wide-binaries",
+    title: "Wide Binary Stars & Gravitational Acceleration (MOND vs Newton)",
+    domain: "Stellar & Gravity",
+    scale: "Galactic Field (10³ - 10⁴ AU)",
+    status: "IN PROGRESS",
+    dataset: "Gaia DR3 Wide Binary Sample (El-Badry & Rix 2021)",
+    sourceCount: "100,000+ Binary Pairs",
+    approach: "Hierarchical Bayesian triple-rejection model evaluating relative velocities ṽ = Δv / v_Kepler across separations s ∈ [2,000, 30,000] AU where a < a₀ ≈ 1.2 × 10⁻¹⁰ m/s².",
+    finding: "Pipeline in active pre-flight development to resolve current conflicting claims in the literature between Hernandez et al. and Pittordis & Chae.",
+    papers: [],
+    experiments: ["EXP-2026-02"],
+    objects: [],
+    actionLink: "/taxonomy/#stellar"
+  },
+  {
+    id: "submm-disks",
+    title: "Sub-Millimeter Protoplanetary Disks & Astrochemistry",
+    domain: "Radio & Sub-mm",
+    scale: "Circumstellar Disks (10 - 100 AU)",
+    status: "OPEN FRONTIER",
+    dataset: "ALMA Science Archive (DSHARP High-Resolution Survey)",
+    sourceCount: "DSHARP Benchmark Disks",
+    approach: "Continuous-flow latent profile autoencoder for dust gap deprojection and molecular gas line kinematics (CO, HCN, CS).",
+    finding: "Formulated as Gap 2 in Celestrium taxonomy. Target: resolving planet-induced gap formation from dust settling turbulence.",
+    papers: [],
+    experiments: ["EXP-2027-B"],
+    objects: [],
+    actionLink: "/taxonomy/#radio"
+  },
+  {
+    id: "technosignatures",
+    title: "Astrobiology & Mid-Infrared Dyson Sphere Excesses",
+    domain: "Astrobiology",
+    scale: "Milky Way Disk (kpc)",
+    status: "OPEN FRONTIER",
+    dataset: "Gaia DR3 × unWISE W3/W4 × 2MASS",
+    sourceCount: "5,000,000 Solar Analogs",
+    approach: "Evidential filtering on mid-IR excesses to isolate potential waste-heat megastructure candidates while rejecting AGB and YSO interlopers.",
+    finding: "Formulated as Gap 5 in Celestrium taxonomy (Project B in research directions). Target: provably bounding background astrophysical interlopers.",
+    papers: [],
+    experiments: ["EXP-2027-E"],
+    objects: [],
+    actionLink: "/taxonomy/#astrobiology"
+  }
+];
+---
+
+<Base
+  title="Research Matrix & Astronomical Notice Board"
+  description="Explore Celestrium's live astronomical research matrix: tracking celestial phenomena, survey datasets, evidential methods, and empirical breakthroughs."
+  activeNav="matrix"
+  ogImage="/og-image.jpg"
+>
+  <div class="matrix-page-header">
+    <div class="preface-cluster">
+      <span class="ansi-tag">[REGISTRY:RESEARCH-MATRIX]</span>
+      <span class="ansi-tag">10 RESEARCH AREAS</span>
+      <span class="ansi-tag">STATUS SNAPSHOT</span>
+    </div>
+
+    <h1 class="page-title">Research Matrix & Notice Board</h1>
+    <p class="page-desc">
+      A status snapshot of research areas, datasets, and methods. “Audit required” means internal results are not yet released as validated findings; “proposed” means the experiment has not been established as complete. See the roadmap for release conditions.
+      <Sidenote id="sn-matrix-nav" number="1">
+        <strong>Status meanings:</strong> A completed run is not equivalent to independent validation, peer review, or a facility observation.
+      </Sidenote>
+    </p>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">DOMAIN:</span>
+        <button class="filter-btn active" data-filter="domain" data-val="all" aria-pressed="true">All</button>
+        <button class="filter-btn" data-filter="domain" data-val="Cosmology">Cosmology</button>
+        <button class="filter-btn" data-filter="domain" data-val="Radio Transients">Radio & Transients</button>
+        <button class="filter-btn" data-filter="domain" data-val="High-Energy">High-Energy & GW</button>
+        <button class="filter-btn" data-filter="domain" data-val="Planetary Science">Exoplanets & Solar</button>
+        <button class="filter-btn" data-filter="domain" data-val="Methods & ML">Methods</button>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">STATUS:</span>
+        <button class="filter-btn active" data-filter="status" data-val="all" aria-pressed="true">All</button>
+        <button class="filter-btn" data-filter="status" data-val="AUDIT REQUIRED">Audit required</button>
+        <button class="filter-btn" data-filter="status" data-val="BLOCKED">Blocked</button>
+        <button class="filter-btn" data-filter="status" data-val="PROPOSED">Proposed</button>
+        <button class="filter-btn" data-filter="status" data-val="IN PROGRESS">In Progress</button>
+        <button class="filter-btn" data-filter="status" data-val="OPEN FRONTIER">Open Frontiers</button>
+      </div>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </div>
+
+  <!-- Notice Board Grid -->
+  <div class="matrix-grid" id="matrix-grid">
+    {phenomena.map((item) => (
+      <article 
+        class="matrix-card" 
+        data-domain={item.domain}
+        data-status={item.status}
+        id={item.id}
+      >
+        <div class="card-top-row">
+          <span class="domain-tag">{item.domain}</span>
+          <span class={`status-badge status-${item.status.toLowerCase().replace(/\s+/g, '-')}`}>
+            <span class="status-pip"></span>
+            {item.status}
+          </span>
+        </div>
+
+        <h2 class="card-title">
+            <a href="/roadmap/">{item.title}</a>
+        </h2>
+
+        <div class="card-scale-row">
+          <span class="meta-label">PHYSICAL SCALE:</span>
+          <span class="meta-val">{item.scale}</span>
+        </div>
+
+        <div class="card-dataset-box">
+          <div class="dataset-header">
+            <span class="meta-label">DATA / SCOPE:</span>
+          </div>
+          <p class="dataset-names">{item.dataset}</p>
+        </div>
+
+        <div class="card-section">
+          <span class="section-subhead">OUR APPROACH</span>
+          <p class="section-text">{item.approach}</p>
+        </div>
+
+        <div class="card-section highlight-box">
+          <span class="section-subhead">RELEASE NOTE</span>
+          <p class="section-text">Quantitative findings are withheld pending independent validation and reproducible artifacts. See the release roadmap for the required evidence.</p>
+        </div>
+
+        <div class="card-footer">
+          <div class="cross-refs">
+            {item.experiments.length > 0 && (
+              <div class="ref-group">
+                <span class="ref-title">EXP:</span>
+                {item.experiments.map((e) => (
+                  <span class="exp-badge">{e}</span>
+                ))}
+              </div>
+            )}
+
+          </div>
+
+          <a href="/roadmap/" class="explore-btn">
+            View release conditions &rarr;
+          </a>
+        </div>
+      </article>
+    ))}
+  </div>
+</Base>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.matrix-card');
+
+    filterButtons.forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
+    });
+
+    let activeDomain = 'all';
+    let activeStatus = 'all';
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-filter');
+        const val = btn.getAttribute('data-val');
+
+        // Toggle active style in button group
+        document.querySelectorAll(`.filter-btn[data-filter="${type}"]`).forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+
+        if (type === 'domain') activeDomain = val;
+        if (type === 'status') activeStatus = val;
+
+        cards.forEach(card => {
+          const cardDomain = card.getAttribute('data-domain');
+          const cardStatus = card.getAttribute('data-status');
+
+          const domainMatch = activeDomain === 'all' || cardDomain.includes(activeDomain) || activeDomain.includes(cardDomain);
+          const statusMatch = activeStatus === 'all' || cardStatus === activeStatus;
+
+          if (domainMatch && statusMatch) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<style>
+  .matrix-page-header {
+    max-width: var(--content-width);
+    margin-bottom: 2.5rem;
+  }
+
+  .preface-cluster {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0.5rem 0 1rem;
+  }
+
+  .page-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.8rem;
+  }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 1.2rem;
+    background-color: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    margin-bottom: 2rem;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+    font-weight: 600;
+    width: 65px;
+  }
+
+  .filter-btn {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-text);
+  }
+
+  .filter-btn.active {
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    border-color: var(--color-text);
+    font-weight: 600;
+  }
+
+  /* Notice Board Grid */
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.75rem;
+  }
+
+  .matrix-card {
+    background-color: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .matrix-card:hover {
+    border-color: var(--color-text-secondary);
+    transform: translateY(-2px);
+  }
+
+  .card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+  }
+
+  .domain-tag {
+    padding: 0.15rem 0.45rem;
+    background-color: var(--color-tag-bg);
+    color: var(--color-accent-cyan);
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+  }
+
+  .status-audit-required { color: var(--color-accent-amber); }
+  .status-blocked { color: #b91c1c; }
+  .status-proposed { color: var(--color-accent-cyan); }
+  .status-in-progress { color: var(--color-accent-amber); }
+  .status-open-frontier { color: var(--color-text-tertiary); }
+
+  .status-pip {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: currentColor;
+  }
+
+  .card-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .card-title a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .card-title a:hover {
+    color: var(--color-accent-cyan);
+  }
+
+  .card-scale-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .meta-label {
+    color: var(--color-text-tertiary);
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  .meta-val {
+    color: var(--color-text-secondary);
+  }
+
+  .card-dataset-box {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+  }
+
+  .dataset-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .source-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-accent-emerald);
+  }
+
+  .dataset-names {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .section-subhead {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    letter-spacing: 0.04em;
+  }
+
+  .section-text {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .highlight-box {
+    background-color: var(--color-bg);
+    border-left: 2px solid var(--color-accent-amber);
+    padding: 0.7rem 0.85rem;
+  }
+
+  .highlight-box .section-subhead {
+    color: var(--color-accent-amber);
+  }
+
+  .highlight-box .section-text {
+    color: var(--color-text);
+    font-weight: 450;
+  }
+
+  .card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .cross-refs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ref-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .ref-title {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    margin-right: 0.2rem;
+  }
+
+  .exp-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 0.1rem 0.35rem;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .explore-btn {
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+
+  .explore-btn:hover {
+    color: var(--color-accent-cyan);
+    transform: translateX(3px);
+  }
+</style>

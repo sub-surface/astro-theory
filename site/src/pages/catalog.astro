@@ -1,25 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
-import RemarkableObjectsViewer from '../components/RemarkableObjectsViewer.astro';
 ---
 
 <Base 
-  title="Remarkable Objects Discovery Catalog" 
-  description="Archival cross-identification catalog mined from 1,295,502 Quaia + Gaia DR3 + unWISE sources across cosmological kinematic anchors and early-universe beacons."
+  title="Catalog In Preparation"
+  description="The candidate-object catalog is withheld pending source and cross-identification verification."
   activeNav="catalog"
+  noindex={true}
 >
   <div class="catalog-page-header">
-    <span class="ansi-tag">[CATALOG:EXP-2026-I]</span>
-    <span class="ansi-tag">1,295,502 SOURCES MINED</span>
-    <h1 class="page-title">Remarkable Objects Discovery Catalog</h1>
+    <span class="ansi-tag">[CATALOG:IN PREPARATION]</span>
+    <h1 class="page-title">Candidate catalog withheld</h1>
     <p class="page-desc">
-      Extracted from 1,295,502 real sources in the Quaia + Gaia DR3 + unWISE catalog. Celestrium's automated mining engine identified five benchmark objects spanning critical observational regimes: from cosmological kinematic anchors and early-universe beacons to dust-obscured hyper-luminous AGNs and fast-moving Galactic halo interlopers.
+      Candidate identities, measurements, and cross-identifications are being checked against their source catalogs. This page will remain unavailable until coordinates, catalog releases, and provenance are independently verified.
     </p>
-    <div class="incomplete-rule"></div>
+    <p><a href="/roadmap/">View research release conditions &rarr;</a></p>
   </div>
-
-  <RemarkableObjectsViewer />
-
+  {false && <div class="catalog-held-content">
   <section class="catalog-breakdown">
     <div class="section-kicker">// ARCHIVAL CROSS-IDENTIFICATION TABLE</div>
     <h2 class="section-title">Benchmark Objects Master Data</h2>
@@ -94,6 +91,7 @@ import RemarkableObjectsViewer from '../components/RemarkableObjectsViewer.astro
     </div>
     <span class="table-note">* Note: Apparent photometric redshift in catalog for OBJ-HALO-05 is spurious due to stellar template mismatch; correctly diagnosed by Celestrium's astrometric motion gate.</span>
   </section>
+  </div>}
 </Base>
 
 <style>

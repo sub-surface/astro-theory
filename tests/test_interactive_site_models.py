@@ -342,8 +342,8 @@ def test_static_site_dist_pages():
         assert "CELESTRIUM" in content
 
 
-def test_interactive_papers_figure_references():
-    """Verify each interactive paper renders and references its respective figures."""
+def test_manuscript_pages_are_withheld_pending_release():
+    """Verify public manuscript routes show the release notice, not draft claims."""
     if not SITE_DIST.exists():
         pytest.skip("site/dist not found; run 'npm run build' inside site/ first")
 
@@ -365,13 +365,30 @@ def test_interactive_papers_figure_references():
             "experiment_u_active_gw_tiling_benchmark.png",
             "rlcd_telescope_queue_scheduling.png",
         ],
+        "paper-e-frb-triage": [
+            "experiment_x_frb_triage.png",
+        ],
+        "paper-f-multi-tracer-bulk-flow": [
+            "experiment_w_multi_tracer_coinference.png",
+        ],
     }
 
-    for paper_slug, figs in paper_figs.items():
+    paper_slugs = [
+        "paper-a-cosmic-dipole",
+        "paper-b-continuous-flow-astrojev",
+        "paper-c-autonomous-followup-mdp",
+        "paper-d-euclid-dr1-forecast",
+        "paper-e-frb-triage",
+        "paper-f-multi-tracer-bulk-flow",
+    ]
+    for paper_slug in paper_slugs:
         page_html = (SITE_DIST / "papers" / paper_slug / "index.html").read_text(encoding="utf-8")
+        assert 'name="robots" content="noindex, nofollow"' in page_html
+        assert "Research not released" in page_html
+        assert "eprint={astro-ph.CO/2609.xxxxx}" not in page_html
+
+    for figs in paper_figs.values():
         for fig in figs:
-            assert fig in page_html, f"Figure {fig} not referenced in {paper_slug}/index.html"
-            # Verify figure file exists on disk
             fig_path = FIGURES_DIR / fig
             assert fig_path.exists(), f"Figure file missing on disk: {fig_path}"
 
@@ -496,4 +513,41 @@ def test_site_aesthetic_constraints():
     assert "--color-bg: #000000" in css, "Dark mode not pure OLED black"
     # Delicate incomplete divider styling
     assert "incomplete-divider" in css or "linear-gradient" in css, "Missing delicate separator styling"
+
+
+def test_matrix_and_wikilinks_and_sidenotes():
+    """Verify the noticeboard, release hold, sidenotes, and roadmap in site dist."""
+    # 1. Research Matrix page exists and contains all 10 tracked phenomena
+    matrix_file = SITE_DIST / "matrix" / "index.html"
+    assert matrix_file.exists(), "matrix/index.html missing from site/dist"
+    matrix_html = matrix_file.read_text(encoding="utf-8")
+    assert "Research Matrix &amp; Notice Board" in matrix_html or "Research Matrix" in matrix_html
+    assert "Fast Radio Bursts" in matrix_html
+    assert "Cosmic Dipole" in matrix_html
+    assert "Gravitational Waves" in matrix_html
+    assert "CHIME/FRB" in matrix_html
+
+    # 2. Front page contains Tufte sidenotes and plain-language inquiries
+    index_file = SITE_DIST / "index.html"
+    assert index_file.exists(), "index.html missing"
+    index_html = index_file.read_text(encoding="utf-8")
+    assert "sidenote" in index_html, "Tufte sidenotes missing from index.html"
+    assert "sidenote-toggle" in index_html
+    assert "Research results are under evidence review" in index_html
+    assert "Paper E" not in index_html
+    assert "Paper F" not in index_html
+
+    # 3. Paper E and Paper F generated cleanly
+    paper_e = SITE_DIST / "papers" / "paper-e-frb-triage" / "index.html"
+    paper_f = SITE_DIST / "papers" / "paper-f-multi-tracer-bulk-flow" / "index.html"
+    assert paper_e.exists(), "paper-e-frb-triage/index.html missing"
+    assert paper_f.exists(), "paper-f-multi-tracer-bulk-flow/index.html missing"
+    assert "Research not released" in paper_e.read_text(encoding="utf-8")
+    assert "Research not released" in paper_f.read_text(encoding="utf-8")
+
+    roadmap = SITE_DIST / "roadmap" / "index.html"
+    assert roadmap.exists(), "roadmap/index.html missing"
+    roadmap_html = roadmap.read_text(encoding="utf-8")
+    assert "Required evidence gates" in roadmap_html
+    assert "label validity" in roadmap_html
 

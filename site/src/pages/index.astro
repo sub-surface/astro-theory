@@ -1,82 +1,172 @@
 ---
 import Base from '../layouts/Base.astro';
-import DipoleSimulator from '../components/DipoleSimulator.astro';
-import EvidentialPlayground from '../components/EvidentialPlayground.astro';
-import RemarkableObjectsViewer from '../components/RemarkableObjectsViewer.astro';
-import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
+import Sidenote from '../components/Sidenote.astro';
+import Marginnote from '../components/Marginnote.astro';
 ---
 
 <Base title="Astrophysical Intelligence Engine" activeNav="home">
-  <!-- Hero Section -->
+  <!-- Hero Section in Plain, Engaging Language -->
   <section class="hero-section">
     <div class="hero-preface">
-      <span class="ansi-tag">[INST:CELESTRIUM-V2]</span>
-      <span class="ansi-tag">3 WINGS OPERATIONAL</span>
-      <span class="ansi-tag">OLED TRUE-BLACK COMPATIBLE</span>
+      <span class="ansi-tag">[RESEARCH SOFTWARE]</span>
+      <span class="ansi-tag">INTERNAL EVIDENCE REVIEW</span>
     </div>
 
     <h1 class="hero-headline">
-      Calibrated epistemic decisions across multi-survey skies.
+      An open astrophysics bench for uncertainty-aware analysis, reproducibility, and better research decisions.
     </h1>
 
     <p class="hero-lead">
-      Celestrium is an open astrophysics research instrument operating at the nexus of theoretical cosmology, evidential deep learning, and autonomous observatory follow-up. We model heteroscedastic noise, deconvolve cosmic harmonic leakages, and schedule multi-messenger telescope queues under distribution-free conformal risk guarantees.
+      Modern astronomy combines observations across wavelengths, instruments, and timescales. Celestrium is a software workbench for exploring analysis pipelines, survey access, and uncertainty-aware decision methods.
+      <Sidenote id="sn-bottleneck" number="1">
+        <strong>Scope:</strong> The repository can construct example follow-up payloads. It does not submit observing requests or operate telescope facilities.
+      </Sidenote>
+    </p>
+
+    <p class="hero-lead">
+      Benchmark and manuscript claims are currently under review. The public roadmap lists the provenance, validation, and reproducibility conditions required before results are presented as scientific findings.
     </p>
 
     <!-- Key Telemetry Metrics -->
     <div class="telemetry-grid">
       <div class="tele-card">
-        <span class="tc-label">SOURCES INGESTED</span>
-        <span class="tc-value">2,865,080</span>
-        <span class="tc-sub">Gaia DR3 &bull; unWISE &bull; NVSS</span>
+        <span class="tc-label">DATA PROVENANCE</span>
+        <span class="tc-value">IN REVIEW</span>
+        <span class="tc-sub">Release manifests being standardized</span>
       </div>
       <div class="tele-card">
         <span class="tc-label">CALIBRATION ERROR (E²_db)</span>
-        <span class="tc-value">0.000118</span>
-        <span class="tc-sub">Stanford Debiased (NeurIPS '19)</span>
+        <span class="tc-value">WITHHELD</span>
+        <span class="tc-sub">Independent evaluation required</span>
       </div>
       <div class="tele-card">
         <span class="tc-label">TRIAGE THROUGHPUT</span>
-        <span class="tc-value">1.35M / sec</span>
-        <span class="tc-sub">NVIDIA H100 SXM5 GPU</span>
+        <span class="tc-value">BENCHMARK ONLY</span>
+        <span class="tc-sub">Hardware and workload audit required</span>
       </div>
       <div class="tele-card">
         <span class="tc-label">8m GMOS FALSE ALARMS</span>
-        <span class="tc-value">0.000%</span>
-        <span class="tc-sub">Conformal FDR &le; 1.0%</span>
+        <span class="tc-value">NOT ESTABLISHED</span>
+        <span class="tc-sub">Independent labels and test set required</span>
       </div>
     </div>
 
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <!-- Plain-Language Science Inquiries: The Big Questions -->
+  <section class="inquiries-section">
+    <div class="section-kicker">// CORE COSMIC MYSTERIES</div>
+    <h2 class="section-title">Three Questions We Are Investigating</h2>
+    <p class="section-lead">
+      Behind our algorithms are three profound astrophysical dilemmas that challenge how we understand the universe.
+    </p>
+
+    <div class="inquiry-cards">
+      <!-- Question 1 -->
+      <article class="inquiry-card">
+        <div class="inquiry-num">QUESTION 01</div>
+        <h3 class="inquiry-title">Are we drifting through the cosmos faster than Einstein predicted?</h3>
+        <p class="inquiry-text">
+          As our solar system moves through space, the relic glow of the Big Bang&mdash;the Cosmic Microwave Background (CMB)&mdash;looks slightly warmer ahead of us and cooler behind us. This &ldquo;cosmic speedometer&rdquo; measures our velocity as roughly 370 kilometers per second.
+          <Sidenote id="sn-dipole-boost" number="2">
+            <strong>The Doppler Boost:</strong> Moving through a bath of radiation compresses light waves in front of you (blue-shifting them) and stretches them behind you (red-shifting them). For distant quasars, this creates an apparent excess in source counts in the direction of motion.
+          </Sidenote>
+          Source-count dipole measurements depend on survey selection, masks, and tracer populations. Whether a measured excess reflects astrophysics or residual systematics must be tested with explicit nulls and selection-aware analysis.
+        </p>
+        <div class="inquiry-action">
+          <a href="/roadmap/" class="wikilink-badge">View the evidence gates</a>
+        </div>
+      </article>
+
+      <!-- Question 2 -->
+      <article class="inquiry-card">
+        <div class="inquiry-num">QUESTION 02</div>
+        <h3 class="inquiry-title">When the sky flashes for a millisecond, who weighs the invisible universe?</h3>
+        <p class="inquiry-text">
+          Fast Radio Bursts (FRBs) release the energy of hundreds of millions of suns in a fraction of a millisecond. As their radio waves journey through billions of light-years of intergalactic space, free electrons in diffuse plasma slow down lower frequencies relative to higher frequencies.
+          <Sidenote id="sn-missing-matter" number="3">
+            <strong>The Missing Matter:</strong> More than 80% of the ordinary atoms in the universe do not live inside luminous stars or galaxies&mdash;they float as a tenuous, ionized gas in intergalactic space. The Macquart relation allows us to use FRB delays to weigh this invisible cosmic web directly.
+          </Sidenote>
+          Dispersion measures can constrain the ionized baryon distribution when host, halo, and Milky Way contributions are modeled. Reliable host follow-up requires independently validated classification and operational review.
+        </p>
+        <div class="inquiry-action">
+          <a href="/roadmap/" class="wikilink-badge">View FRB validation status</a>
+        </div>
+      </article>
+
+      <!-- Question 3 -->
+      <article class="inquiry-card">
+        <div class="inquiry-num">QUESTION 03</div>
+        <h3 class="inquiry-title">Why must an AI astronomer know how to doubt itself?</h3>
+        <p class="inquiry-text">
+          Predictive uncertainty can be miscalibrated, especially under distribution shift. Calibration and risk-control methods have assumptions that need testing against independent data before operational use.
+          <Sidenote id="sn-doubt-rl" number="4">
+            <strong>Rewarding Doubt:</strong> Grounded in TUM 2026 research (Bani-Harouni et al.), we train our calibration heads with logarithmic scoring rules that reward the model for stating &ldquo;I don't know&rdquo; when evidence is sparse, safely routing ambiguous signals to small screening telescopes.
+          </Sidenote>
+          Celestrium investigates uncertainty-aware decision methods. Their calibration and operational claims remain under review; no facility dispatch or distribution-free performance guarantee is asserted here.
+        </p>
+        <div class="inquiry-action">
+          <a href="/roadmap/" class="wikilink-badge">View the evidence and release criteria</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="incomplete-rule"></div>
+  </section>
+
+  <!-- Research Matrix Notice Board Teaser -->
+  <section class="notice-board-teaser">
+    <div class="teaser-inner">
+      <div class="teaser-left">
+        <div class="section-kicker">// INTERACTIVE DISCOVERY HUB</div>
+        <h2 class="teaser-title">The Research Matrix & Astronomical Notice Board</h2>
+        <p class="teaser-desc">
+          Browse research areas and their current status. Quantitative findings are withheld until the documented release conditions have been met.
+        </p>
+        <div class="teaser-stats">
+          <span class="t-pill">10 AREAS MAPPED</span>
+          <span class="t-pill">RESULTS UNDER REVIEW</span>
+          <span class="t-pill">MANUSCRIPTS WITHHELD</span>
+        </div>
+      </div>
+      <div class="teaser-right">
+        <a href="/matrix/" class="matrix-launch-btn">
+          <span>Open Research Matrix & Notice Board</span>
+          <span class="btn-arrow">&rarr;</span>
+        </a>
+      </div>
+    </div>
     <div class="incomplete-rule"></div>
   </section>
 
   <!-- The Three Wings -->
   <section class="wings-section">
     <div class="section-kicker">// ARCHITECTURAL FOUNDATION</div>
-    <h2 class="section-title">The Three Operational Wings</h2>
+    <h2 class="section-title">Three Software Work Areas</h2>
 
     <div class="wings-grid">
       <div class="wing-card">
         <div class="wing-num">[01]</div>
-        <h3 class="wing-title">Theory Workshop & Evidential AI</h3>
+        <h3 class="wing-title">Literature & Methods</h3>
         <p class="wing-desc">
-          Continuous-Flow normalizing networks and Dirichlet prior heads directly ingesting heteroscedastic survey uncertainties log &sigma;. Disentangled RLCD rewards doubt, separating photon shot noise from out-of-distribution epistemic vacuity with analytical credible intervals.
+          Literature utilities, model prototypes, and calibration experiments. Each method must be assessed against its assumptions and task-specific baselines.
         </p>
       </div>
 
       <div class="wing-card">
         <div class="wing-num">[02]</div>
-        <h3 class="wing-title">Experimental Validation & Streaming</h3>
+        <h3 class="wing-title">Archive & Data Tools</h3>
         <p class="wing-desc">
-          Unified Table Access Protocol (TAP) discovery across 10 astronomical archives (Gaia, Euclid, IRSA, MAST, SDSS). Zero-bloat compressed streaming (96 B/src), selection function deprojection, and vectorized affine-invariant Bayesian Poisson MCMC.
+          Interfaces for querying and processing astronomical data. Archive connectivity is not a claim that all listed surveys have been ingested or scientifically validated.
         </p>
       </div>
 
       <div class="wing-card">
         <div class="wing-num">[03]</div>
-        <h3 class="wing-title">Observatory Follow-Up & ToO Dispatch</h3>
+        <h3 class="wing-title">Decision Prototypes</h3>
         <p class="wing-desc">
-          Autonomous multi-tier Target-of-Opportunity (ToO) protocol serialization for Gemini 8m GMOS spectroscopy and robotic LCOGT 1m networks. Active 3D gravitational-wave tiling MDPs prioritizing dual-band Kasen reddening confirmation.
+          Experimental triage and follow-up payload serialization. Payload generation is not a facility submission, approved observation, or operational deployment.
         </p>
       </div>
     </div>
@@ -84,21 +174,16 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     <div class="incomplete-rule"></div>
   </section>
 
-  <!-- Interactive Model 1: Dipole Simulator -->
-  <section class="interactive-feature">
-    <div class="section-kicker">// INTERACTIVE PAPER EXPERIMENT</div>
-    <h2 class="section-title">Cosmic Dipole & Harmonic Leakage Deconvolution</h2>
-    <DipoleSimulator />
-  </section>
-
-  <!-- Research Papers Index -->
+  <!-- Research release status -->
   <section class="papers-overview">
-    <div class="section-kicker">// ACTIVE PUBLICATIONS</div>
-    <h2 class="section-title">Core Research Manuscripts</h2>
+    <div class="section-kicker">// PUBLICATION STATUS</div>
+    <h2 class="section-title">Research results are under evidence review</h2>
     <p class="section-lead">
-      Each proposed scientific publication from Celestrium is presented on this site as an interactive, fully auditable paper with embedded models, data cutouts, and reproducible telemetry.
+      Manuscript pages are temporarily withheld while data provenance, independent validation, uncertainty reporting, and reproducibility artifacts are audited. The roadmap records the release criteria and current blockers.
     </p>
+    <p><a class="read-btn" href="/roadmap/">Open the evidence and release roadmap &rarr;</a></p>
 
+    {false && (
     <div class="papers-list">
       <!-- Paper A -->
       <article class="paper-entry">
@@ -183,31 +268,54 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
           <a href="/papers/paper-d-euclid-dr1-forecast/" class="read-btn">Read Interactive Paper &rarr;</a>
         </div>
       </article>
+
+      <!-- Paper E -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER E</span>
+          <span class="entry-subject">astro-ph.HE &bull; astro-ph.CO &bull; cs.LG</span>
+          <span class="entry-venue">The Astrophysical Journal (ApJ) / MNRAS</span>
+        </div>
+        <a href="/papers/paper-e-frb-triage/" class="entry-link">
+          <h3>Fast Radio Burst Evidential Dispersion Triage & Host Localization: Conformal Risk Control on 600 Real CHIME Bursts</h3>
+        </a>
+        <p class="entry-summary">
+          The first evidential Dirichlet decision engine evaluated on all 600 real bursts from CHIME/FRB Catalog 1. Decomposes cold-plasma dispersion and multi-path scattering against Galactic models. Disentangled RLCD doubt training achieves 22.1% Stanford debiased error reduction and dispatches 164 pristine cosmological bursts to Gemini GMOS 8m spectroscopy in 0.076 ms/alert.
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">600 REAL CHIME BURSTS</span>
+          <span class="entry-tag">22.1% DEBIASED COLLAPSE</span>
+          <span class="entry-tag">164 8M GMOS TARGETS</span>
+          <a href="/papers/paper-e-frb-triage/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Paper F -->
+      <article class="paper-entry">
+        <div class="entry-meta">
+          <span class="entry-code">PAPER F</span>
+          <span class="entry-subject">astro-ph.CO</span>
+          <span class="entry-venue">Physical Review Letters (PRL) / A&A</span>
+        </div>
+        <a href="/papers/paper-f-multi-tracer-bulk-flow/" class="entry-link">
+          <h3>Unified Multi-Tracer Cosmological Bulk Flow Co-Inference across Optical, Infrared, and Radio Horizons</h3>
+        </a>
+        <p class="entry-summary">
+          Simultaneous joint Bayesian Poisson MCMC co-inference evaluating 2,865,080 sources across Quaia (optical), CatWISE2020 (mid-IR), and NVSS (radio). Inferred bulk velocity v_bulk = 664.5 &plusmn; 188.4 km/s aligns within 16.4&deg; of the CMB apex. Decisive model evidence (&Delta;BIC = +180.7) rejects decoupled independent systematics in favor of a shared physical flow.
+        </p>
+        <div class="entry-footer">
+          <span class="entry-tag">2,865,080 SOURCES</span>
+          <span class="entry-tag">16.4&deg; FROM CMB APEX</span>
+          <span class="entry-tag">&Delta;BIC = +180.7</span>
+          <a href="/papers/paper-f-multi-tracer-bulk-flow/" class="read-btn">Read Interactive Paper &rarr;</a>
+        </div>
+      </article>
     </div>
+    )}
 
     <div class="incomplete-rule"></div>
   </section>
 
-  <!-- Interactive Model 2: Evidential Playground -->
-  <section class="interactive-feature">
-    <div class="section-kicker">// INTERACTIVE DECISION ENGINE</div>
-    <h2 class="section-title">Dirichlet Evidential UQ & RLCD Doubt Gating</h2>
-    <EvidentialPlayground />
-  </section>
-
-  <!-- Remarkable Objects Section -->
-  <section class="catalog-feature">
-    <div class="section-kicker">// BENCHMARK DATASET MINING</div>
-    <h2 class="section-title">Remarkable Astrophysical Objects Mined from 1.3M Sources</h2>
-    <RemarkableObjectsViewer />
-  </section>
-
-  <!-- Field Taxonomy Section -->
-  <section class="taxonomy-feature">
-    <div class="section-kicker">// ENCYCLOPAEDIC COVERAGE & GAPS</div>
-    <h2 class="section-title">Astronomy Field Taxonomy & Research Gap Matrix</h2>
-    <FieldTaxonomyExplorer />
-  </section>
 </Base>
 
 <style>
@@ -225,9 +333,9 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
 
   .hero-headline {
     font-family: var(--font-serif);
-    font-size: 2.7rem;
+    font-size: 2.6rem;
     font-weight: 500;
-    line-height: 1.2;
+    line-height: 1.25;
     color: var(--color-text);
     margin-bottom: 1.8rem;
     letter-spacing: -0.01em;
@@ -235,10 +343,10 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
 
   .hero-lead {
     font-family: var(--font-serif);
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     line-height: 1.8;
     color: var(--color-text);
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.8rem;
   }
 
   .telemetry-grid {
@@ -284,6 +392,141 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     color: var(--color-text-secondary);
   }
 
+  /* Inquiries Section (Plain-Language Narrative) */
+  .inquiries-section {
+    padding: 2.5rem 0;
+    max-width: var(--content-width);
+  }
+
+  .inquiry-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+
+  .inquiry-card {
+    background-color: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .inquiry-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-accent-amber);
+    letter-spacing: 0.05em;
+  }
+
+  .inquiry-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--color-text);
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .inquiry-text {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .inquiry-action {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  /* Notice Board Teaser */
+  .notice-board-teaser {
+    margin: 2rem 0 3.5rem;
+  }
+
+  .teaser-inner {
+    background: linear-gradient(135deg, var(--color-bg-subtle) 0%, var(--color-bg) 100%);
+    border: 1px solid var(--color-border);
+    padding: 2.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .teaser-left {
+    max-width: 600px;
+  }
+
+  .teaser-title {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0.4rem 0 0.8rem;
+  }
+
+  .teaser-desc {
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.2rem;
+  }
+
+  .teaser-stats {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .t-pill {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background-color: var(--color-tag-bg);
+    color: var(--color-text);
+  }
+
+  .matrix-launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.4rem;
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: all 0.2s ease;
+  }
+
+  .matrix-launch-btn:hover {
+    background-color: var(--color-accent-cyan);
+    color: #ffffff;
+    transform: translateY(-2px);
+  }
+
+  .btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .matrix-launch-btn:hover .btn-arrow {
+    transform: translateX(4px);
+  }
+
   .section-kicker {
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -306,14 +549,14 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     line-height: 1.7;
     color: var(--color-text-secondary);
     max-width: var(--content-width);
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
 
   .wings-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin: 2.5rem 0;
+    gap: 1.5rem;
+    margin: 2.5rem 0 3.5rem;
   }
 
   @media (max-width: 860px) {
@@ -325,29 +568,27 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
   .wing-card {
     background: var(--color-bg-subtle);
     padding: 1.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+    border-left: 1px solid var(--color-border);
   }
 
   .wing-num {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.8rem;
     color: var(--color-text-tertiary);
+    margin-bottom: 0.75rem;
   }
 
   .wing-title {
     font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.15rem;
+    font-weight: 500;
     color: var(--color-text);
-    line-height: 1.35;
+    margin-bottom: 0.75rem;
   }
 
   .wing-desc {
     font-size: 0.88rem;
-    line-height: 1.65;
+    line-height: 1.6;
     color: var(--color-text-secondary);
   }
 
@@ -355,20 +596,25 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    margin: 2.5rem 0;
+    margin: 2.5rem 0 3.5rem;
+    max-width: var(--content-width);
   }
 
   .paper-entry {
     background: var(--color-bg-subtle);
     padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
+    border-left: 2px solid var(--color-border);
+    transition: border-color 0.2s ease;
+  }
+
+  .paper-entry:hover {
+    border-left-color: var(--color-text);
   }
 
   .entry-meta {
     display: flex;
-    gap: 0.6rem;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
     align-items: center;
     flex-wrap: wrap;
   }
@@ -377,25 +623,15 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
     font-family: var(--font-mono);
     font-size: 0.7rem;
     font-weight: 600;
-    padding: 0.2rem 0.5rem;
+    padding: 0.15rem 0.4rem;
     background: var(--color-text);
     color: var(--color-bg);
   }
 
-  .entry-subject {
+  .entry-subject, .entry-venue {
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    color: var(--color-accent-cyan);
-    background: var(--color-tag-bg);
-    padding: 0.2rem 0.5rem;
-  }
-
-  .entry-venue {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--color-accent-amber);
-    background: var(--color-tag-bg);
-    padding: 0.2rem 0.5rem;
+    color: var(--color-text-tertiary);
   }
 
   .entry-link {
@@ -404,51 +640,55 @@ import FieldTaxonomyExplorer from '../components/FieldTaxonomyExplorer.astro';
 
   .entry-link h3 {
     font-family: var(--font-serif);
-    font-size: 1.45rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 500;
     color: var(--color-text);
     line-height: 1.35;
-    transition: color 0.15s;
+    margin-bottom: 0.75rem;
   }
 
   .entry-link:hover h3 {
-    color: var(--color-text-secondary);
+    text-decoration: underline;
   }
 
   .entry-summary {
-    font-family: var(--font-serif);
-    font-size: 0.95rem;
-    line-height: 1.65;
+    font-size: 0.9rem;
+    line-height: 1.6;
     color: var(--color-text-secondary);
+    margin-bottom: 1.25rem;
   }
 
   .entry-footer {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.8rem;
     flex-wrap: wrap;
-    padding-top: 0.8rem;
+    gap: 0.75rem;
+    padding-top: 1rem;
     border-top: 1px dashed var(--color-border);
   }
 
   .entry-tag {
     font-family: var(--font-mono);
     font-size: 0.68rem;
-    color: var(--color-text-tertiary);
-    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    background: var(--color-tag-bg);
     padding: 0.2rem 0.5rem;
   }
 
   .read-btn {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 500;
     color: var(--color-text);
     text-decoration: none;
-    margin-left: auto;
+    font-weight: 500;
   }
 
   .read-btn:hover {
-    text-decoration: underline;
+    color: var(--color-accent-cyan);
+  }
+
+  .interactive-feature, .catalog-feature, .taxonomy-feature {
+    margin: 4rem 0;
   }
 </style>

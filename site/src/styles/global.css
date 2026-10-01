@@ -190,3 +190,182 @@ th {
   font-size: 0.72rem;
   color: var(--color-accent-emerald);
 }
+
+/* ==========================================================================
+   Tufte Sidenotes & Margin Notes System
+   ========================================================================== */
+.sidenote-wrapper,
+.marginnote-wrapper {
+  position: relative;
+  display: inline;
+}
+
+.sidenote-ref {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-accent-amber);
+  cursor: default;
+  margin-left: 0.15em;
+  font-weight: 600;
+}
+
+.sidenote,
+.marginnote {
+  float: right;
+  clear: right;
+  width: var(--sidenote-width);
+  margin-right: calc(-1 * var(--sidenote-width) - 2.5rem);
+  margin-bottom: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-sidenote);
+  text-align: left;
+  position: relative;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.sidenote-number {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-right: 0.3em;
+  color: var(--color-accent-amber);
+}
+
+.sidenote-toggle,
+.marginnote-toggle {
+  display: none;
+}
+
+.sidenote-toggle-label,
+.marginnote-toggle-label {
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-accent-amber);
+  cursor: pointer;
+  display: none;
+}
+
+.marginnote-toggle-label {
+  font-size: 0.85em;
+  color: var(--color-accent-cyan);
+}
+
+@media (max-width: 1200px) {
+  .sidenote,
+  .marginnote {
+    width: 220px;
+    margin-right: calc(-1 * 220px - 1.5rem);
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidenote-ref {
+    display: none;
+  }
+
+  .sidenote-toggle-label,
+  .marginnote-toggle-label {
+    display: inline;
+    padding: 0 0.15em;
+    background-color: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+  }
+
+  .sidenote-toggle,
+  .marginnote-toggle {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .sidenote-toggle:focus-visible + .sidenote-toggle-label,
+  .marginnote-toggle:focus-visible + .marginnote-toggle-label {
+    outline: 2px solid var(--color-accent-cyan);
+    outline-offset: 2px;
+  }
+
+  .sidenote,
+  .marginnote {
+    display: none;
+    float: none;
+    width: 100%;
+    margin: 0.75rem 0 1.25rem 0;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-bg-subtle);
+    font-size: 0.82rem;
+    border-left: 2px solid var(--color-accent-amber);
+  }
+
+  .marginnote {
+    border-left: 2px solid var(--color-accent-cyan);
+  }
+
+  .sidenote-toggle:checked ~ .sidenote,
+  .marginnote-toggle:checked ~ .marginnote {
+    display: block;
+  }
+}
+
+/* ==========================================================================
+   Wikilinks Cross-Referencing System
+   ========================================================================== */
+.wikilink {
+  font-family: inherit;
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 1.5px dotted var(--color-accent-cyan);
+  padding-bottom: 1px;
+  transition: all 0.18s ease;
+  position: relative;
+  font-weight: 500;
+}
+
+.wikilink::after {
+  content: ' ↗';
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  color: var(--color-accent-cyan);
+  opacity: 0.6;
+  transition: opacity 0.18s ease;
+}
+
+.wikilink:hover {
+  color: var(--color-accent-cyan);
+  border-bottom-style: solid;
+  border-bottom-color: var(--color-accent-cyan);
+}
+
+.wikilink:hover::after {
+  opacity: 1;
+}
+
+.wikilink-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.wikilink-badge:hover {
+  border-color: var(--color-accent-cyan);
+  background-color: var(--color-bg-card);
+}

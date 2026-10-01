@@ -1,0 +1,231 @@
+---
+import Base from '../layouts/Base.astro';
+
+const releaseGates = [
+  {
+    number: '01',
+    title: 'State a testable claim before analysis',
+    detail: 'Record the estimand, primary outcome, exclusions, model comparisons, and decision thresholds before inspecting the held-out results. Mark exploratory analyses as exploratory.'
+  },
+  {
+    number: '02',
+    title: 'Establish data provenance and label validity',
+    detail: 'Cite the exact catalog release and selection, preserve license and query details, record file hashes, and document how each label was obtained. A label derived from the same features used by a model is not independent ground truth.'
+  },
+  {
+    number: '03',
+    title: 'Separate fitting, calibration, and evaluation',
+    detail: 'Use independent splits appropriate to the problem (for example, source, sky region, observing epoch, or event). Do not choose a threshold and report its guarantee on the same observations without a method that justifies that procedure.'
+  },
+  {
+    number: '04',
+    title: 'Compare against credible baselines and nulls',
+    detail: 'Include simple physical and statistical baselines, injection-recovery, negative controls, sensitivity to cuts and selection functions, and uncertainty intervals. Explain the sampling model behind every reported p-value or model comparison.'
+  },
+  {
+    number: '05',
+    title: 'Make every figure and number reproducible',
+    detail: 'Generate publication figures directly from saved predictions and result files. Publish the command, code revision, environment, seeds, input identifiers or hashes, split definitions, and machine-readable outputs.'
+  },
+  {
+    number: '06',
+    title: 'Review claims, limitations, and operational language',
+    detail: 'Distinguish simulations and payload generation from real observations or facility dispatch. Report negative results and failure modes. Never describe an internal benchmark as peer reviewed, deployed, or independently validated.'
+  }
+];
+
+const workItems = [
+  {
+    title: 'FRB triage (EXP-2026-X)',
+    status: 'BLOCKED',
+    detail: 'Current catalog labels are assigned using latitude, DM excess, and repeater status, while overlapping quantities are also model inputs. The real-catalog path does not define an RFI ground-truth class. Rebuild evaluation around independently sourced labels and a held-out test set before publishing performance or follow-up claims.'
+  },
+  {
+    title: 'Multi-tracer dipole (EXP-2026-W)',
+    status: 'AUDIT REQUIRED',
+    detail: 'Reconcile the experiment ledger, paper, and code; publish the exact catalog snapshots, selection and overlap treatment, likelihood, sampler diagnostics, and reproducible model-comparison calculation. Do not interpret ΔBIC as Bayesian evidence or as ruling out systematics.'
+  },
+  {
+    title: 'Papers A-D and existing benchmark pages',
+    status: 'AUDIT REQUIRED',
+    detail: 'For every quantitative claim, link the generating script and result artifact, verify that plots are computed from those results, report uncertainty and split design, and label the work as a forecast, internal benchmark, preprint, submission, or peer-reviewed publication as appropriate.'
+  },
+  {
+    title: 'Cosmic dawn, exoplanet, and solar/NEO studies',
+    status: 'PROPOSED',
+    detail: 'Keep these as proposals until the ledger, code, data provenance, and validation artifacts demonstrate that an experiment has actually been run. “Completed” should refer to a reproducible analysis milestone, not a target metric.'
+  }
+];
+---
+
+<Base
+  title="Evidence & Release Roadmap"
+  description="Celestrium's public research release criteria, validation gates, and current evidence status."
+  activeNav="roadmap"
+>
+  <header class="roadmap-header">
+    <span class="ansi-tag">[RESEARCH GOVERNANCE]</span>
+    <span class="ansi-tag">STATUS: INTERNAL REVIEW</span>
+    <h1>Evidence before headline results</h1>
+    <p class="lede">A completed run is not, by itself, a validated scientific result. This noticeboard records what must be true before a benchmark becomes a public finding, and where current work still needs evidence.</p>
+    <p class="status-key"><strong>Release path:</strong> Proposal → Internal benchmark → Reproducible result → Preprint or submission → Peer reviewed. These stages are not interchangeable.</p>
+  </header>
+
+  <section aria-labelledby="release-gates">
+    <div class="section-heading">
+      <span class="section-kicker">RELEASE CONDITIONS</span>
+      <h2 id="release-gates">Required evidence gates</h2>
+    </div>
+    <ol class="gate-list">
+      {releaseGates.map((gate) => (
+        <li class="gate-row">
+          <span class="gate-number">{gate.number}</span>
+          <div>
+            <h3>{gate.title}</h3>
+            <p>{gate.detail}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="work-section" aria-labelledby="work-status">
+    <div class="section-heading">
+      <span class="section-kicker">CURRENT NOTICEBOARD</span>
+      <h2 id="work-status">Work requiring attention</h2>
+    </div>
+    <div class="work-list">
+      {workItems.map((item) => (
+        <article class="work-row">
+          <div class="work-topline">
+            <h3>{item.title}</h3>
+            <span class="work-status">{item.status}</span>
+          </div>
+          <p>{item.detail}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <p class="scope-note">Facility follow-up examples currently demonstrate decision logic and payload construction. They are not evidence that telescope time was requested or observations were performed.</p>
+</Base>
+
+<style>
+  .roadmap-header,
+  .roadmap-header > p,
+  .section-heading {
+    max-width: var(--content-width);
+  }
+
+  .roadmap-header h1 {
+    max-width: 15ch;
+    margin: 1.1rem 0;
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--color-text);
+  }
+
+  .lede,
+  .status-key {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .status-key {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border-left: 2px solid var(--color-accent-amber);
+    background: var(--color-bg-subtle);
+  }
+
+  .section-heading {
+    margin: 3.5rem 0 1.5rem;
+  }
+
+  .section-kicker,
+  .gate-number,
+  .work-status {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-accent-cyan);
+  }
+
+  .section-heading h2 {
+    margin-top: 0.45rem;
+    font-family: var(--font-serif);
+    font-size: 1.7rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .gate-list,
+  .work-list {
+    max-width: calc(var(--content-width) + var(--sidenote-width) + 3rem);
+    list-style: none;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .gate-row {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .gate-number {
+    padding-top: 0.2rem;
+    color: var(--color-accent-amber);
+  }
+
+  .gate-row h3,
+  .work-row h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .gate-row p,
+  .work-row p {
+    margin-top: 0.45rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .work-row {
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .work-topline {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .work-status {
+    flex: 0 0 auto;
+    color: var(--color-accent-amber);
+  }
+
+  .scope-note {
+    max-width: var(--content-width);
+    margin-top: 2.5rem;
+    padding: 1rem;
+    background: var(--color-bg-subtle);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 600px) {
+    .roadmap-header h1 { font-size: 2rem; }
+    .work-topline { align-items: flex-start; flex-direction: column; gap: 0.3rem; }
+  }
+</style>

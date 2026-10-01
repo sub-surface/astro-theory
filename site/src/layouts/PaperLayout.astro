@@ -27,64 +27,87 @@ const {
   description,
   ogImage
 } = Astro.props;
+
+const withheld = true;
+const withheldDescription = 'This research is in preparation and is not available as a validated result.';
 ---
 
-<Base title={shortTitle || title} description={description} activeNav="papers" ogImage={ogImage}>
+<Base
+  title={withheld ? 'Research In Preparation' : shortTitle || title}
+  description={withheld ? withheldDescription : description}
+  activeNav="papers"
+  ogImage={ogImage}
+  noindex={withheld}
+>
   <article class="paper-container">
     <header class="paper-header">
-      <div class="paper-badges">
-        <span class="badge-code">{paperCode}</span>
-        <span class="badge-subject">{subject}</span>
-        <span class="badge-venue">TARGET: {venue}</span>
-      </div>
+      {withheld ? (
+        <>
+          <div class="paper-badges"><span class="badge-code">IN PREPARATION</span></div>
+          <h1 class="paper-title">Research not released</h1>
+          <p>This work is withheld while its data labels, validation design, and reported metrics are reviewed. No scientific findings or telescope allocations are being asserted on this page.</p>
+          <p><a href="/roadmap/">View the evidence and release conditions.</a></p>
+        </>
+      ) : (
+        <>
+          <div class="paper-badges">
+            <span class="badge-code">{paperCode}</span>
+            <span class="badge-subject">{subject}</span>
+            <span class="badge-venue">TARGET: {venue}</span>
+          </div>
 
-      <h1 class="paper-title">{title}</h1>
+          <h1 class="paper-title">{title}</h1>
 
-      <div class="paper-meta-grid">
-        <div class="meta-cell">
-          <span class="meta-label">AUTHORS</span>
-          <span class="meta-data">Celestrium Collaboration &bull; Sub-Surface</span>
-        </div>
-        <div class="meta-cell">
-          <span class="meta-label">DATE &bull; VERSION</span>
-          <span class="meta-data">{date} &bull; v{version}</span>
-        </div>
-        <div class="meta-cell">
-          <span class="meta-label">TIED EXPERIMENTS</span>
-          <span class="meta-data">{experiments}</span>
-        </div>
-        <div class="meta-cell">
-          <span class="meta-label">REPRODUCIBILITY</span>
-          <span class="meta-data">HERMETIC &bull; SEED 42 &bull; H100 AUDITED</span>
-        </div>
-      </div>
+          <div class="paper-meta-grid">
+            <div class="meta-cell">
+              <span class="meta-label">AUTHORS</span>
+              <span class="meta-data">Celestrium Collaboration &bull; Sub-Surface</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">DATE &bull; VERSION</span>
+              <span class="meta-data">{date} &bull; v{version}</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">TIED EXPERIMENTS</span>
+              <span class="meta-data">{experiments}</span>
+            </div>
+            <div class="meta-cell">
+              <span class="meta-label">REPRODUCIBILITY</span>
+              <span class="meta-data">See linked artifacts and validation status</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <div class="incomplete-rule"></div>
     </header>
 
-    <div class="prose">
-      <slot />
-    </div>
-
-    <section class="paper-citation-section">
-      <div class="incomplete-rule"></div>
-      <div class="citation-box">
-        <div class="citation-head">
-          <span class="citation-label">// BIBTEX CITATION RECORD</span>
-          <button type="button" id="copy-bib-btn" class="copy-bib-btn" title="Copy BibTeX to clipboard">
-            <span id="copy-btn-text">[COPY BIBTEX 📋]</span>
-          </button>
+    {!withheld && (
+      <>
+        <div class="prose">
+          <slot />
         </div>
-        <pre class="citation-pre"><code id="bib-code">{`@article{celestrium2026_${paperCode.toLowerCase().replace(/[^a-z0-9]/g, '_')},
+
+        <section class="paper-citation-section">
+          <div class="incomplete-rule"></div>
+          <div class="citation-box">
+            <div class="citation-head">
+              <span class="citation-label">// BIBTEX CITATION RECORD</span>
+              <button type="button" id="copy-bib-btn" class="copy-bib-btn" title="Copy BibTeX to clipboard">
+                <span id="copy-btn-text">[COPY BIBTEX]</span>
+              </button>
+            </div>
+            <pre class="citation-pre"><code id="bib-code">{`@article{celestrium2026_${paperCode.toLowerCase().replace(/[^a-z0-9]/g, '_')},
   title={{${title}}},
   author={{Celestrium Collaboration and Sub-Surface}},
   journal={{${venue}}},
   year={2026},
-  eprint={astro-ph.CO/2609.xxxxx},
   note={Experiments: ${experiments}}
 }`}</code></pre>
-      </div>
-    </section>
+          </div>
+        </section>
+      </>
+    )}
 
     <script is:inline>
       (function() {
