@@ -133,6 +133,8 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 - **Local Machine**: Windows 11 host (PowerShell), NVIDIA GeForce RTX 2060 (6 GB VRAM). Fast local iteration and unit testing.
 - **Modal Cloud Compute**: Active grant balance ~$22.16 USD. Use for scaled H100 SXM5 multi-GPU training, large-scale Monte Carlo runs, and broker streaming workers (`modal run modal_app.py`).
 - **Cloudflare Edge Deployment**: Web platform deployed to Cloudflare Workers with static assets serving [https://astro.subsurfaces.net](https://astro.subsurfaces.net). Automated builds via `wrangler.toml` (`[build] command = "npm --prefix site install && npm --prefix site run build"`). Custom OpenGraph suite and SVG/ICO favicons live at edge.
+  - **Deploying**: `git push` does not redeploy the site. Run `npx wrangler deploy` from the repo root (builds `site/` and uploads). Stop any `astro preview` server first: it locks `site/node_modules` and `npm ci` fails with EPERM.
+  - `site/src/data/` is tracked despite the repo-wide `data/` ignore; regenerate it with `python scripts/novae/export_site_data.py`.
 
 ---
 
