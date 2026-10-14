@@ -35,3 +35,6 @@ site/.astro/
 
 # browser-automation screenshots
 .playwright-mcp/
+
+# the site ships its own small exported data (scripts/novae/export_site_data.py)
+!site/src/data/
