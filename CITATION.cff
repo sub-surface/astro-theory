@@ -3,8 +3,9 @@ message: "If you use these results, figures or code, please cite them as below. 
 title: "Celestrium: an astrophysics research notebook"
 type: software
 authors:
-  - name: "Leon"
-  - name: "Claude (Anthropic)"
+  - given-names: "Leon Patrick"
+    family-names: "Morgan"
+  - name: "Claude"
 repository-code: "https://github.com/sub-surface/astro-theory"
 url: "https://astro.subsurfaces.net"
 abstract: "Data access to the major astronomical archives, calibrated inference machinery, and research programmes (cosmic dipole, recurrent novae including T Coronae Borealis and a candidate 1943 eruption of V347 Nor, calibrated triage) run on real data with honest uncertainties."

@@ -15,7 +15,7 @@ export function GET() {
   <link rel="self" href="${SITE}/feed.xml" />
   <id>${SITE}/</id>
   <updated>${updated}</updated>
-  <author><name>Leon and Claude</name></author>
+  <author><name>Leon Patrick Morgan &amp; Claude</name></author>
 ${items.map((c) => `  <entry>
     <title>${esc(c.subject)}</title>
     <link href="${c.url}" />
