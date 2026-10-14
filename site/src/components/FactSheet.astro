@@ -1,0 +1,12 @@
+---
+// Quantity / value / source table that stacks into cards on phones.
+interface Props { rows: [string, string, string][]; head?: [string, string, string]; }
+const { rows, head = ['Quantity', 'Value', 'Source'] } = Astro.props;
+---
+
+<div class="wrap">
+  <table class="sheet stack">
+    <tr>{head.map((h) => <th>{h}</th>)}</tr>
+    {rows.map(([q, v, s]) => <tr><td>{q}</td><td class="mono">{v}</td><td>{s}</td></tr>)}
+  </table>
+</div>

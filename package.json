@@ -3,7 +3,8 @@
   "description": "Celestrium — Astrophysical Intelligence Engine & Research Platform",
   "private": true,
   "scripts": {
-    "build": "npm --prefix site run build",
-    "deploy": "npm --prefix site run build && npx wrangler deploy"
+    "build": "npm --prefix site ci && npm --prefix site run build",
+    "deploy": "npx wrangler deploy",
+    "ship": "python scripts/infra/ship.py"
   }
 }

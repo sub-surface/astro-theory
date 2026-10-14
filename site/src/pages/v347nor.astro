@@ -1,5 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
+import Fig from '../components/Fig.astro';
+import FactSheet from '../components/FactSheet.astro';
+import Toc from '../components/Toc.astro';
+import Cite from '../components/Cite.astro';
+import Gates from '../components/Gates.astro';
 import D from '../data/v347nor.json';
 
 const A = D.audit;
@@ -52,7 +57,6 @@ const gates: [string, string, string, string][] = [
   ['G8', 'Nebula', 'A 1943 origin of the ring needs a decelerating front (n = 0.25-0.57), consistent with the shock reading of Santander-García+ 2007. A moving front could also be older gas being lit up, so this is consistent, not diagnostic.', 'neutral'],
   ['G9', 'Original plates', 'Inspect the plates of 1943 Feb 9-11 and rb12036 in the Harvard stacks; check the 1943 Announcement Cards. Draft request written, not sent.', 'open'],
 ];
-const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn' };
 ---
 
 <Base title="V347 Nor 1943" wide description="A candidate unrecorded 1943 nova eruption of the symbiotic nova Hen 2-147 (V347 Nor), found on the Harvard plates: light curve, the gates it has passed, and what would confirm it." ogImage="/fig/rn/v347nor_1943.png">
@@ -68,26 +72,10 @@ const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn'
     anywhere else yet.
   </div>
 
-  <nav class="toc" aria-label="Contents">
-    <b>Contents</b>
-    <ol>
-      <li><a href="#facts">Facts</a></li>
-      <li><a href="#lc">Light curve</a></li>
-      <li><a href="#gates">Gates</a></li>
-      <li><a href="#nebula">The nebula</a></li>
-      <li><a href="#search">How it was found</a></li>
-      <li><a href="#decir">DE Cir 1929</a></li>
-      <li><a href="#refs">Data and references</a></li>
-    </ol>
-  </nav>
+  <Toc items={[['facts', 'Facts'], ['lc', 'Light curve'], ['gates', 'Gates'], ['nebula', 'The nebula'], ['search', 'How it was found'], ['decir', 'DE Cir 1929'], ['refs', 'Data and references']]} />
 
   <h2 id="facts">Facts</h2>
-  <div class="wrap">
-    <table class="sheet stack">
-      <tr><th>Quantity</th><th>Value</th><th>Source</th></tr>
-      {sheet.map(([q, v, s]) => <tr><td>{q}</td><td class="mono">{v}</td><td>{s}</td></tr>)}
-    </table>
-  </div>
+  <FactSheet rows={sheet} />
 
   <h2 id="lc">Light curve</h2>
   <div class="panel">
@@ -113,29 +101,15 @@ const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn'
   <p class="small">DASCH DR7 magnitudes (photographic, B-like). Many grey limits during 1943-44 are pipeline misses: the
     bright image was not matched to the catalogue star, or was given to a neighbour, though the star is visible in the
     image cutouts. Red ticks mark those plates.</p>
-  <figure>
-    <a href="/fig/rn/v347nor_onset.png"><img src="/fig/rn/v347nor_onset.png" alt="Plate cutouts of V347 Nor from 9 to 26 February 1943 and a 1942 plate" loading="lazy" /></a>
-    <figcaption>The onset. Absent on 9 and 10 February 1943; present on 11 February on two cameras, and on every plate after. The last panel is a 1942 plate. Only rb12036 has a catalogued magnitude.</figcaption>
-  </figure>
+  <Fig src="rn/v347nor_onset.png" alt="Plate cutouts of V347 Nor from 9 to 26 February 1943 and a 1942 plate">The onset. Absent on 9 and 10 February 1943; present on 11 February on two cameras, and on every plate after. The last panel is a 1942 plate. Only rb12036 has a catalogued magnitude.</Fig>
 
   <h2 id="gates">Gates</h2>
   <p>The checks a candidate must pass before we call it an eruption. Green: passed. Yellow: open. Grey: no verdict either way.</p>
-  <div class="wrap">
-    <table class="stack">
-      <tr><th>Gate</th><th>Test</th><th>Result</th></tr>
-      {gates.map(([g, what, res, st]) => <tr><td class={`mono ${gcls[st]}`}>{g}</td><td><b>{what}.</b> {res}</td><td class={`st ${gcls[st]}`}>{st.toUpperCase()}</td></tr>)}
-    </table>
-  </div>
+  <Gates gates={gates} />
 
   <div class="pair">
-    <figure>
-      <a href="/fig/rn/v347nor_vetting.png"><img src="/fig/rn/v347nor_vetting.png" alt="Plate cutouts of V347 Nor before and during the 1943 eruption" loading="lazy" /></a>
-      <figcaption>Plate cutouts around V347 Nor before and during the eruption. The circle is 10″ around the Gaia position.</figcaption>
-    </figure>
-    <figure>
-      <a href="/fig/rn/v347nor_dasch_misses.png"><img src="/fig/rn/v347nor_dasch_misses.png" alt="Plates logged as non-detections that show the star" loading="lazy" /></a>
-      <figcaption>Plates from 1943 that DASCH logs as non-detections. The star is there.</figcaption>
-    </figure>
+    <Fig src="rn/v347nor_vetting.png" alt="Plate cutouts of V347 Nor before and during the 1943 eruption">Plate cutouts around V347 Nor before and during the eruption. The circle is 10″ around the Gaia position.</Fig>
+    <Fig src="rn/v347nor_dasch_misses.png" alt="Plates logged as non-detections that show the star">Plates from 1943 that DASCH logs as non-detections. The star is there.</Fig>
   </div>
 
   <h2 id="nebula">The nebula</h2>
@@ -166,23 +140,14 @@ const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn'
     It does not at 1% false alarms (recall 0.39 against 0.41), but does at 0.1% (0.28 against 0.14). A neural network
     trained on simulated eruptions learned the simulator's quirks and failed on real plates.</p>
   <div class="pair">
-    <figure>
-      <a href="/fig/rn/rn_scores_recall.png"><img src="/fig/rn/rn_scores_recall.png" alt="Detection scores and recall of catalogued eruptions" loading="lazy" /></a>
-      <figcaption>Scores of targets and controls, and recall of 197 catalogued eruptions.</figcaption>
-    </figure>
-    <figure>
-      <a href="/fig/rn/rn_completeness.png"><img src="/fig/rn/rn_completeness.png" alt="Completeness for 356 classical novae" loading="lazy" /></a>
-      <figcaption>Completeness for repeat eruptions of 356 classical novae. None found, which limits the fraction that are recurrent to below 2.5% for typical decline times.</figcaption>
-    </figure>
+    <Fig src="rn/rn_scores_recall.png" alt="Detection scores and recall of catalogued eruptions">Scores of targets and controls, and recall of 197 catalogued eruptions.</Fig>
+    <Fig src="rn/rn_completeness.png" alt="Completeness for 356 classical novae">Completeness for repeat eruptions of 356 classical novae. None found, which limits the fraction that are recurrent to below 2.5% for typical decline times.</Fig>
   </div>
 
   <h2 id="decir">DE Cir 1929</h2>
   <p>The nova DE Cir (2003) also shows a brightening on the 1929 plates, but it scores below the pre-registered threshold,
     so it stays exploratory. Pagnotta &amp; Schaefer (2014) did not search its plates.</p>
-  <figure>
-    <a href="/fig/rn/decir_1929.png"><img src="/fig/rn/decir_1929.png" alt="DE Cir light curve around 1929" loading="lazy" /></a>
-    <figcaption>DE Cir on the Harvard plates around 1929. Exploratory only.</figcaption>
-  </figure>
+  <Fig src="rn/decir_1929.png" alt="DE Cir light curve around 1929">DE Cir on the Harvard plates around 1929. Exploratory only.</Fig>
 
   <h2 id="refs">Data and references</h2>
   <p>DASCH DR7 light curves and cutouts (Grindlay+ 2009); Gaia DR3; SPM4; POSS-II; NASA ADS. Corradi+ 1999 A&amp;A 348, 978;
@@ -191,28 +156,9 @@ const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn'
     <code>rn_*.py</code>.</p>
 
 
+  <Cite title="V347 Normae in 1943: an unrecorded nova eruption on the Harvard plates (candidate)" path="/v347nor/" key="celestrium_v347nor" />
+
   <style>
-    .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }
-    .toc { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 1em 0.4em; margin: 1em 0; font-size: 0.95em; width: fit-content; max-width: 100%; }
-    .toc ol { margin: 0.3em 0 0.2em; padding-left: 1.6em; columns: 2; column-gap: 2.5em; }
-    @media (min-width: 900px) { .toc { float: right; margin: 0 0 1em 1.5em; } .toc ol { columns: 1; } }
-    @media (max-width: 480px) { .toc ol { columns: 1; } }
-    h2 { clear: both; }
-    .sheet td:first-child { white-space: nowrap; }
-    @media (max-width: 560px) {
-      .stack th { display: none; }
-      .stack, .stack tbody, .stack tr, .stack td { display: block; width: auto; }
-      .stack tr { border: 1px solid var(--rule); padding: 4px 8px; }
-      .stack tr + tr { border-top: 0; }
-      .stack tr:has(th) { display: none; }
-      .stack tr:has(th) + tr { border-top: 1px solid var(--rule); }
-      .stack td { border: 0; padding: 0; white-space: normal !important; }
-      .stack td:first-child { font-weight: bold; }
-    }
-    .pair { display: grid; gap: 0 1.5em; }
-    .pair > * { min-width: 0; }
-    @media (min-width: 760px) { .pair { grid-template-columns: 1fr 1fr; align-items: start; } }
-    .panel { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 0.6em; margin: 1em 0; }
     .lcsvg { display: block; width: 100%; height: auto; margin-bottom: 0.3em; }
     .lcsvg text { fill: var(--muted); font: 11px "Courier New", Courier, monospace; }
     .lcsvg .lab { fill: var(--fg); }

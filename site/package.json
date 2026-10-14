@@ -6,7 +6,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "prebuild": "node scripts/sync.mjs",
+    "sync": "node scripts/sync.mjs"
   },
   "dependencies": {
     "astro": "^6.1.5"

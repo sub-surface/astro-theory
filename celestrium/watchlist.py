@@ -1,6 +1,6 @@
 """Observing calendar: dated data drops, pre-registered observables and forecasts to score.
 
-One curated list (`EVENTS`) shared by all agents. Each entry says *when* to look, *what* to look at,
+One curated list, `celestrium/watchlist.json` (loaded here as `EVENTS`, and read directly by the website build). Each entry says *when* to look, *what* to look at,
 and — for observables and forecasts — the pre-registered test that decides the outcome, written
 before the data arrive so it cannot be tuned afterwards. When an entry's window closes, score it:
 set `status` to "passed" / "failed" / "lapsed" and record what happened in `outcome`.
@@ -16,10 +16,13 @@ minimum at JD 2461061.17 (EXP-2026-Y ephemeris stage).
 """
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional
 
+EVENTS_FILE = Path(__file__).with_name("watchlist.json")
 KINDS = ("release", "observable", "forecast", "deadline", "triggered")
 STATUSES = ("open", "passed", "failed", "lapsed", "done")
 
@@ -38,6 +41,7 @@ class WatchEvent:
     project: str = ""             # e.g. EXP-2026-Y
     status: str = "open"
     outcome: str = ""
+    group: str = ""               # section heading in the calendar
 
     @property
     def start_date(self) -> Optional[date]:
@@ -51,79 +55,13 @@ class WatchEvent:
         return asdict(self)
 
 
-EVENTS: List[WatchEvent] = [
-    # ------------------------------------------------------------------ data releases
-    WatchEvent("euclid-dr1", "2026-10-21", None, "release", "Euclid",
-               "Euclid DR1 (~1900 deg2 wide survey)",
-               "Run the partial-sky dipole estimator same day; DR1 selection is independent of WISE/Gaia.",
-               source="docs/programmes/dipole.md", project="EXP-2026-01"),
-    WatchEvent("gaia-dr4", "2026-12-01", "2026-12-31", "release", "Gaia",
-               "Gaia DR4 (66 months; epoch astrometry, photometry and RVS spectra)",
-               "Confirm the date on the ESA Gaia site; pull T CrB / RS Oph epoch photometry and refresh distances.",
-               source="ESA Gaia DR4 schedule (verify)", project="EXP-2026-Y"),
-    # ------------------------------------------------------------------ T CrB observables (ours)
-    WatchEvent("tcrb-uv-recovery", "2026-11-05", "2026-11-30", "observable", "T CrB",
-               "Does the Sep 2026 UV collapse recover by orbital phase ~0.3?",
-               "Swift/UVOT UVM2 and XRT 2-10 keV in the newest HEASARC pointings "
-               "(scripts/novae/fetch_tcrb_swift_uvot.py, fetch_tcrb_swift_xrt.py).",
-               test="Geometric (orbit-locked obscuration) if UVM2 brightens by >= 1 mag from the 29 Sep 2026 level "
-                    "by 2026-11-30 (phase 0.3 = 2026-11-12) with the hard X-rays falling again; a change of accretion "
-                    "state if UVM2 stays within 0.5 mag of its quiescent pre-2015 level through 2026-11-30.",
-               source="EXP-2026-Y uv_dips (two collapses 5.04 orbits apart, chance p = 0.08)", project="EXP-2026-Y"),
-    WatchEvent("tcrb-conjunction-2027", "2027-04-20", None, "observable", "T CrB",
-               "Next giant-in-front conjunction (deeper ellipsoidal minimum)",
-               "If a third UV collapse begins within ~0.1 in phase after this date, the orbit-locked hypothesis "
-               "gains a third coincidence.",
-               test="Orbit-locked if a UV collapse (>= 1.5 mag UVM2 in < 45 d) starts between 2027-04-20 and 2027-06-10.",
-               source="EXP-2026-Y ephemeris", project="EXP-2026-Y"),
-    WatchEvent("tcrb-1946-analogue", "2027-03-01", "2027-08-01", "observable", "T CrB",
-               "1946 analogue window: eruption 0.63 yr after the Sep 2026 UV collapse (2027.38 = 2027-05-19)",
-               "AAVSO alerts / ATels; the overlay stage in scripts/novae/tcrb_analysis.py.",
-               test="Analogue survives if T CrB erupts between 2027-03-01 and 2027-08-01; dead (like the 2023 alignment) "
-                    "if no eruption by 2027-08-01.",
-               source="EXP-2026-Y dip_overlay alignment B", project="EXP-2026-Y"),
-    WatchEvent("tcrb-recurrence-median", "2027-02-14", "2030-11-25", "observable", "T CrB",
-               "Recurrence-clock forecast: 68% window 2027.12-2030.90, median 2028.13",
-               "Score at eruption: where does the date fall in our survival-conditioned log-normal?",
-               test="Report the predictive CDF at the eruption date (calibrated forecasts give uniform CDF values).",
-               source="EXP-2026-Y forecast.recurrence", project="EXP-2026-Y"),
-    # ------------------------------------------------------------------ other people's forecasts to score
-    WatchEvent("marchev-atel17784", "2026-10-15", "2026-11-30", "forecast", "T CrB",
-               "Marchev+ ATel 17784 (May 2026): eruption within 5-6 months",
-               "Lapses if no eruption by end of Nov 2026.", test="Passes if T CrB erupts by 2026-11-30.",
-               source="ATel 17784", project="EXP-2026-Y"),
-    WatchEvent("iijima-rsoph", "2026-10-01", "2026-11-30", "forecast", "RS Oph",
-               "Iijima 2025: next RS Oph outburst ~Oct-Nov 2026",
-               "Our Swift data show RS Oph quiescent on 2026-09 (UVM2 14.85). Watch AAVSO / ATels.",
-               test="Passes if RS Oph erupts by 2026-11-30.", source="Iijima 2025", project="EXP-2026-Y"),
-    WatchEvent("pei-dec2026", "2026-12-01", "2026-12-31", "forecast", "T CrB",
-               "Pei+ 2026 early branch: eruption Dec 2026 (late branch >= 2029.4)",
-               "", test="Early branch passes if T CrB erupts in Dec 2026.",
-               source="2026MNRAS.550g1361P", project="EXP-2026-Y"),
-    WatchEvent("schneider-2027a", "2027-01-25", "2027-02-22", "forecast", "T CrB",
-               "Schneider 2024 RNAAS discrete date 2027.106 (2027-02-08)",
-               "", test="Passes if the eruption lands within +/- 2 weeks of 2027-02-08.",
-               source="Schneider 2024 RNAAS", project="EXP-2026-Y"),
-    WatchEvent("sello-feb2027", "2027-02-12", "2027-03-12", "forecast", "T CrB",
-               "Sello+ 2026: eruption 26 Feb 2027",
-               "", test="Passes if the eruption lands within +/- 2 weeks of 2027-02-26.",
-               source="Sello+ 2026", project="EXP-2026-Y"),
-    # ------------------------------------------------------------------ our own targets
-    WatchEvent("exp-04-bald", "2026-11-10", None, "deadline", "DESI / 4MOST",
-               "EXP-2026-04 BALD active learning target date", "docs/ledger.md",
-               project="EXP-2026-04"),
-    WatchEvent("exp-05-zoa", "2026-12-01", None, "deadline", "eROSITA + CatWISE",
-               "EXP-2026-05 Zone-of-Avoidance fusion target date", "docs/ledger.md",
-               project="EXP-2026-05"),
-    # ------------------------------------------------------------------ triggered (on eruption)
-    WatchEvent("tcrb-eruption-playbook", None, None, "triggered", "T CrB",
-               "On eruption: score every open T CrB forecast; pull Swift/NuSTAR/Fermi-LAT; check the "
-               "Shara+ 2024 30 pc super-remnant for a light echo (they predict none); compare the shock "
-               "X-ray rise with RS Oph 2006/2021 (data/srn/rs_oph).",
-               "Re-run scripts/novae/tcrb_literature.py scoreboard with the eruption date.",
-               test="Super-remnant: Shara+ prediction passes if no fluorescent echo is detected.",
-               source="2024ApJ...977L..48S", project="EXP-2026-Y"),
-]
+def load_events(path: Path = EVENTS_FILE) -> List[WatchEvent]:
+    """Read the calendar from its JSON source (also read by the website build)."""
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    return [WatchEvent(**e) for e in doc["events"]]
+
+
+EVENTS: List[WatchEvent] = load_events()
 
 
 def _today(today: Optional[date] = None) -> date:

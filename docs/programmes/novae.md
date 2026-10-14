@@ -2,7 +2,7 @@
 
 **Status**: active · **Lead objects**: T CrB, plus the symbiotic recurrent-nova family (RS Oph, V3890 Sgr, V745 Sco)
 **Code**: [`celestrium/novae/`](../../celestrium/novae/) · [`scripts/novae/`](../../scripts/novae/) · **Data**: `data/tcrb/`, `data/srn/<slug>/`
-**Ledger**: EXP-2026-Y in [`../ledger.md`](../ledger.md) · **Results page**: https://claude.ai/artifact/54hXuNBCsx7wbyayrjCBYf
+**Ledger**: EXP-2026-Y, Z in [`../ledger.md`](../ledger.md) · **Pages**: https://astro.subsurfaces.net/tcrb/, https://astro.subsurfaces.net/v347nor/
 **Dated tests**: `python -m celestrium calendar` (entries in [`celestrium/watchlist.py`](../../celestrium/watchlist.py))
 
 ## Question

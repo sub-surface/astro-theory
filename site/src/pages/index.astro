@@ -1,109 +1,185 @@
 ---
+// The hub. Everything listed here is generated from the repo at build time (scripts/sync.mjs):
+// ledger rows from docs/ledger.md, programmes from docs/programmes/, dates from celestrium/watchlist.json,
+// "what changed" from the git history of docs/. Edit those, not this page.
 import Base from '../layouts/Base.astro';
+import SkyMap from '../components/SkyMap.astro';
+import Fig from '../components/Fig.astro';
+import Cite from '../components/Cite.astro';
+import LEDGER from '../generated/ledger.json';
+import PROGRAMMES from '../generated/programmes.json';
+import CALENDAR from '../generated/calendar.json';
+import CHANGES from '../generated/changes.json';
+import FIGS from '../generated/figures.json';
+import { REPO, builtOn } from '../build-info';
 
-const updated = '14 October 2026';
+const figs = FIGS as Record<string, any>;
+const byId = Object.fromEntries(LEDGER.map((r) => [r.id, r]));
+const programmes = [...PROGRAMMES].sort((a, b) => a.id.localeCompare(b.id));
+const progOf: Record<string, string> = {};
+for (const p of programmes) for (const e of p.experiments) progOf[e] = p.id;
+// One plain-language line per programme (the generated status is the programme page's own first clause)
+const blurb: Record<string, string> = {
+  P1: 'Is the quasar number-count dipole consistent with our motion against the CMB? Euclid DR1 arrives 21 Oct 2026. The earlier tension claims did not survive the audit.',
+  P2: 'Watching T Coronae Borealis before its next eruption, and searching a century of Harvard plates for recurrent novae nobody saw.',
+  P3: 'Classifiers that report honest uncertainty for follow-up decisions. Being rebuilt on real labelled data.',
+  P4: 'Inflation after ACT DR6, primordial non-Gaussianity, physics-informed denoising. Ideas, no results yet.',
+};
+const pages: Record<string, [string, string][]> = { P2: [['/tcrb/', 'T CrB'], ['/v347nor/', 'V347 Nor 1943']] };
 
-// Status classes: ok = sound, rerun = needs rerun, syn = synthetic only, no = withdrawn / not demonstrated, plan = planned
-const experiments = [
-  { id: 'Y', title: 'T Coronae Borealis: multi-wavelength status and accretion inversion', data: 'AAVSO, ANS UBV, Swift UVOT/XRT, TESS', status: 'SOUND', cls: 'ok', note: 'See the T CrB section below.', fig: 'tcrb/tcrb_uv_xray_track.png' },
-  { id: 'Z', title: 'Hidden recurrent novae on a century of Harvard plates', data: 'DASCH DR7, 1,211 targets + 2,101 controls', status: 'SOUND (pre-registered)', cls: 'ok', note: 'One new candidate: V347 Nor erupted in February 1943 (see its page). Recurrent-nova fraction among classical novae < 2.5% for typical speeds.', fig: 'rn/v347nor_1943.png' },
-  { id: 'G', title: 'Live audit of ten archive pipelines', data: 'TAP, REST and FITS services', status: 'SOUND', cls: 'ok', note: 'All ten returned rows when checked.' },
-  { id: 'I', title: 'Quaia selection-function and Galactic-cut survey', data: 'Quaia G20.5 + SIMBAD', status: 'SOUND (descriptive)', cls: 'ok', note: 'Dipole amplitude stays in the published 2.1-3.1% band. The grid script it cites is missing.', fig: 'remarkable_objects_discovery_gallery.png' },
-  { id: 'K', title: 'Dipole estimator injection-recovery', data: 'full-sky mocks', status: 'SOUND (synthetic validation)', cls: 'ok', note: 'Estimator response b = 0.975 +/- 0.021. A method test; says nothing about the sky.', fig: 'dipole_injection_recovery_benchmark.png' },
-  { id: 'B', title: 'Quaia quasar dipole deconvolution', data: 'Quaia G20.5, 1.3M quasars', status: 'NEEDS RERUN', cls: 'rerun', note: 'Classifier used Galactic (l, b) as features; errors not checked on mocks.', fig: 'experiment_b_quaia_dipole_deconvolution.png' },
-  { id: 'F', title: '12-class source classifier', data: 'Gaia DR3 + Quaia + unWISE', status: 'NEEDS RERUN', cls: 'rerun', note: '7 of 12 classes synthetic; labels leak into the photometry.' },
-  { id: 'H', title: 'Calibrated decisions ("rewarding doubt")', data: 'EXP-F dataset', status: 'NEEDS RERUN', cls: 'rerun', note: 'Inherits the EXP-F label leak; calibration measured in-sample.', fig: 'rlcd_decision_calibration_benchmark.png' },
-  { id: 'J', title: 'Full-catalogue conformal filtering', data: 'Quaia, 1.3M sources', status: 'NEEDS RERUN', cls: 'rerun', note: 'Uses (l, b) as features; the threshold was hard-coded, so the FDR bound is unsupported.' },
-  { id: 'L', title: 'Quaia selection deprojection', data: 'Quaia selection map', status: 'NEEDS RERUN', cls: 'rerun', note: 'Raw-sample deprojection stands; the purified branch cancels its own purification.', fig: 'quaia_selection_deprojection_progression.png' },
-  { id: 'O', title: '10,000-mock null test of the dipole', data: 'LCDM kinematic mocks', status: 'NEEDS RERUN', cls: 'rerun', note: 'Null ignores clustering; p < 1e-4 is the Monte-Carlo floor.', fig: 'large_null_dipole_monte_carlo.png' },
-  { id: 'P', title: 'MCMC dipole parameter estimation', data: 'Quaia, |b| > 20 deg', status: 'NEEDS RERUN', cls: 'rerun', note: 'Sampler converged (R-hat < 1.05); the Poisson likelihood overstates the evidence.', fig: 'bayesian_mcmc_dipole_posteriors.png' },
-  { id: 'X', title: 'Fast radio burst triage', data: 'CHIME/FRB Catalog 1', status: 'NEEDS RERUN', cls: 'rerun', note: 'Labels were functions of the inputs; the classifier learned the rule.', fig: 'experiment_x_frb_triage.png' },
-  { id: 'A', title: 'Real-time alert triage', data: 'simulated alert stream', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'Latency measured on simulated alerts only.', fig: 'experiment_a_streaming_triage.png' },
-  { id: 'D', title: 'Conformal contamination bounds', data: 'Beta-distributed synthetic scores', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'Quaia has no truth labels; scores were synthetic.', fig: 'experiment_d_conformal_risk_control.png' },
-  { id: 'Q', title: 'Exoplanet transit / RV triage', data: 'simulated', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'Classes separable by construction.', fig: 'experiment_q_exoplanet_triage.png' },
-  { id: 'R', title: 'Multi-messenger counterpart triage', data: 'simulated GW + neutrino alerts', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'Injected kilonovae; zero false alarms is the veto boundary.', fig: 'experiment_r_multimessenger_triage.png' },
-  { id: 'S', title: 'z > 10 galaxy vs brown-dwarf discrimination', data: 'simulated', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'No JWST or Euclid photometry read.', fig: 'experiment_s_cosmic_dawn_triage.png' },
-  { id: 'T', title: 'Solar flare forecasting', data: 'simulated', status: 'SYNTHETIC ONLY', cls: 'syn', note: 'Perfect skill by generator construction.', fig: 'experiment_t_space_weather_triage.png' },
-  { id: 'U', title: 'GW error-volume tiling', data: '100 simulated events', status: 'SYNTHETIC ONLY', cls: 'syn', note: '97% vs 89% recovery is within noise at n = 100.', fig: 'experiment_u_active_gw_tiling_benchmark.png' },
-  { id: 'V', title: 'Cross-survey zero-point calibration', data: 'real SEDs, injected offsets', status: 'NOT DEMONSTRATED', cls: 'no', note: 'RMSE equals the injected scatter: no better than predicting zero.', fig: 'experiment_v_flow_cross_calibration.png' },
-  { id: 'E', title: 'Cloud Monte Carlo null for the dipole', data: '200 HEALPix mocks', status: 'WITHDRAWN', cls: 'no', note: '200 draws cannot support p < 1e-5; mismatched mask.', fig: 'experiment_e_cloud_monte_carlo_null.png' },
-  { id: 'M', title: 'Classifier sky hold-out', data: 'Galactic N vs S', status: 'WITHDRAWN', cls: 'no', note: 'Conclusion inverted: accuracy fell 88% to 55% on the held-out hemisphere.', fig: 'foundation_spatial_holdout_generalization.png' },
-  { id: 'N', title: 'Telescope queue scheduling', data: 'simulated semesters', status: 'WITHDRAWN', cls: 'no', note: 'Screening read the true class from the simulation.', fig: 'rlcd_telescope_queue_scheduling.png' },
-  { id: 'W', title: 'Multi-tracer dipole co-inference', data: 'Quaia, CatWISE, NVSS', status: 'WITHDRAWN', cls: 'no', note: 'The larger model fit worse than the nested one: a sampler failure.', fig: 'experiment_w_multi_tracer_coinference.png' },
-  { id: '01', title: 'Euclid DR1 dipole recovery', data: 'Euclid DR1 Wide', status: 'PLANNED', cls: 'plan', note: 'Data release 21 Oct 2026.' },
-  { id: '04', title: 'Active learning for spectroscopic fibres', data: 'DESI', status: 'PLANNED', cls: 'plan', note: 'No result yet.' },
-  { id: '05', title: 'Zone-of-avoidance multi-wavelength fusion', data: 'eROSITA + CatWISE', status: 'PLANNED', cls: 'plan', note: 'No code or data yet.' },
+const order = ['ok', 'rerun', 'syn', 'no', 'plan'];
+const rows = [...LEDGER].sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls));
+const count = (c: string) => LEDGER.filter((r) => r.cls === c).length;
+const legend: [string, string, string][] = [
+  ['ok', 'SOUND', 'real data, honest errors'],
+  ['rerun', 'NEEDS RERUN', 'real data, a flaw in the headline number'],
+  ['syn', 'SYNTHETIC ONLY', 'simulated benchmark'],
+  ['no', 'WITHDRAWN', 'effect absent or an artifact'],
+  ['plan', 'PLANNED', 'no result yet'],
 ];
 
-const tcrb = [
-  ['tcrb_panchromatic_lightcurve.png', 'Light curves 2005-2026: optical (AAVSO, Gaia), Swift UVOT ultraviolet and XRT X-ray. The 2016-2022 high state, the 2023 dip, and the September 2026 UV collapse.'],
-  ['tcrb_uv_xray_track.png', 'UV against hard X-ray. In September 2026 UVM2 fell 2.05 mag in 30 days (12.12 to 14.17) while 2-10 keV X-rays rose. Unreported as of this page.'],
-  ['tcrb_uv_dip_onsets.png', 'The 2023 and 2026 UV collapses aligned on their onsets, with hard X-rays below. A viscous disk with its supply cut fades at most 0.11 mag in 30 days; a 2-mag fade takes at least 288 days. So the inner disk changed state.'],
-  ['tcrb_dips_overlay.png', 'The 1945-46 pre-eruption dip overlaid on today. Aligning on the 2023 dip is falsified; aligning on the 2026 collapse implies eruption near 2027.4.'],
-  ['tcrb_inner_edge.png', 'Disk inversion. The inner edge moves from about 3 solar radii (quiescence) to 0.75-1 (2016-22 high state) and back to 2.7 (2023 dip, and now). The absolute accretion rate is not identified.'],
-  ['tcrb_accretion_movie.gif', 'The inversion as a movie: the inner 8 solar radii, face-on, 2005-2026.'],
-  ['tcrb_ephemeris.png', 'Orbital period 227.60 +/- 0.06 d from AAVSO V with the secular trend removed, and the ellipsoidal light curve.'],
-  ['tcrb_roche_map.png', 'Roche geometry of the red giant and white dwarf.'],
-  ['tcrb_orbit.gif', 'The binary through one orbit, with the measured quiescent V light curve folded against the model.'],
-  ['tcrb_system_states.png', 'Rendered system in quiescence (2010), peak accretion (2016.3) and now (2026.75). Inclination 61 deg; colours are blackbody, brightness on a log-T scale.'],
-  ['tcrb_tess_flicker.png', 'TESS sectors 24, 25, 51 and 78. No significant periodicity against red-noise simulations; the disputed ~6000 s signal is not seen.'],
-  ['srn_family_uv_xray.png', 'The symbiotic recurrent-nova family. In quiescence RS Oph and V745 Sco are about 2,800 times more UV-luminous than T CrB.'],
-  ['tcrb_parameter_forest.png', 'Published white-dwarf masses (converged on 1.29-1.37 solar masses) and inclinations, with our ellipsoidal-amplitude range shaded.'],
-  ['tcrb_forecast_scoreboard.png', 'Fifteen published eruption windows; five have closed without an eruption. Ours: recurrence median 2028.1 (68%: 2027.1-2030.9) and the dip analogue near 2027.4.'],
-  ['tcrb_literature_bibliometrics.png', '160 years of T CrB in ADS: 1,273 papers mention it, 213 refereed papers have it in the title or abstract.'],
-];
+// Dates: dated events still open, soonest first; then the ones that wait on an eruption.
+const today = builtOn;
+const dated = CALENDAR.filter((e) => e.start && e.status === 'open' && (e.end || e.start) >= today)
+  .sort((a, b) => a.start!.localeCompare(b.start!));
+const triggered = CALENDAR.filter((e) => !e.start && e.status === 'open');
+const eruptionOpen = CALENDAR.some((e) => e.id === 'tcrb-eruption-playbook' && e.status === 'open');
+const nextEvent = dated.find((e) => e.start! > today) || dated[0];
+const fmtDate = (iso: string) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const span = (e: { start: string | null; end: string | null }) => fmtDate(e.start!) + (e.end ? ' – ' + fmtDate(e.end) : '');
+
+const changes = CHANGES.slice(0, 8);
+const thumb = (f: string) => figs[f]?.thumb || `/fig/${f}`;
 ---
 
 <Base>
   <h1>Celestrium</h1>
-  <p>An astrophysics notebook kept by Leon and Claude. Code and full write-ups are in the repository; this page lists what has been done and what each result is worth.</p>
-  <p class="small">Last updated {updated}.</p>
+  <p>An astrophysics notebook kept by Leon and Claude: data from the big archives, calibrated inference, and research programmes run on real data with honest uncertainties. Code and full write-ups are in the <a href={REPO}>repository</a>; this site lists what has been done and what each result is worth.</p>
 
-  <p>[ <a href="#programmes">programmes</a> | <a href="#tcrb">T CrB</a> (<a href="/tcrb/">full page</a>) | <a href="/v347nor/">V347 Nor 1943</a> | <a href="#ledger">ledger</a> | <a href="#dates">dates</a> ]</p>
+  <div class="hero">
+    <SkyMap />
+    <div class="board mono" aria-label="Status">
+      <div><b>T CrB</b>
+        <span>{eruptionOpen ? `no eruption as of ${fmtDate(builtOn)}` : 'ERUPTED: see the T CrB page'}</span>
+        <span><span id="tcrb-age" class="odo">80.68</span> yr since 9 Feb 1946</span>
+        <span class="small">the gap before was 79.75 yr (1866–1946)</span></div>
+      {nextEvent && (
+        <div><b>next date</b>
+          <span><a href="#dates">{nextEvent.target}: {nextEvent.title.split(' (')[0]}</a></span>
+          <span class="count" data-at={nextEvent.start}>{span(nextEvent)}</span></div>
+      )}
+      <div><b>ledger</b>
+        <span><a href="#ledger">{LEDGER.length} experiments</a></span>
+        <span class="bars" aria-hidden="true">{order.map((c) => <i class={`st ${c}`} style={`flex:${count(c)}`}></i>)}</span>
+        <span class="small">{count('ok')} sound · {count('rerun')} rerun · {count('syn')} synthetic · {count('no')} withdrawn · {count('plan')} planned</span></div>
+      {changes[0] && (
+        <div><b>last change</b>
+          <span><a href={changes[0].url}>{changes[0].date}</a>: {changes[0].subject}</span></div>
+      )}
+    </div>
+  </div>
+
+  <p class="nav">[ <a href="#programmes">programmes</a> | <a href="/tcrb/">T CrB</a> | <a href="/v347nor/">V347 Nor 1943</a> | <a href="#new">what's new</a> | <a href="#dates">dates</a> | <a href="#ledger">ledger</a> | <a href="#follow">follow &amp; cite</a> ]</p>
 
   <hr />
 
   <h2 id="programmes">Programmes</h2>
-  <ul>
-    <li><b>P1 Cosmic dipole.</b> Is the quasar number-count dipole consistent with our motion against the CMB? Machinery for Quaia, CatWISE and NVSS; Euclid DR1 arrives 21 Oct 2026. The earlier tension claims did not survive the audit.</li>
-    <li><b>P2 Recurrent novae.</b> Watching <a href="/tcrb/">T Coronae Borealis</a> before its next eruption (seen in 1866 and 1946). A search of the Harvard plates found a candidate unrecorded nova eruption of the symbiotic star <a href="/v347nor/">V347 Nor in 1943</a>. Active.</li>
-    <li><b>P3 Calibrated triage.</b> Classifiers that report honest uncertainty for follow-up decisions. Being rebuilt on real labelled data.</li>
-    <li><b>P4 Theory threads.</b> Inflation after ACT DR6, primordial non-Gaussianity, physics-informed denoising. Ideas, no results yet.</li>
+  <div class="progs">
+    {programmes.map((p) => (
+      <section class="prog panel">
+        <h3><span class="mono">{p.id}</span> {p.title}</h3>
+        <p>{blurb[p.id] || p.status}</p>
+        {p.experiments.length > 0 && (
+          <p class="chips">{p.experiments.map((e) => byId[e] && (
+            <a href={`#exp-${e}`} class={`chip st ${byId[e].cls}`} title={`${byId[e].title}: ${byId[e].status}`}>{e}</a>
+          ))}</p>
+        )}
+        {p.threads.length > 0 && <ul class="threads small">{p.threads.map((t) => <li><b>{t.id}</b> {t.title}</li>)}</ul>}
+        <p class="small">
+          {(pages[p.id] || []).map(([href, label]) => <><a href={href}>{label}</a> · </>)}
+          <a href={p.url}>programme page</a> · status: {p.status}
+        </p>
+      </section>
+    ))}
+  </div>
+
+  <hr />
+
+  <h2 id="pages">Objects</h2>
+  <div class="cards">
+    <a class="card panel" href="/tcrb/">
+      <img src={thumb('tcrb/tcrb_uv_xray_track.png')} alt="" width="260" loading="lazy" />
+      <span><b>T Coronae Borealis</b><br />Recurrent nova 0.9 kpc away, due to erupt. The September 2026 UV collapse, the 1946 comparison, the disk inversion, the forecast scoreboard.</span>
+    </a>
+    <a class="card panel" href="/v347nor/">
+      <img src={thumb('rn/v347nor_1943.png')} alt="" width="260" loading="lazy" />
+      <span><b>V347 Nor, February 1943</b> <span class="st rerun">&nbsp;CANDIDATE&nbsp;</span><br />An unrecorded eruption of a symbiotic star on the Harvard plates, and the gates it has passed.</span>
+    </a>
+  </div>
+
+  <h3 id="tcrb">T Coronae Borealis (EXP-Y)</h3>
+  <p>A recurrent nova 0.9 kpc away: a white dwarf of about 1.35 solar masses accreting from a red giant on a 227.6-day orbit. It erupted in 1866 and 1946 and is expected to erupt again within a few years. Data: AAVSO and ANS optical photometry, Swift UVOT and XRT (2005-2026), TESS, and 1,273 papers. <b><a href="/tcrb/">Full page</a></b>, with interactive light curves. A selection:</p>
+  <div class="pair">
+    <Fig src="tcrb/tcrb_panchromatic_lightcurve.png" alt="T CrB light curves 2005-2026">Light curves 2005-2026: optical (AAVSO, Gaia), Swift UVOT ultraviolet and XRT X-ray. The 2016-2022 high state, the 2023 dip, and the September 2026 UV collapse.</Fig>
+    <Fig src="tcrb/tcrb_uv_xray_track.png" alt="T CrB UV against hard X-ray">UV against hard X-ray. In September 2026 UVM2 fell 2.05 mag in 30 days (12.12 to 14.17) while 2-10 keV X-rays rose.</Fig>
+    <Fig src="tcrb/tcrb_uv_dip_onsets.png" alt="The 2023 and 2026 UV collapses aligned on onset">The 2023 and 2026 UV collapses aligned on their onsets. A viscous disk with its supply cut fades at most 0.11 mag in 30 days; a 2-mag fade takes at least 288 days. So the inner disk changed state.</Fig>
+    <Fig src="tcrb/tcrb_dips_overlay.png" alt="The 1945-46 pre-eruption dip overlaid on today">The 1945-46 pre-eruption dip overlaid on today. Aligning on the 2023 dip is falsified; aligning on the 2026 collapse implies eruption near 2027.4.</Fig>
+  </div>
+
+  <hr />
+
+  <h2 id="new">What's new</h2>
+  <p class="small">From the git history of <code>docs/</code> and the calendar. Follow it in a feed reader: <a href="/feed.xml">/feed.xml</a>.</p>
+  <ul class="changes">
+    {changes.map((c) => (
+      <li><span class="mono"><a href={c.url}>{c.sha.slice(0, 7)}</a> {c.date}</span> {c.subject}
+        {c.summary && <details><summary class="small">more</summary><p class="small">{c.summary}</p></details>}</li>
+    ))}
   </ul>
 
   <hr />
 
-  <h2 id="tcrb">T Coronae Borealis (EXP-Y)</h2>
-  <p>A recurrent nova 0.9 kpc away: a white dwarf of about 1.35 solar masses accreting from a red giant on a 227.6-day orbit. It erupted in 1866 and 1946 and is expected to erupt again within a few years. Data: AAVSO and ANS optical photometry, Swift UVOT and XRT (2005-2026), TESS, and 1,273 papers.</p>
-  <p><b><a href="/tcrb/">Full page: T Coronae Borealis</a></b>, with interactive light curves, the 1945 comparison and the disk inversion. A selection of figures:</p>
-  {tcrb.slice(0, 4).map(([f, cap]) => (
-    <figure>
-      <a href={`/fig/tcrb/${f}`}><img src={`/fig/tcrb/${f}`} alt={cap} loading="lazy" /></a>
-      <figcaption>{cap}</figcaption>
-    </figure>
-  ))}
+  <h2 id="dates">Dates</h2>
+  <p class="small">What we are waiting for, from <code>celestrium/watchlist.json</code> (the same list <code>python -m celestrium calendar</code> prints). <b><a href="/calendar.ics">Subscribe (.ics)</a></b> to get them in your calendar.</p>
+  <div class="wrap">
+    <table class="stack dates">
+      <tr><th>When</th><th>What</th><th>Test</th><th></th></tr>
+      {dated.map((e) => (
+        <tr>
+          <td class="mono nowrap">{span(e)}</td>
+          <td><b>{e.target}.</b> {e.title}<br /><span class="small">{e.kind}{e.project && ` · ${e.project}`}</span></td>
+          <td class="small">{e.test || e.check}</td>
+          <td class="mono nowrap count" data-at={e.start} data-end={e.end || ''}></td>
+        </tr>
+      ))}
+    </table>
+  </div>
+  {triggered.map((e) => <p class="callout"><b>On eruption ({e.target}).</b> {e.title}</p>)}
 
   <hr />
 
   <h2 id="ledger">Experiment ledger</h2>
-  <p>Every experiment was re-checked against its code on 14 October 2026. Most results from June to September 2026 were on simulated data or had leaks; they are listed with their status, not hidden. Only rows marked SOUND are findings.</p>
-  <p class="small">
-    <span class="st ok">&nbsp;SOUND&nbsp;</span> real data, honest errors &nbsp;
-    <span class="st rerun">&nbsp;NEEDS RERUN&nbsp;</span> real data, a flaw in the headline number &nbsp;
-    <span class="st syn">&nbsp;SYNTHETIC ONLY&nbsp;</span> simulated benchmark &nbsp;
-    <span class="st no">&nbsp;WITHDRAWN&nbsp;</span> effect absent or an artifact
+  <p>Every experiment was re-checked against its code on 14 October 2026. Most results from June to September 2026 were on simulated data or had leaks; they are listed with their status, not hidden. Only rows marked SOUND are findings. Source: <a href={`${REPO}/blob/main/docs/ledger.md`}><code>docs/ledger.md</code></a>.</p>
+  <p class="filters" role="group" aria-label="Filter by status">
+    <button type="button" data-f="all" aria-pressed="true">all {LEDGER.length}</button>
+    {legend.map(([c, label, what]) => (
+      <button type="button" data-f={c} aria-pressed="false" title={what}><span class={`st ${c}`}>&nbsp;{label}&nbsp;</span> {count(c)}</button>
+    ))}
   </p>
+  <p class="small">{legend.map(([c, label, what]) => <><span class={`st ${c}`}>&nbsp;{label}&nbsp;</span> {what} &nbsp; </>)}</p>
   <div class="wrap">
-    <table class="ledger">
+    <table class="ledger stack">
       <tr><th>EXP</th><th>What</th><th>Data</th><th>Status</th><th>Note</th><th>Figure</th></tr>
-      {experiments.map((e) => (
-        <tr>
-          <td><tt>{e.id}</tt></td>
+      {rows.map((e) => (
+        <tr id={`exp-${e.id}`} data-cls={e.cls}>
+          <td><tt>{e.id}</tt>{progOf[e.id] && <span class="small"> {progOf[e.id]}</span>}</td>
           <td>{e.title}</td>
           <td>{e.data}</td>
           <td class={`st ${e.cls}`}>{e.status}</td>
-          <td>{e.note}</td>
-          <td>{e.fig ? <a href={`/fig/${e.fig}`}><img src={`/fig/${e.fig}`} alt={`EXP-${e.id} figure`} loading="lazy" /></a> : '-'}</td>
+          <td>{e.note}{e.results.length > 0 && <> <a href={e.results[0]} class="small">[results]</a></>}</td>
+          <td>{e.figures.length && figs[e.figures[0]]
+            ? <a href={`/fig/${e.figures[0]}`}><img src={thumb(e.figures[0])} alt={`EXP-${e.id} figure`} width="120" loading="lazy" /></a>
+            : '-'}</td>
         </tr>
       ))}
     </table>
@@ -111,13 +187,95 @@ const tcrb = [
 
   <hr />
 
-  <h2 id="dates">Dates</h2>
+  <h2 id="follow">Follow &amp; cite</h2>
   <ul>
-    <li><b>21 Oct 2026</b> Euclid DR1 public release.</li>
-    <li><b>5-30 Nov 2026</b> T CrB UV-recovery test. If UVM2 brightens by 1 mag or more by 30 Nov with hard X-rays falling, the collapse was obscuration on the orbit; if it stays within 0.5 mag of quiescence, the accretion state changed.</li>
-    <li><b>Dec 2026</b> Gaia DR4 (expected).</li>
-    <li><b>Mar-Aug 2027</b> T CrB window from the 1946 analogue (centre 2027.4).</li>
-    <li><b>Apr 2027</b> T CrB near solar conjunction.</li>
+    <li>Changes: <a href="/feed.xml">Atom feed</a> · dates: <a href="/calendar.ics">calendar.ics</a> · code and data products: <a href={REPO}>GitHub</a></li>
+    <li>Figures may be reused with credit. Each figure links the script that made it, at the commit this site was built from.</li>
   </ul>
+  <Cite title="Celestrium: an astrophysics research notebook" path="/" key="celestrium" />
 
+  <script is:inline>
+    (function () {
+      // T CrB: years since the 1946 eruption, ticking.
+      var t0 = Date.UTC(1946, 1, 9), yr = 365.25 * 86400e3, odo = document.getElementById('tcrb-age');
+      var tick = function () { odo.textContent = ((Date.now() - t0) / yr).toFixed(8); };
+      tick();
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(tick, 250); else setInterval(tick, 60000);
+      // Countdowns to calendar dates (computed in the reader's clock, not at build time).
+      var day = 86400e3;
+      var label = function (el) {
+        var s = Date.parse(el.dataset.at + 'T00:00:00Z'), e = el.dataset.end ? Date.parse(el.dataset.end + 'T23:59:59Z') : s + day;
+        var now = Date.now();
+        if (now < s) {
+          var d = Math.floor((s - now) / day);
+          if (d >= 2) return 'in ' + d + ' days';
+          var h = Math.floor((s - now) / 3600e3), m = Math.floor((s - now) / 60e3) % 60, x = Math.floor((s - now) / 1e3) % 60;
+          return 'in ' + h + 'h ' + (m < 10 ? '0' : '') + m + 'm ' + (x < 10 ? '0' : '') + x + 's';
+        }
+        if (now <= e) return 'open now';
+        return 'closed: to score';
+      };
+      var counts = document.querySelectorAll('.count');
+      var upd = function () { counts.forEach(function (el) { el.textContent = label(el); }); };
+      upd(); setInterval(upd, 1000);
+      // Ledger filter.
+      var btns = document.querySelectorAll('.filters button');
+      btns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          btns.forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+          document.querySelectorAll('.ledger tr[data-cls]').forEach(function (r) {
+            r.hidden = !(b.dataset.f === 'all' || r.dataset.cls === b.dataset.f);
+          });
+        });
+      });
+      // Arriving on #exp-X: make sure the row is visible and flash it.
+      var hl = function () {
+        var r = location.hash.indexOf('#exp-') === 0 && document.getElementById(location.hash.slice(1));
+        if (!r) return;
+        r.hidden = false; r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash');
+      };
+      addEventListener('hashchange', hl); hl();
+    })();
+  </script>
 </Base>
+
+<style>
+  .hero { margin: 1em 0; }
+  .hero > :global(.panel) { margin: 0; border-bottom: 0; }
+  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(11.5em, 1fr)); border: 1px solid var(--rule); background: var(--box); font-size: 0.82em; gap: 1px; background-image: linear-gradient(var(--faint), var(--faint)); }
+  .board > div { display: flex; flex-direction: column; gap: 2px; padding: 5px 7px; background: var(--box); min-width: 0; }
+  .board b { color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.9em; }
+  .odo { font-weight: bold; font-variant-numeric: tabular-nums; color: var(--alert); }
+  .count { font-variant-numeric: tabular-nums; }
+  .bars { display: flex; height: 7px; margin: 2px 0; border: 1px solid var(--rule); }
+  .bars i { display: block; padding: 0 !important; }
+  .nav { margin: 0.4em 0; }
+  .progs { display: grid; grid-template-columns: repeat(auto-fit, minmax(17em, 1fr)); gap: 0.8em; }
+  .prog { margin: 0; display: flex; flex-direction: column; min-width: 0; }
+  .prog h3 { margin: 0 0 0.3em; font-size: 1.05em; }
+  .prog p { margin: 0.3em 0; }
+  .prog > p:last-child { margin-top: auto; padding-top: 0.4em; }
+  .threads { margin: 0.2em 0; padding-left: 1.2em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .chip { font-family: "Courier New", Courier, monospace; font-size: 0.85em; padding: 0 5px; border: 1px solid var(--rule); text-decoration: none; color: var(--fg); }
+  .chip:hover { outline: 1px solid var(--fg); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(19em, 1fr)); gap: 0.8em; }
+  .card { margin: 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 0.7em; align-items: start; color: var(--fg); text-decoration: none; }
+  .card img { width: 110px; height: auto; border: 1px solid var(--faint); background: #fff; }
+  .card:hover b { text-decoration: underline; color: var(--link); }
+  .pair { grid-template-columns: repeat(auto-fit, minmax(20em, 1fr)); }
+  .changes { padding-left: 1.2em; }
+  .changes li { margin: 0.25em 0; }
+  .changes details { display: inline; }
+  .changes summary { display: inline; cursor: pointer; }
+  .changes details[open] p { margin: 0.2em 0 0.5em; }
+  .dates td { vertical-align: top; }
+  .nowrap { white-space: nowrap; }
+  .filters { display: flex; flex-wrap: wrap; gap: 0.3em; }
+  .filters button { font: inherit; font-size: 0.85em; padding: 2px 6px; color: var(--fg); background: var(--th); border: 2px outset var(--faint); cursor: pointer; }
+  .filters button[aria-pressed="true"] { border-style: inset; background: var(--bg); font-weight: bold; }
+  .ledger td img { width: 120px; max-width: none; display: block; background: #fff; }
+  .ledger tr:target, .ledger tr.flash { animation: flash 2s ease-out; }
+  @keyframes flash { from { background: var(--notice); } to { background: transparent; } }
+  @media (prefers-reduced-motion: reduce) { .ledger tr.flash { animation: none; outline: 2px solid var(--notice-rule); } }
+</style>

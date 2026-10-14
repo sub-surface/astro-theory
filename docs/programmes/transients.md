@@ -2,7 +2,7 @@
 
 **Status**: rebuild · **Code**: [`celestrium/engines/`](../../celestrium/engines/) (evidential ML), [`celestrium/transients/`](../../celestrium/transients/) (streams, multi-messenger, FRB, GW tiling, ToO), [`celestrium/explore/`](../../celestrium/explore/) (parked, synthetic-only)
 **Scripts**: [`scripts/engines/`](../../scripts/engines/), [`scripts/transients/`](../../scripts/transients/), [`scripts/explore/`](../../scripts/explore/)
-**Ledger**: EXP-2026-A, D, F, H, M, N, Q, R, S, T, U, V, X
+**Ledger**: EXP-2026-A, D, F, H, M, N, Q, R, S, T, U, V, X, 04
 
 ## Question
 

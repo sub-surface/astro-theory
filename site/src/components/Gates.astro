@@ -1,0 +1,15 @@
+---
+// The checks a candidate must pass, with a verdict per gate: pass / open / neutral / fail.
+interface Props { gates: [string, string, string, string][]; }
+const { gates } = Astro.props;
+const cls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn', fail: 'no' };
+---
+
+<div class="wrap">
+  <table class="stack">
+    <tr><th>Gate</th><th>Test</th><th>Result</th></tr>
+    {gates.map(([g, what, res, st]) => (
+      <tr><td class={`mono ${cls[st]}`}>{g}</td><td><b>{what}.</b> {res}</td><td class={`st ${cls[st]}`}>{st.toUpperCase()}</td></tr>
+    ))}
+  </table>
+</div>

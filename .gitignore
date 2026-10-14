@@ -38,3 +38,7 @@ site/.astro/
 
 # the site ships its own small exported data (scripts/novae/export_site_data.py)
 !site/src/data/
+# generated at build time by site/scripts/sync.mjs from docs/, celestrium/watchlist.json and git history
+site/public/fig/
+site/public/calendar.ics
+site/src/generated/

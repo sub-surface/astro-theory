@@ -39,10 +39,10 @@ celestrium/                 the package
   cli.py hub.py dashboard.py config.py paths.py net.py watchlist.py modal_app.py   surfaces and shared infrastructure
 scripts/<programme>/        runnable experiments: dipole/ novae/ engines/ transients/ explore/ infra/
 docs/                       ledger.md, programmes/, results/, figures/, reference/, engineering/, manuscripts/, history/
-tests/                      hermetic test suite (`python -m pytest`; 271 fast tests, slow ones marked `slow`)
+tests/                      hermetic test suite (`python -m pytest`; 274 fast tests, slow ones marked `slow`)
 data/ checkpoints/ cache/   local only (git-ignored)
 Archive/                    shelved June 2026 dipole pipeline (G)
-site/                       one-page public listing (astro.subsurfaces.net); wrangler.toml deploys it to Cloudflare Workers
+site/                       public site (astro.subsurfaces.net): hub + object pages, generated from docs/ at build
 ```
 
 New programme code goes in its subpackage and its scripts in `scripts/<programme>/`; scripts set
@@ -83,7 +83,7 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (271 fast tests pass as of 2026-10-14).
+- Verify regularly: `python -m pytest` (274 fast tests pass as of 2026-10-14).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.
@@ -132,11 +132,14 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 
 - **Local Machine**: Windows 11 host (PowerShell), NVIDIA GeForce RTX 2060 (6 GB VRAM). Fast local iteration and unit testing.
 - **Modal Cloud Compute**: Active grant balance ~$22.16 USD. Use for scaled H100 SXM5 multi-GPU training, large-scale Monte Carlo runs, and broker streaming workers (`modal run modal_app.py`).
-- **Cloudflare Edge Deployment**: Web platform deployed to Cloudflare Workers with static assets serving [https://astro.subsurfaces.net](https://astro.subsurfaces.net). Automated builds via `wrangler.toml` (`[build] command = "npm --prefix site install && npm --prefix site run build"`). Custom OpenGraph suite and SVG/ICO favicons live at edge.
-  - **Deploying**: `git push` does not redeploy the site. Run `npx wrangler deploy` from the repo root (builds `site/` and uploads). Stop any `astro preview` server first: it locks `site/node_modules` and `npm ci` fails with EPERM.
-  - `site/src/data/` is tracked despite the repo-wide `data/` ignore; regenerate it with `python scripts/novae/export_site_data.py`.
-  - The footer shows the commit the site was built from (`site/src/build-info.ts`): commit before deploying, or it reads `sha+` (uncommitted changes in `site/`). A commit not yet on GitHub links to the commit list instead of 404ing. Builds without `.git` can pass `GIT_SHA`.
+- **Cloudflare Edge Deployment**: Web platform deployed to Cloudflare Workers with static assets serving [https://astro.subsurfaces.net](https://astro.subsurfaces.net) (`wrangler.toml`; assets from `site/dist`).
+  - **Deploying**: pushing to `main` on GitHub deploys (Cloudflare Workers Builds runs the root `npm run build`, which does `npm --prefix site ci` first, then `npx wrangler deploy`). `python scripts/infra/ship.py` runs the fast tests and the same build, refuses uncommitted changes, and pushes; `--deploy` also deploys from here. Stop any `astro preview` server first: it locks `site/node_modules` and `npm ci` fails with EPERM.
+  - **Sources of truth, synced at build** (`site/scripts/sync.mjs`, npm `prebuild`; outputs git-ignored): `docs/ledger.md` -> ledger table (status, audit note, figure column), `docs/programmes/*.md` -> programme cards (title, `**Status**:` and `**Ledger**:` lines, `## Tn ·` threads), `celestrium/watchlist.json` -> Dates + `/calendar.ics`, `git log -- docs` -> "What's new" + `/feed.xml`, `docs/figures/**` -> `site/public/fig/` (web size, webp thumbnails, originals under `_full/`, provenance = the script that writes each figure). Never copy figures into `site/public/fig/` by hand; reference them as `<Fig src="tcrb/x.png">` (path relative to `docs/figures/`) and the build fails if one is missing.
+  - Animations: keep the GIF and add an MP4 next to it with `python scripts/infra/gif_to_mp4.py <gif>`; the site plays the MP4 and links the GIF.
+  - `site/src/data/` is tracked despite the repo-wide `data/` ignore; regenerate with `python scripts/novae/export_site_data.py` (T CrB, V347 Nor) and `python scripts/infra/export_sky.py` (hero sky map).
+  - The footer shows the commit the site was built from (`site/src/build-info.ts`; `WORKERS_CI_COMMIT_SHA` on Cloudflare): commit before deploying, or it reads `sha+`. A commit not yet on GitHub links to the commit list instead of 404ing.
   - Theme: tokens on `:root` (light), redefined for OS dark under `:root:not([data-theme="light"])` and for the toggle under `:root[data-theme="dark"]` (`site/src/layouts/Base.astro`). New colours go in all three blocks.
+  - Components (`site/src/components/`): `Fig`, `FactSheet`, `Gates`, `Toc`, `Cite`, `SkyMap`. Citation metadata: `CITATION.cff`.
 
 ---
 

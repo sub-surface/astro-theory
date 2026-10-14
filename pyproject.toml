@@ -37,6 +37,9 @@ celestrium = "celestrium.hub:app"
 where = ["."]
 include = ["celestrium*"]
 
+[tool.setuptools.package-data]
+celestrium = ["watchlist.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

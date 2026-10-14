@@ -1,0 +1,44 @@
+---
+// A figure from docs/figures (path relative to it, e.g. "tcrb/tcrb_orbit.gif"), synced at build by scripts/sync.mjs.
+// Shows the web-size image linked to the full-resolution original, plays animations as MP4 (GIF linked),
+// and names the script that wrote it, at the commit the site was built from.
+import FIGS from '../generated/figures.json';
+import { REPO, sha, pushed } from '../build-info';
+
+interface Props { src: string; alt: string; }
+const { src, alt } = Astro.props;
+const info = (FIGS as Record<string, any>)[src];
+if (!info) throw new Error(`Fig: ${src} was not synced from docs/figures (check the path)`);
+const web = `/fig/${src}`;
+const isGif = src.endsWith('.gif');
+const mp4 = isGif && (FIGS as Record<string, any>)[src.replace(/\.gif$/, '.mp4')] ? web.replace(/\.gif$/, '.mp4') : null;
+const ref = pushed && sha ? sha : 'main';
+const scripts: string[] = info.scripts || [];
+---
+
+<figure class="fig">
+  {mp4 ? (
+    <video autoplay loop muted playsinline preload="metadata" aria-label={alt}>
+      <source src={mp4} type="video/mp4" />
+      <img src={web} alt={alt} loading="lazy" />
+    </video>
+  ) : (
+    <a href={info.full || web}><img src={web} alt={alt} loading="lazy" decoding="async"
+      width={info.width ? Math.min(info.width, 1400) : undefined}
+      height={info.width ? Math.round(info.height * Math.min(info.width, 1400) / info.width) : undefined} /></a>
+  )}
+  <figcaption>
+    <slot />
+    <span class="prov">
+      {mp4 && <><a href={web}>GIF</a> · </>}
+      {info.full && <><a href={info.full}>full size</a> · </>}
+      {scripts.length ? <>made by {scripts.slice(0, 2).map((s, i) => <>{i > 0 && ', '}<a href={`${REPO}/blob/${ref}/${s}`}><code>{s.split('/').pop()}</code></a></>)}</> : <>source: <a href={`${REPO}/blob/${ref}/docs/figures/${src}`}><code>docs/figures</code></a></>}
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  video { display: block; width: 100%; height: auto; border: 1px solid var(--faint); background: #000; }
+  .prov { display: block; font-size: 0.8em; color: var(--muted); margin-top: 0.15em; }
+  .prov a { color: var(--muted); }
+</style>

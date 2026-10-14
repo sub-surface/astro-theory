@@ -1,5 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
+import Fig from '../components/Fig.astro';
+import FactSheet from '../components/FactSheet.astro';
+import Toc from '../components/Toc.astro';
+import Cite from '../components/Cite.astro';
 import D from '../data/tcrb.json';
 
 const n = D.n;
@@ -59,30 +63,10 @@ const watch: [string, string][] = [
     so the inner disk itself changed state. As far as we know this has not been reported.
   </div>
 
-  <nav class="toc" aria-label="Contents">
-    <b>Contents</b>
-    <ol>
-      <li><a href="#curves">Light curves, 2005 to now</a></li>
-      <li><a href="#system">The system</a></li>
-      <li><a href="#uvx">UV and X-rays trade places</a></li>
-      <li><a href="#dip">1945 and now</a></li>
-      <li><a href="#disk">Inside the disk</a></li>
-      <li><a href="#flicker">Flickering</a></li>
-      <li><a href="#family">The family</a></li>
-      <li><a href="#when">When?</a></li>
-      <li><a href="#lit">The literature</a></li>
-      <li><a href="#caveats">Caveats</a></li>
-      <li><a href="#data">Data and code</a></li>
-    </ol>
-  </nav>
+  <Toc items={[['curves', 'Light curves, 2005 to now'], ['system', 'The system'], ['uvx', 'UV and X-rays trade places'], ['dip', '1945 and now'], ['disk', 'Inside the disk'], ['flicker', 'Flickering'], ['family', 'The family'], ['when', 'When?'], ['lit', 'The literature'], ['caveats', 'Caveats'], ['data', 'Data and code']]} />
 
   <h3>Data sheet</h3>
-  <div class="wrap">
-    <table class="sheet stack">
-      <tr><th>Quantity</th><th>Value</th><th>Source</th></tr>
-      {sheet.map(([q, v, s]) => <tr><td>{q}</td><td class="mono">{v}</td><td>{s}</td></tr>)}
-    </table>
-  </div>
+  <FactSheet rows={sheet} />
 
   <h2 id="curves">1. Light curves, 2005 to now</h2>
   <p>Optical V (AAVSO and ANS), Swift/UVOT UVM2 and Swift/XRT hard X-rays on one time axis. Hover or tap to read values; the last UV point is the September 2026 collapse.</p>
@@ -101,36 +85,21 @@ const watch: [string, string][] = [
 
   <h2 id="system">2. The system</h2>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_orbit.gif" alt="Animated view of T CrB through one orbit, with the measured and modelled ellipsoidal light curves" loading="lazy" />
-      <figcaption>One 227.6-day orbit, computed rather than drawn: Roche-lobe-filling giant with gravity darkening, a ballistic stream from L1, and disk temperatures from our viscous model. Below: the measured quiescent V light curve (AAVSO 2006-14, folded) against the pure-giant model. On the literature light-minimum ephemeris the data's deeper minimum comes with the giant in front, while a gravity-darkened giant alone puts it half an orbit later. Either light the model leaves out (disk, hot spot, irradiation) or a half-orbit offset in that ephemeris's phase zero; not yet resolved.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_orbit.gif" alt="Animated view of T CrB through one orbit, with the measured and modelled ellipsoidal light curves">One 227.6-day orbit, computed rather than drawn: Roche-lobe-filling giant with gravity darkening, a ballistic stream from L1, and disk temperatures from our viscous model. Below: the measured quiescent V light curve (AAVSO 2006-14, folded) against the pure-giant model. On the literature light-minimum ephemeris the data's deeper minimum comes with the giant in front, while a gravity-darkened giant alone puts it half an orbit later. Either light the model leaves out (disk, hot spot, irradiation) or a half-orbit offset in that ephemeris's phase zero; not yet resolved.</Fig>
     <div>
       <p>A 1.35 M☉ white dwarf and a 0.93 M☉ M3 giant, 0.96 AU apart, 887 pc away. The giant fills its Roche lobe (about 72 R☉ across; CHARA interferometry measures 69 ± 5 R☉, Norris+ 2026). Gas leaves through the inner Lagrange point and hits the disk rim about 18° ahead of the line of centres in our integration, close to the ~20° hot-spot azimuth Munari+ 2025 infer from the light curve.</p>
       <p>Every ~80 years the hydrogen piled onto the white dwarf ignites. Eruptions were seen in 1866 and 1946, and probably in 1787 and 1217 (Schaefer 2023). Each was preceded by a decade-long accretion high state; the current one ran 2015-2023.</p>
     </div>
   </div>
-  <figure>
-    <img src="/fig/tcrb/tcrb_system_states.png" alt="The binary rendered in quiescence, at peak accretion and now" loading="lazy" />
-    <figcaption>The system in quiescence (2010), at peak accretion (2016.3) and now, from the disk inversion in section 5. Inclination 61°; blackbody colours.</figcaption>
-  </figure>
+  <Fig src="tcrb/tcrb_system_states.png" alt="The binary rendered in quiescence, at peak accretion and now">The system in quiescence (2010), at peak accretion (2016.3) and now, from the disk inversion in section 5. Inclination 61°; blackbody colours.</Fig>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_roche_map.png" alt="Roche potential map of the binary" loading="lazy" />
-      <figcaption>Roche geometry of the giant and white dwarf.</figcaption>
-    </figure>
-    <figure>
-      <img src="/fig/tcrb/tcrb_ephemeris.png" alt="Period search, bootstrap period distribution and folded ellipsoidal light curve" loading="lazy" />
-      <figcaption>Period {f(n.period_d, 2)} ± {f(n.period_sd_d, 2)} d from AAVSO V with the secular trend removed, matching Fekel+ 2000 and Munari+ 2025. The double-humped fold is the tidally distorted giant.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_roche_map.png" alt="Roche potential map of the binary">Roche geometry of the giant and white dwarf.</Fig>
+    <Fig src="tcrb/tcrb_ephemeris.png" alt="Period search, bootstrap period distribution and folded ellipsoidal light curve">Period {f(n.period_d, 2)} ± {f(n.period_sd_d, 2)} d from AAVSO V with the secular trend removed, matching Fekel+ 2000 and Munari+ 2025. The double-humped fold is the tidally distorted giant.</Fig>
   </div>
 
   <h2 id="uvx">3. UV and X-rays trade places</h2>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_uv_xray_track.png" alt="Same-day Swift UVM2 flux against XRT hard X-ray count rate, coloured by year" loading="lazy" />
-      <figcaption>Every same-day Swift pair since 2005. The newest points sit back among the 2005-11 quiescent cloud.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_uv_xray_track.png" alt="Same-day Swift UVM2 flux against XRT hard X-ray count rate, coloured by year">Every same-day Swift pair since 2005. The newest points sit back among the 2005-11 quiescent cloud.</Fig>
     <div>
       <p>When the inner disk is bright in the UV, the boundary layer is optically thick and the hard X-rays fade; when the UV fades, the hard X-rays return. The anticorrelation is known (Luna+ 2018; Pei+ 2025). We find Spearman ρ = <span class="mono">{f(n.uvx_rho, 2)}</span> over <span class="mono">{n.uvx_pairs}</span> same-day pairs (the formal p-value treats autocorrelated visits as independent, so we do not quote it).</p>
       <p>On 29 September 2026 the UV fell to its pre-2015 level and the hard X-rays rose to <span class="mono">{f(n.hard_now, 3)}</span> c/s. By this measure the inner disk has returned to quiescence while the optical light, dominated by the giant and the outer disk, has barely moved.</p>
@@ -143,10 +112,7 @@ const watch: [string, string][] = [
     {f(n.uv_latest - n.uv_last_bright, 2)} mag in {f(n.fade_days, 1)} days. The supply did not stop: the inner disk changed
     state, by a thermal transition, truncation or obscuration. Dust is unlikely (Luna+ 2026 find no infrared excess in the 2023 faint state).
   </div>
-  <figure>
-    <img src="/fig/tcrb/tcrb_uv_dip_onsets.png" alt="UV and hard X-ray light curves around the 2023 and 2026 UV collapses aligned on their onsets" loading="lazy" />
-    <figcaption>The 2023 and 2026 UV collapses on a common clock. Both began just after orbital phase 0 (giant in front), 5.04 orbits apart; an alignment that close happens by chance 8% of the time, so it is a hint, not a detection. If the 2026 collapse is geometric, the UV should recover by phase ~0.3 (mid-November 2026).</figcaption>
-  </figure>
+  <Fig src="tcrb/tcrb_uv_dip_onsets.png" alt="UV and hard X-ray light curves around the 2023 and 2026 UV collapses aligned on their onsets">The 2023 and 2026 UV collapses on a common clock. Both began just after orbital phase 0 (giant in front), 5.04 orbits apart; an alignment that close happens by chance 8% of the time, so it is a hint, not a detection. If the 2026 collapse is geometric, the UV should recover by phase ~0.3 (mid-November 2026).</Fig>
 
   <h2 id="dip">4. 1945 and now</h2>
   <p>Before the 1946 eruption the star faded by ~0.7 mag (visual) and erupted 0.63 years after the dip began. Slide today's light curve against that template and read off the eruption date it implies. Aligning on the 2023 dip predicted late 2023; nothing happened.</p>
@@ -166,15 +132,9 @@ const watch: [string, string][] = [
   <p class="small">The 1940s curve is mostly one visual observer comparing against a 9.8-mag star in 0.1-mag steps, and a red giant looks different by eye than through a V filter. Treat the analogue as a monitoring window, not a forecast.</p>
 
   <h2 id="disk">5. Inside the disk: what an inversion can and cannot tell</h2>
-  <figure>
-    <a href="/fig/tcrb/tcrb_inner_edge.png"><img src="/fig/tcrb/tcrb_inner_edge.png" alt="Optical and UV light curves since 2005 and the inferred inner-disk edge radius" loading="lazy" /></a>
-    <figcaption>The light curves (top) inverted through a 1D viscous disk with a moving inner edge (bottom; V fit scatter 0.08 mag). The inner edge is the robust output. The accretion rate is not shown because its absolute scale is not identified; the full fit, rate panel included, is <a href="/fig/tcrb/tcrb_accretion_inversion.png">here</a>.</figcaption>
-  </figure>
+  <Fig src="tcrb/tcrb_inner_edge.png" alt="Optical and UV light curves since 2005 and the inferred inner-disk edge radius">The light curves (top) inverted through a 1D viscous disk with a moving inner edge (bottom; V fit scatter 0.08 mag). The inner edge is the robust output. The accretion rate is not shown because its absolute scale is not identified; the full fit, rate panel included, is <a href="/fig/tcrb/tcrb_accretion_inversion.png">here</a>.</Fig>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_accretion_movie.gif" alt="Animated face-on view of the inner accretion disk from 2005 to 2026" loading="lazy" />
-      <figcaption>The inner 8 R☉, face-on, 2005 to now. The dark hole is the truncation radius the light curves require.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_accretion_movie.gif" alt="Animated face-on view of the inner accretion disk from 2005 to 2026">The inner 8 R☉, face-on, 2005 to now. The dark hole is the truncation radius the light curves require.</Fig>
     <div>
       <p><b>What the fit is sure of: the inner edge.</b> The hot inner disk stopped near 3 R☉ in quiescence (2005-14), moved in to ~0.75-1 R☉ through the 2016-22 high state, jumped back out to 2.7 R☉ in the 2023 dip, and is at 2.7 R☉ again now. September 2026 looks like the 2023 dip, not like quiescence and not like the high state.</p>
       <p><b>What it cannot measure: how much fuel.</b> With a free inner edge, a faint disk holding a lot of gas and a bright disk holding little produce the same light. The fit settles on accretion rates about 100 times the literature value and strains against physical priors to stay there. That is a model failure, most likely the missing nebular (Balmer) continuum, which dominates the U and UV light of symbiotic stars. So we quote no accreted mass.</p>
@@ -183,10 +143,7 @@ const watch: [string, string][] = [
 
   <h2 id="flicker">6. Flickering, seen by TESS</h2>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_tess_flicker.png" alt="TESS light curves and power spectra of T CrB" loading="lazy" />
-      <figcaption>Two-minute TESS photometry in four sectors. The flicker comes from the inner disk.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_tess_flicker.png" alt="TESS light curves and power spectra of T CrB">Two-minute TESS photometry in four sectors. The flicker comes from the inner disk.</Fig>
     <div>
       <p>Flicker amplitude on 10-minute to 6-hour timescales: <span class="mono">{f(tess['24'].flicker_rms_10min_6h_e_s, 0)}</span> and <span class="mono">{f(tess['25'].flicker_rms_10min_6h_e_s, 0)}</span> e⁻/s at the 2020 peak, <span class="mono">{f(tess['51'].flicker_rms_10min_6h_e_s, 0)}</span> in 2022 and <span class="mono">{f(tess['78'].flicker_rms_10min_6h_e_s, 0)}</span> in May 2024, about 30% lower after the high state ended.</p>
       <p>The power spectra are red noise (slopes {sectors.map((k) => f(tess[k].high_freq_slope, 1)).join(', ')}). Against 60 red-noise simulations per sector with the same gaps, the largest local excess near 6000 s has p = {f(minLocalFap, 2)} before correcting for four sectors and all trial frequencies; global false-alarm probabilities are {sectors.map((k) => f(tess[k].fap_global_max_peak, 2)).join(', ')}. No periodicity survives.</p>
@@ -199,21 +156,12 @@ const watch: [string, string][] = [
     <div id="fam" class="chart" role="img" aria-label="UV luminosity of the four symbiotic recurrent novae relative to T CrB in quiescence, log scale"></div>
     <div class="small">UV luminosity relative to T CrB in quiescence (2005-14), log scale. Whiskers: systematic uncertainty from distance and reddening. The V3890 Sgr point is from early 2019, months before its eruption.</div>
   </div>
-  <figure>
-    <img src="/fig/tcrb/srn_family_uv_xray.png" alt="UV absolute magnitude against cycle fraction, and UV against hard X-ray luminosity, for the four systems" loading="lazy" />
-    <figcaption>The siblings accrete steadily; T CrB stores fuel in a disk and dumps it in bursts.</figcaption>
-  </figure>
+  <Fig src="tcrb/srn_family_uv_xray.png" alt="UV absolute magnitude against cycle fraction, and UV against hard X-ray luminosity, for the four systems">The siblings accrete steadily; T CrB stores fuel in a disk and dumps it in bursts.</Fig>
 
   <h2 id="when">8. When?</h2>
-  <figure>
-    <img src="/fig/tcrb/tcrb_forecast_scoreboard.png" alt="Published eruption forecasts as windows against the date they were made" loading="lazy" />
-    <figcaption>Every eruption date we found in the literature, against when it was published. {n.forecasts_lapsed} of {n.forecasts_published} windows have closed without an eruption. The first forecast came the week of the 1946 eruption: Knight wrote to the BAA that the next would come in 2026-27 (Shears 2024).</figcaption>
-  </figure>
+  <Fig src="tcrb/tcrb_forecast_scoreboard.png" alt="Published eruption forecasts as windows against the date they were made">Every eruption date we found in the literature, against when it was published. {n.forecasts_lapsed} of {n.forecasts_published} windows have closed without an eruption. The first forecast came the week of the 1946 eruption: Knight wrote to the BAA that the next would come in 2026-27 (Shears 2024).</Fig>
   <div class="pair">
-    <figure>
-      <img src="/fig/tcrb/tcrb_forecast.png" alt="Survival-conditioned predictive distribution of the eruption year" loading="lazy" />
-      <figcaption>The recurrence clock alone: a log-normal fitted to the three known intervals, with a Jeffreys prior, conditioned on no eruption by today.</figcaption>
-    </figure>
+    <Fig src="tcrb/tcrb_forecast.png" alt="Survival-conditioned predictive distribution of the eruption year">The recurrence clock alone: a log-normal fitted to the three known intervals, with a Jeffreys prior, conditioned on no eruption by today.</Fig>
     <div>
       <h3 style="margin-top:0">What to watch</h3>
       <div class="wrap">
@@ -225,14 +173,8 @@ const watch: [string, string][] = [
   </div>
 
   <h2 id="lit">9. The literature</h2>
-  <figure>
-    <img src="/fig/tcrb/tcrb_literature_bibliometrics.png" alt="Papers per year mentioning T CrB, 1860 to 2026" loading="lazy" />
-    <figcaption>{n.lit.n_focused} ADS records with T CrB in the title or abstract ({n.lit.n_refereed} refereed, {n.lit.n_circulars} telegrams and circulars) and {n.lit.n_fulltext.toLocaleString('en-GB')} that mention it anywhere; {n.lit.papers_2023_2026} of the focused records appeared since 2023.</figcaption>
-  </figure>
-  <figure>
-    <img src="/fig/tcrb/tcrb_parameter_forest.png" alt="White dwarf mass and inclination estimates" loading="lazy" />
-    <figcaption>The white-dwarf mass has converged near the Chandrasekhar limit; the inclination still depends on method. The green band is our ellipsoidal-amplitude range, a lower limit because disk light dilutes the amplitude.</figcaption>
-  </figure>
+  <Fig src="tcrb/tcrb_literature_bibliometrics.png" alt="Papers per year mentioning T CrB, 1860 to 2026">{n.lit.n_focused} ADS records with T CrB in the title or abstract ({n.lit.n_refereed} refereed, {n.lit.n_circulars} telegrams and circulars) and {n.lit.n_fulltext.toLocaleString('en-GB')} that mention it anywhere; {n.lit.papers_2023_2026} of the focused records appeared since 2023.</Fig>
+  <Fig src="tcrb/tcrb_parameter_forest.png" alt="White dwarf mass and inclination estimates">The white-dwarf mass has converged near the Chandrasekhar limit; the inclination still depends on method. The green band is our ellipsoidal-amplitude range, a lower limit because disk light dilutes the amplitude.</Fig>
   <h3>Where the field stands</h3>
   <div class="wrap">
     <table class="stack">
@@ -255,30 +197,9 @@ const watch: [string, string][] = [
   <p>AAVSO International Database; Munari+ 2025 ANS UBVRI photometry (VizieR J/A+A/701/A176); Swift/UVOT archive images (photometry ours); Swift/XRT LSXPS per-observation light curves (Evans+ 2023); TESS SPOC light curves (MAST); Gaia DR3 distance; NASA ADS. Code: <code>celestrium/novae/</code> and <code>scripts/novae/</code>; the numbers on this page come from <code>scripts/novae/export_site_data.py</code>.</p>
 
 
+  <Cite title="T Coronae Borealis: pre-eruption status" path="/tcrb/" key="celestrium_tcrb" />
+
   <style>
-    .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }
-    .toc { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 1em 0.4em; margin: 1em 0; font-size: 0.95em; width: fit-content; max-width: 100%; }
-    .toc ol { margin: 0.3em 0 0.2em; padding-left: 1.6em; columns: 2; column-gap: 2.5em; }
-    @media (min-width: 900px) { .toc { float: right; margin: 0 0 1em 1.5em; } .toc ol { columns: 1; } }
-    @media (max-width: 480px) { .toc ol { columns: 1; } }
-    h2 { clear: both; }
-    .sheet td:first-child { white-space: nowrap; }
-    @media (max-width: 560px) {
-      .stack th { display: none; }
-      .stack, .stack tbody, .stack tr, .stack td { display: block; width: auto; }
-      .stack tr { border: 1px solid var(--rule); padding: 4px 8px; }
-      .stack tr + tr { border-top: 0; }
-      .stack tr:has(th) { display: none; }
-      .stack tr:has(th) + tr { border-top: 1px solid var(--rule); }
-      .stack td { border: 0; padding: 0; white-space: normal !important; }
-      .stack td:first-child { font-weight: bold; }
-      .stack td:last-child { font-size: 0.85em; color: var(--muted); }
-    }
-    .pair { display: grid; gap: 0 1.5em; }
-    .pair > * { min-width: 0; }
-    @media (min-width: 760px) { .pair { grid-template-columns: 1.1fr 1fr; align-items: start; } }
-    .callout { border-left: 4px solid var(--alert); padding: 0.2em 0 0.2em 0.9em; margin: 1em 0; }
-    .panel { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 0.6em; margin: 1em 0; }
     .bar { display: flex; flex-wrap: wrap; gap: 0.4em 1em; align-items: center; margin-bottom: 0.4em; }
     .bar input[type=range] { flex: 1 1 12em; min-width: 0; accent-color: var(--link); }
     .btns { display: inline-flex; gap: 0.3em; }

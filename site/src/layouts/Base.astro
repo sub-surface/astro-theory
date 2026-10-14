@@ -29,6 +29,7 @@ const ogImageUrl = new URL(ogImage, site);
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href={canonicalUrl.href} />
+    <link rel="alternate" type="application/atom+xml" title="Celestrium: what changed" href="/feed.xml" />
     <title>{pageTitle}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -119,6 +120,30 @@ const ogImageUrl = new URL(ogImage, site);
         :root:not([data-theme="light"]) .theme-btn .sun { display: block; }
         :root:not([data-theme="light"]) .theme-btn .moon { display: none; }
       }
+      /* shared page furniture (object pages, hub) */
+      .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }
+      .toc { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 1em 0.4em; margin: 1em 0; font-size: 0.95em; width: fit-content; max-width: 100%; }
+      .toc ol { margin: 0.3em 0 0.2em; padding-left: 1.6em; columns: 2; column-gap: 2.5em; }
+      @media (min-width: 900px) { .toc { float: right; margin: 0 0 1em 1.5em; } .toc ol { columns: 1; } }
+      @media (max-width: 480px) { .toc ol { columns: 1; } }
+      h2 { clear: both; }
+      .sheet td:first-child { white-space: nowrap; }
+      @media (max-width: 560px) {
+        .stack th { display: none; }
+        .stack, .stack tbody, .stack tr, .stack td { display: block; width: auto; }
+        .stack tr { border: 1px solid var(--rule); padding: 4px 8px; }
+        .stack tr + tr { border-top: 0; }
+        .stack tr:has(th) { display: none; }
+        .stack tr:has(th) + tr { border-top: 1px solid var(--rule); }
+        .stack td { border: 0; padding: 0; white-space: normal !important; }
+        .stack td:first-child { font-weight: bold; }
+        .sheet.stack td:last-child { font-size: 0.85em; color: var(--muted); }
+      }
+      .pair { display: grid; gap: 0 1.5em; }
+      .pair > * { min-width: 0; }
+      @media (min-width: 760px) { .pair { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+      .callout { border-left: 4px solid var(--alert); padding: 0.2em 0 0.2em 0.9em; margin: 1em 0; }
+      .panel { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 0.6em; margin: 1em 0; }
       .site-foot { margin-top: 2.5em; }
       .site-foot a { color: var(--muted); }
     </style>
@@ -144,6 +169,18 @@ const ogImageUrl = new URL(ogImage, site);
         };
         var label = function () { btn.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode'); btn.title = btn.getAttribute('aria-label'); };
         label();
+        // copy buttons: <button class="copy" data-copy="...">
+        document.addEventListener('click', function (ev) {
+          var c = ev.target.closest && ev.target.closest('button.copy');
+          if (!c) return;
+          var done = function (ok) { var t = c.textContent; c.textContent = ok ? 'copied' : 'select and copy'; setTimeout(function () { c.textContent = t; }, 1500); };
+          if (navigator.clipboard) navigator.clipboard.writeText(c.dataset.copy).then(function () { done(true); }, function () { done(false); });
+          else done(false);
+        });
+        // no autoplaying animations for visitors who ask for reduced motion
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.querySelectorAll('video[autoplay]').forEach(function (v) { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
+        }
         btn.addEventListener('click', function () {
           var next = isDark() ? 'light' : 'dark';
           root.dataset.theme = next;

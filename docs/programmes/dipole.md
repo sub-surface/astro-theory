@@ -1,7 +1,7 @@
 # P1 · Cosmic dipole (Euclid DR1 line)
 
 **Status**: active; **Euclid DR1 lands 2026-10-21** · **Code**: [`celestrium/dipole/`](../../celestrium/dipole/) · [`scripts/dipole/`](../../scripts/dipole/) · earlier pipeline in [`Archive/2026-06-G-dipole/`](../../Archive/2026-06-G-dipole/ARCHIVE.md)
-**Ledger**: EXP-2026-B, E, I, J, K, L, O, P, W, 01
+**Ledger**: EXP-2026-B, E, I, J, K, L, O, P, W, 01, 05
 
 ## What stands after the 2026-10-14 audit
 

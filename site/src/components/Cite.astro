@@ -1,0 +1,30 @@
+---
+// "How to cite" box: a BibTeX entry for this page at the commit it was built from, with a copy button.
+import { REPO, sha, builtOn } from '../build-info';
+
+interface Props { title: string; path: string; key: string; }
+const { title, path, key } = Astro.props;
+const year = builtOn.slice(0, 4);
+const bib = `@misc{${key},
+  author       = {Leon and Claude},
+  title        = {${title}},
+  howpublished = {Celestrium, \\url{https://astro.subsurfaces.net${path}}},
+  year         = {${year}},
+  note         = {Accessed ${builtOn}; source ${REPO}${sha ? `, commit ${sha}` : ''}}
+}`;
+---
+
+<details class="cite">
+  <summary>Cite this page</summary>
+  <pre class="mono"><code>{bib}</code></pre>
+  <button type="button" class="copy" data-copy={bib}>copy BibTeX</button>
+  <span class="small">The repository also has a <a href={`${REPO}/blob/main/CITATION.cff`}>CITATION.cff</a>.</span>
+</details>
+
+<style>
+  .cite { border: 1px solid var(--rule); background: var(--box); padding: 0.4em 0.7em; margin: 1.2em 0; }
+  .cite summary { cursor: pointer; font-weight: bold; }
+  .cite pre { overflow-x: auto; font-size: 0.82em; margin: 0.6em 0; white-space: pre; }
+  .copy { font: inherit; font-size: 0.85em; padding: 2px 8px; color: var(--fg); background: var(--th); border: 2px outset var(--faint); cursor: pointer; margin-right: 0.6em; }
+  .copy:active { border-style: inset; }
+</style>
