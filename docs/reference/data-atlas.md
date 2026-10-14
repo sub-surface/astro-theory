@@ -76,54 +76,78 @@ not "download Rubin images".
 
 ---
 
-## 3. The archives, by ecosystem
+## 3. Data sources by wavelength and modality
 
-### ESA — `astroquery.esa.*`, ESASky, ESA Datalabs (GitHub tutorials)
-- **Gaia** (`astroquery.gaia`) — DR3 public (1.8B sources, astrometry+photometry+QSO/galaxy
-  tables); **DR4 ~late 2026**. ★ Our workhorse: wide binaries (A), QSO catalogue, proper
-  motions. Anonymous ADQL, results auto-purged 72h.
-- **Euclid** (`astroquery.esa.euclid`) — Q1/Q2 public; DR1 Oct. ESA-Datalabs/Euclid-Q1
-  GitHub tutorials (cutouts, ADQL, jdaviz). Run on Datalabs to avoid bulk download.
-- **Planck** — Planck Legacy Archive: CMB maps, component-separated, catalogues (PCCS, SZ).
-- **XMM-Newton, INTEGRAL, Herschel** — via ESASky / dedicated archives.
+Access key: **open** (anonymous) · **have** (credential configured here) · **want** (free account worth getting) · **gated** (data rights / paid).
+"Module" is our client, if any. ✓ = already pulled real data in this repo.
 
-### NASA MAST — `astroquery.mast` (STScI; optical/UV/NIR space)
-- **JWST** — imaging+spectra; deep fields (JADES, CEERS, COSMOS-Web). ◐ Pixel-heavy, but
-  catalogues from survey teams are tractable; the **high-z census (E)** lives here.
-- **HST** — decades of imaging; legacy fields.
-- **TESS / Kepler / K2** — full-frame + light curves. ★ Time-domain desk gold via
-  `lightkurve`: transits, rotation, flares, asteroseismology.
-- **Pan-STARRS, GALEX** — optical/UV all-(north-)sky catalogues, TAP-queryable.
+### Time domain: optical and archival plates (P2 core)
+| Source | Span / depth | What it gives | Access | Module |
+|---|---|---|---|---|
+| **DASCH DR7** (Harvard plates) | 1885–1992, all sky, B≈12–18 | century light curves, plate cutouts, exposure lists | open (public API); full tier needs `DASCHLAB_API_KEY` | `archives/dasch.py` ✓ |
+| **APPLAUSE DR4** (Hamburg, Bamberg, Potsdam, Tartu, ... plates) | 1890s–1990s, mostly north | plate catalogues + scans; independent check on DASCH | open TAP; account for bulk | — (next) |
+| **AAVSO** International Database + VSX | 1900s→now, visual + CCD | long light curves; variable-star catalogue (VSX) | **have** (`AAVSO_TOKEN` in `.env`); VSX open | `scripts/novae/fetch_tcrb_aavso.py` ✓ |
+| **ASAS-SN Sky Patrol v2** | 2012→now, V/g≲17, all sky | light curves anywhere | open (`pyasassn`) | — |
+| **ZTF** (IRSA light curves; forced photometry ZFPS) | 2018→now, r≲20.5, north | DR light curves; forced phot at any position | open (DR); **want** ZFPS account (email registration) | via `tap.py` (IRSA) |
+| **ATLAS** forced photometry | 2015→now, c/o≲19.5, all sky | forced phot at any position | **want** (free account + token) | — |
+| **Gaia** DR3 epoch phot / alerts → **DR4** (Dec 2026) | 2014→2020(DR4), G≲20 | epoch photometry, XP spectra, astrometry; Gaia Alerts | open; optional archive account for big async jobs | `tap.py` ✓ |
+| **OGLE** (bulge/disk), **KMTNet**, **VVV/VVVX** (NIR) | 1992→now, dense fields | bulge light curves; NIR variability | open (download / VizieR) | `vizier.py` |
+| **TESS / Kepler / K2** | 2009→now, minutes cadence | flicker, rotation, eclipses | open (MAST) | `mast.py` ✓ |
+| **Brokers**: ALeRCE, Fink, Lasair, ANTARES | live alerts (ZTF → Rubin) | alert streams, cross-matches | open (Lasair token: **want**) | `alerce.py` |
+| **Rubin** alerts / DP1–DR1 | 2025→ | alerts public via brokers; images & catalogues data-rights | alerts open; archive **gated** | — |
+| **TNS** (Transient Name Server) | live | official transient reports, novae (AstroNotes) | read open; **want** bot API key for programmatic queries | — |
 
-### NASA IRSA — `astroquery.ipac.irsa` (IPAC; infrared + survey catalogues)
-- **WISE / AllWISE / CatWISE2020** — mid-IR all-sky. ★ Heart of the dipole anomaly
-  (Secrest); already in our archive.
-- **NEOWISE** — time-domain mid-IR.
-- **2MASS** — NIR all-sky (J/H/Ks).
-- **Spitzer, IRAS** — legacy IR.
-- **SPHEREx** (2025-launch, releasing 2026) — ★ **all-sky NIR spectro-photometry**, a
-  selection-*independent* probe → natural dipole + ISW + high-z sibling.
-- **COSMOS / deep-field value-added** — multiwavelength photo-z catalogues for (E).
+### Ultraviolet & X-ray & gamma (high-energy accretion, shocks)
+| Source | What | Access | Module |
+|---|---|---|---|
+| **Swift** UVOT / XRT (HEASARC) | UV + soft X-ray monitoring of novae/symbiotics | open | `heasarc.py`, `fetch_tcrb_swift_*.py` ✓ |
+| **GALEX** | FUV/NUV all-sky snapshot (2003–13) | open (MAST) | `mast.py` |
+| **HST/IUE** spectra | UV spectroscopy archives (IUE: 1978–96, many symbiotics) | open (MAST) | `mast.py` |
+| **XMM-Newton**, **Chandra**, **NuSTAR**, **NICER**, **eROSITA DR1** | X-ray spectra/timing; eROSITA half-sky survey | open (HEASARC / ESA / MPE) | `heasarc.py` |
+| **MAXI**, **Swift/BAT** | daily all-sky X-ray monitoring | open | — |
+| **Fermi-LAT** | GeV γ-rays (nova shocks) | open (FSSC) | — |
 
-### NASA HEASARC — `astroquery.heasarc` (high-energy; cloud-friendly)
-- **Chandra, XMM, NuSTAR, Swift, Fermi (γ-ray), eROSITA-DR1 (western gal. hemisphere, X-ray)**,
-  ROSAT. ◐ More specialised; AGN/cluster cross-matches, X-ray dipole as another isotropy front.
+### Infrared & spectra
+| Source | What | Access | Module |
+|---|---|---|---|
+| **2MASS, AllWISE/CatWISE, unWISE, NEOWISE** | NIR/MIR colours; NEOWISE 2014–24 MIR light curves (dusty symbiotics) | open (IRSA) | `tap.py`, `xmatch.py` ✓ |
+| **SPHEREx** (2026 rolling) | all-sky 0.75–5 µm spectrophotometry | open (IRSA) | — |
+| **Gaia XP / RVS** | low-res optical spectra for ~220M stars | open | `tap.py` |
+| **SDSS-V / LAMOST / DESI / GALAH / APOGEE** | optical/IR spectra; symbiotic and accretor discovery | open (SDSS, DESI); LAMOST registration for some DRs | `sdss.py`, `datalab_desi.py` ✓ |
+| **ARAS** amateur spectroscopy database | dense spectral monitoring of symbiotics/novae | open download | — |
+| **ESO archive** (Phase 3 products) | reduced spectra/images (X-shooter, UVES, ...) | open TAP; account for raw data | `tap.py` |
 
-### NOIRLab Astro Data Lab — `datalab` client (ground-based optical, server-side notebooks)
-- **DESI** (DR1 public: 18.7M spectra; DR2 ~2027) — ★ spectroscopic redshifts, BAO, QSO/ELG
-  catalogues; peculiar-velocity survey (bulk-flow sibling probe).
-- **DES, DECaLS / Legacy Surveys** (sweeps), **NSC**, **SDSS**. ★ Server-side SQL; huge
-  imaging catalogues without downloading pixels.
+### Radio, CMB, multimessenger, catalogues
+| Source | What | Access | Module |
+|---|---|---|---|
+| **NVSS, FIRST, VLASS, RACS, LoTSS** | radio continuum surveys (dipole; nova shocks) | open (CASDA download needs OPAL account: **want** if used) | `vizier.py`, `cutouts.py` ✓ |
+| **Planck PLA, ACT DR6, SPT** | CMB maps, lensing, SZ | open | — |
+| **GWOSC**, **GraceDB**, **IceCube/GCN** | GW strain/events; alerts | open | `transients/` |
+| **Euclid** Q1 / DR1 (21 Oct 2026) | deep optical/NIR wide survey | open (anonymous TAP; account for Datalabs) | `tap.py` |
+| **SIMBAD, VizieR, NED, CDS X-Match** | identifiers, published tables, cross-matching | open | `resolvers.py`, `vizier.py`, `xmatch.py` ✓ |
+| **ADS / SciX**, arXiv | literature, citations, BibTeX | **have** (`~/.ads/dev_key`); arXiv open | `ads.py` ✓ |
+| **CBAT** CBETs | nova/comet discovery telegrams | **gated** (subscription) | — |
+| **ATel** | astronomer's telegrams | open read; posting requires account (Leon's decision) | — |
 
-### Radio — NRAO / CASDA / LOFAR / SARAO
-- **NVSS, FIRST, VLASS** (NRAO), **RACS** (ASKAP/CASDA), **LoTSS-DR2** (LOFAR). ★ The radio
-  leg of the dipole anomaly (Böhme et al.); NVSS already in our archive.
+## 3b. Credentials
 
-### CMB & multimessenger
-- **Planck PLA, ACT DR6, SPT** — CMB maps/spectra, lensing, SZ clusters.
-- **GWOSC** (LIGO/Virgo/KAGRA, fully open strain + event catalogues) — desk-doable parameter
-  re-analysis, population studies.
-- **NASA Exoplanet Archive** — confirmed planets + TESS candidates, TAP-queryable.
+**Configured here** (never print or commit values):
+- `AAVSO_TOKEN` in the gitignored `.env`: AAVSO data downloads.
+- ADS dev key in `~/.ads/dev_key` (or `$ADS_DEV_KEY`): literature search.
+- Modal token in `~/.modal.toml`: cloud GPU (balance in ledger §4).
+- Cloudflare OAuth via `npx wrangler login`: site deploys.
+- Git identity Sub-Surface: GitHub pushes.
+
+**Worth getting (free), in rough priority for current work:**
+1. **ATLAS forced photometry** account. Modern all-sky light curves at any position, for symbiotic and nova candidates.
+2. **ZTF forced photometry (ZFPS)** registration. Deeper northern forced photometry.
+3. **TNS bot API key**. Programmatic queries of reported transients and novae.
+4. **DASCH full-tier API key** (`DASCHLAB_API_KEY`, request from the DASCH team). The public tier has worked for everything so far.
+5. **Lasair token**. Rubin-era alert filters.
+6. **Gaia / ESA Datalabs account**. Large async ADQL jobs and Euclid notebooks.
+7. **CASDA OPAL** (only if we use RACS images) and **LAMOST** registration (only if we use its spectra).
+
+**Not available to us**: Rubin data rights (spectate via brokers), CBAT subscription (paid).
 
 ---
 
@@ -143,6 +167,7 @@ edge* can add now (open access + selection-systematics-limited + uncrowded + fou
 | **JWST deep fields** | ★★★★★ | ★★★☆ | high-z census flank (E); systematics audit, not pixel races |
 | **eROSITA DR1** | ★★★★ | ★★★ | X-ray isotropy/AGN; only half-sky public, more specialised |
 | **GWOSC** | ★★★★ | ★★★ | open, re-analysable, but pro-saturated population work |
+| **DASCH / APPLAUSE plates** | ★★★ | ★★★★★ | century baseline, complete since 2024, barely mined systematically (EXP-2026-Z) |
 | **Rubin DP1/DP2** | ★★★★★ | ★☆ | superb but **data-rights-gated** — spectate until open |
 
 ---

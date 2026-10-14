@@ -6,6 +6,7 @@ const updated = '14 October 2026';
 // Status classes: ok = sound, rerun = needs rerun, syn = synthetic only, no = withdrawn / not demonstrated, plan = planned
 const experiments = [
   { id: 'Y', title: 'T Coronae Borealis: multi-wavelength status and accretion inversion', data: 'AAVSO, ANS UBV, Swift UVOT/XRT, TESS', status: 'SOUND', cls: 'ok', note: 'See the T CrB section below.', fig: 'tcrb/tcrb_uv_xray_track.png' },
+  { id: 'Z', title: 'Hidden recurrent novae on a century of Harvard plates', data: 'DASCH DR7, 1,211 targets + 2,101 controls', status: 'SOUND (pre-registered)', cls: 'ok', note: 'One new candidate: V347 Nor erupted in February 1943 (see its page). Recurrent-nova fraction among classical novae < 2.5% for typical speeds.', fig: 'rn/v347nor_1943.png' },
   { id: 'G', title: 'Live audit of ten archive pipelines', data: 'TAP, REST and FITS services', status: 'SOUND', cls: 'ok', note: 'All ten returned rows when checked.' },
   { id: 'I', title: 'Quaia selection-function and Galactic-cut survey', data: 'Quaia G20.5 + SIMBAD', status: 'SOUND (descriptive)', cls: 'ok', note: 'Dipole amplitude stays in the published 2.1-3.1% band. The grid script it cites is missing.', fig: 'remarkable_objects_discovery_gallery.png' },
   { id: 'K', title: 'Dipole estimator injection-recovery', data: 'full-sky mocks', status: 'SOUND (synthetic validation)', cls: 'ok', note: 'Estimator response b = 0.975 +/- 0.021. A method test; says nothing about the sky.', fig: 'dipole_injection_recovery_benchmark.png' },
@@ -58,14 +59,14 @@ const tcrb = [
   <p>An astrophysics notebook kept by Leon and Claude. Code and full write-ups are in the repository; this page lists what has been done and what each result is worth.</p>
   <p class="small">Last updated {updated}.</p>
 
-  <p>[ <a href="#programmes">programmes</a> | <a href="#tcrb">T CrB</a> (<a href="/tcrb/">full page</a>) | <a href="#ledger">ledger</a> | <a href="#dates">dates</a> ]</p>
+  <p>[ <a href="#programmes">programmes</a> | <a href="#tcrb">T CrB</a> (<a href="/tcrb/">full page</a>) | <a href="/v347nor/">V347 Nor 1943</a> | <a href="#ledger">ledger</a> | <a href="#dates">dates</a> ]</p>
 
   <hr />
 
   <h2 id="programmes">Programmes</h2>
   <ul>
     <li><b>P1 Cosmic dipole.</b> Is the quasar number-count dipole consistent with our motion against the CMB? Machinery for Quaia, CatWISE and NVSS; Euclid DR1 arrives 21 Oct 2026. The earlier tension claims did not survive the audit.</li>
-    <li><b>P2 Recurrent novae.</b> Watching <a href="/tcrb/">T Coronae Borealis</a> before its next eruption (seen in 1866 and 1946). Active.</li>
+    <li><b>P2 Recurrent novae.</b> Watching <a href="/tcrb/">T Coronae Borealis</a> before its next eruption (seen in 1866 and 1946). A search of the Harvard plates found a candidate unrecorded nova eruption of the symbiotic star <a href="/v347nor/">V347 Nor in 1943</a>. Active.</li>
     <li><b>P3 Calibrated triage.</b> Classifiers that report honest uncertainty for follow-up decisions. Being rebuilt on real labelled data.</li>
     <li><b>P4 Theory threads.</b> Inflation after ACT DR6, primordial non-Gaussianity, physics-informed denoising. Ideas, no results yet.</li>
   </ul>

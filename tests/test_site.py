@@ -57,3 +57,15 @@ def test_tcrb_page_figures_and_data_exist():
     data = json.loads((SITE_DIR / "src" / "data" / "tcrb.json").read_text(encoding="utf-8"))
     assert len(data["uvm2"]["t"]) == len(data["uvm2"]["m"]) > 100
     assert data["n"]["uv_latest"] - data["n"]["uv_last_bright"] > 1.5
+
+
+def test_v347nor_page_figures_and_data_exist():
+    src = (SITE_DIR / "src" / "pages" / "v347nor.astro").read_text(encoding="utf-8")
+    figs = re.findall(r'src="/fig/(rn/[^"]+)"', src)
+    assert len(figs) >= 6
+    for f in figs:
+        assert (SITE_DIR / "public" / "fig" / f).exists(), f
+    data = json.loads((SITE_DIR / "src" / "data" / "v347nor.json").read_text(encoding="utf-8"))
+    assert data["det"] and data["lim"] and data["cut"]
+    assert "G3_onset_from_cutouts" in data["audit"] and data["stamps"]["n_control"] > 100
+    assert "CANDIDATE" in src  # must stay labelled a candidate until the original plates are checked

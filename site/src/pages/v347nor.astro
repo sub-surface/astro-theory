@@ -1,0 +1,233 @@
+---
+import Base from '../layouts/Base.astro';
+import D from '../data/v347nor.json';
+
+const A = D.audit;
+const S = D.stamps;
+const G3 = A.G3_onset_from_cutouts;
+const f = (x: number, d = 2) => Number(x).toFixed(d);
+
+// Light curve as a server-rendered SVG: two panels, 1889-1990 and 1942.5-1947.
+const W = 720, H = 210, L = 44, R = 10, T = 10, B = 26;
+const yOf = (m: number) => T + ((m - 7) / (17.5 - 7)) * (H - T - B);
+const panel = (lo: number, hi: number, step: number, r: number) => {
+  const xOf = (t: number) => L + ((t - lo) / (hi - lo)) * (W - L - R);
+  const ticks: number[] = [];
+  for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) ticks.push(+t.toFixed(2));
+  const lim = D.lim.filter(([t]) => t >= lo && t <= hi);
+  const det = D.det.filter(([t]) => t >= lo && t <= hi);
+  const cut = D.cut.filter((t) => t >= lo && t <= hi);
+  return { xOf, ticks, lim, det, cut, r };
+};
+const P1 = panel(1888, 1992, 10, 1.6);
+const P2 = panel(1942.5, 1947, 0.5, 2.6);
+const mags = [8, 10, 12, 14, 16];
+const tri = (x: number, y: number, s: number) => `M${f(x - s, 1)},${f(y - s, 1)}L${f(x + s, 1)},${f(y - s, 1)}L${f(x, 1)},${f(y + s * 0.9, 1)}Z`;
+
+const sheet: [string, string, string][] = [
+  ['Names', 'V347 Nor = Hen 2-147 = Wray 16-208 = PN G327.9-04.3', 'SIMBAD'],
+  ['Position (J2000)', '16h14m01.1s −56°59′28″', 'Gaia DR3 5835411094089870592'],
+  ['System', 'D-type symbiotic; Mira donor, P = 373 d (M7-M9e)', 'VSX; Gromadzki+ 2009'],
+  ['Quiescent brightness', 'B ≈ 19.8, Gaia G = 12.19 (BP−RP 5.77)', 'SPM4; Gaia DR3'],
+  ['Distance', '3.0 ± 0.4 kpc (Mira P-L); 1.5 ± 0.4 kpc (nebular expansion parallax)', 'Santander-García+ 2007'],
+  ['Reddening', 'E(B−V) = 0.47 ± 0.08', 'SFD 0.51, S&F 0.43'],
+  ['Last plates without it', `1943 Feb 9 UT (bi00717, to B = ${f(G3.deepest_absent_within_3d.lim, 1)}) and Feb 10 (bi00722, to ${f(G3.last_absent.lim, 1)})`, 'DASCH cutouts'],
+  ['First plates with it', '1943 Feb 11 UT, am22958 and rb11996: a strong image on two cameras', 'DASCH cutouts'],
+  ['First catalogued magnitude', `1943 Feb 26 UT, rb12036, B = ${f(A.first_detection.B, 2)} (flagged saturated)`, 'DASCH'],
+  ['Rise', 'about one day, from below the plate limit to an image as strong as on Feb 26', 'this work'],
+  ['Decline', `t2 = ${A.G5_decline.t2_days[0]} d (${A.G5_decline.t2_days[1]}-${A.G5_decline.t2_days[2]}), t3 = ${A.G5_decline.t3_days[0]} d (${A.G5_decline.t3_days[1]}-${A.G5_decline.t3_days[2]})`, 'this work, from first detection'],
+  ['Absolute magnitude, 3 kpc', `M_B = ${f(A.G4_luminosity.M_B_at_first_detection, 1)} at first detection; ${f(A.G4_luminosity.M_B_day74, 1)} at day 74`, 'this work'],
+  ['Measured detections', `${A.G5_decline.n_detections} on ${A.G2_uniqueness.eruption_nights} nights, 7 plate series, 1943-46`, 'DASCH'],
+];
+
+const gates: [string, string, string, string][] = [
+  ['G1', 'Position', `Mean offset of ${A.G1_astrometry.n} bright detections from Gaia: (${f(A.G1_astrometry.mean_offset_arcsec[0], 1)} ± ${f(A.G1_astrometry.sem_arcsec[0], 1)}″, ${f(A.G1_astrometry.mean_offset_arcsec[1], 1)} ± ${f(A.G1_astrometry.sem_arcsec[1], 1)}″). The neighbour 6.5″ away is excluded at ${f(A.G1_astrometry.neighbour_rejected_sigma, 0)}σ.`, 'pass'],
+  ['G2', 'Uniqueness', `${A.G2_uniqueness.deep_plates_1890_1942} deep plates 1890-1942 and ${A.G2_uniqueness.deep_plates_1947_1990} in 1947-90: no bright detection outside 1943-46.`, 'pass'],
+  ['G3', 'Onset', `Absent on Feb 9 (to B = ${f(G3.deepest_absent_within_3d.lim, 1)}) and Feb 10; on Feb 11 a strong image on two cameras (S = ${f(G3.same_night[0].S, 0)} and ${f(G3.same_night[1].S, 0)}, against at most ${f(S.control_S_max, 1)} on ${S.n_control} quiet-year plates). A rise of about a day, as in classical novae.`, 'pass'],
+  ['G4', 'Luminosity', `M_B ≈ ${f(A.G4_luminosity.M_B_at_first_detection, 1)} at 3 kpc (−4.8 at 1.5 kpc). Without rb12036: ≤ ${f(A.G4_luminosity.M_B_day74, 1)} at day 74. Z And-type outbursts reach −2 to −4.`, 'pass'],
+  ['G5', 'Decline', `t3 ≈ ${A.G5_decline.t3_days[0]} days, back below the plate limits by 1947.`, 'pass'],
+  ['G6', 'Chance coincidence', `Probability that a catalogued nova lies within 2″ of any of our 1,211 targets: ${A.G6_coincidence.p_any_of_1211_targets.toExponential(1)}. No catalogued nova at this position.`, 'pass'],
+  ['G7', 'Alternatives', 'Mira maximum: cannot rise several magnitudes in a day. Plate flaw or asteroid: 64 nights on 7 series. Z And-type outburst: these rise over weeks, by 2-4 mag.', 'pass'],
+  ['G7b', 'Pipeline misses', S ? `Of the plates DASCH logs as non-detections, ${S.n_1943_above_p99} of ${S.n_1943} in 1943 show the star in the cutout above the 99th percentile of ${S.n_control} quiet-year plates (S > ${f(S.control_S_p99, 1)}); ${S.by_year['1944'][1]} of ${S.by_year['1944'][0]} in 1944 and fewer later, as it fades below the plate limits.` : 'Pending.', S ? (S.n_1943_above_p99 / S.n_1943 > 0.5 ? 'pass' : 'open') : 'open'],
+  ['G8', 'Nebula', 'A 1943 origin of the ring needs a decelerating front (n = 0.25-0.57), consistent with the shock reading of Santander-García+ 2007. A moving front could also be older gas being lit up, so this is consistent, not diagnostic.', 'neutral'],
+  ['G9', 'Original plates', 'Inspect the plates of 1943 Feb 9-11 and rb12036 in the Harvard stacks; check the 1943 Announcement Cards. Draft request written, not sent.', 'open'],
+];
+const gcls: Record<string, string> = { pass: 'ok', open: 'rerun', neutral: 'syn' };
+---
+
+<Base title="V347 Nor 1943" wide description="A candidate unrecorded 1943 nova eruption of the symbiotic nova Hen 2-147 (V347 Nor), found on the Harvard plates: light curve, the gates it has passed, and what would confirm it." ogImage="/fig/rn/v347nor_1943.png">
+  <p class="small"><a href="/">Celestrium</a> › V347 Nor 1943</p>
+  <h1>V347 Normae in 1943</h1>
+  <p class="small">EXP-2026-Z · <span class="st rerun">&nbsp;CANDIDATE&nbsp;</span> · status as of 14 October 2026</p>
+
+  <div class="notice">
+    <b>Candidate, not confirmed.</b> On the Harvard plates, the symbiotic star Hen 2-147 (V347 Nor) appears between
+    10 and 11 February 1943, at once among the brightest stars in its field, and fades over the next three years. Its spectrum and ring nebula have long
+    marked it as a "symbiotic nova", but no outburst has been reported. Harvard was the only observatory photographing
+    this part of the sky in 1943, so confirmation means looking at the original glass plates. We have not reported this
+    anywhere else yet.
+  </div>
+
+  <nav class="toc" aria-label="Contents">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#facts">Facts</a></li>
+      <li><a href="#lc">Light curve</a></li>
+      <li><a href="#gates">Gates</a></li>
+      <li><a href="#nebula">The nebula</a></li>
+      <li><a href="#search">How it was found</a></li>
+      <li><a href="#decir">DE Cir 1929</a></li>
+      <li><a href="#refs">Data and references</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="facts">Facts</h2>
+  <div class="wrap">
+    <table class="sheet stack">
+      <tr><th>Quantity</th><th>Value</th><th>Source</th></tr>
+      {sheet.map(([q, v, s]) => <tr><td>{q}</td><td class="mono">{v}</td><td>{s}</td></tr>)}
+    </table>
+  </div>
+
+  <h2 id="lc">Light curve</h2>
+  <div class="panel">
+    {[P1, P2].map((p, k) => (
+      <svg class="lcsvg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={k === 0 ? 'DASCH light curve of V347 Nor 1888-1992' : 'DASCH light curve of V347 Nor 1942.5-1947'}>
+        {mags.map((m) => <g><line class="gr" x1={L} x2={W - R} y1={yOf(m)} y2={yOf(m)} /><text x={L - 6} y={yOf(m) + 4} text-anchor="end">{m}</text></g>)}
+        {p.ticks.map((t) => <text x={p.xOf(t)} y={H - 8} text-anchor="middle">{k === 0 ? t : (t % 1 === 0 ? t : '')}</text>)}
+        {p.ticks.map((t) => <line class="ax" x1={p.xOf(t)} x2={p.xOf(t)} y1={H - B} y2={H - B + 4} />)}
+        <rect class="ax" x={L} y={T} width={W - L - R} height={H - T - B} />
+        <path class="lim" d={p.lim.map(([t, m]) => tri(p.xOf(t), yOf(Math.min(m, 17.4)), p.r)).join('')} />
+        {p.det.map(([t, m]) => <circle class="det" cx={f(p.xOf(t), 1)} cy={f(yOf(m), 1)} r={p.r + 0.4} />)}
+        <path class="cut" d={p.cut.map((t) => `M${f(p.xOf(t), 1)},${T + 2}v9`).join('')} />
+        {k === 1 && <g>
+          <line class="al" x1={p.xOf(1943.107)} x2={p.xOf(1943.107)} y1={T} y2={H - B} />
+          <text class="lab" x={p.xOf(1943.107) - 4} y={yOf(16.6)} text-anchor="end">Feb 9: absent</text>
+          <text class="lab" x={p.xOf(1943.153) + 8} y={yOf(8.1)}>Feb 26: B = 8.0</text>
+        </g>}
+        <text x="6" y={T + 8} class="lab">B</text>
+      </svg>
+    ))}
+    <div class="key"><span><i class="k-det"></i>detection at V347 Nor</span><span><i class="k-lim">▼</i>plate limit, not detected</span><span><i class="k-cut">|</i>star in the cutout, missed by the catalogue</span></div>
+  </div>
+  <p class="small">DASCH DR7 magnitudes (photographic, B-like). Many grey limits during 1943-44 are pipeline misses: the
+    bright image was not matched to the catalogue star, or was given to a neighbour, though the star is visible in the
+    image cutouts. Red ticks mark those plates.</p>
+  <figure>
+    <a href="/fig/rn/v347nor_onset.png"><img src="/fig/rn/v347nor_onset.png" alt="Plate cutouts of V347 Nor from 9 to 26 February 1943 and a 1942 plate" loading="lazy" /></a>
+    <figcaption>The onset. Absent on 9 and 10 February 1943; present on 11 February on two cameras, and on every plate after. The last panel is a 1942 plate. Only rb12036 has a catalogued magnitude.</figcaption>
+  </figure>
+
+  <h2 id="gates">Gates</h2>
+  <p>The checks a candidate must pass before we call it an eruption. Green: passed. Yellow: open. Grey: no verdict either way.</p>
+  <div class="wrap">
+    <table class="stack">
+      <tr><th>Gate</th><th>Test</th><th>Result</th></tr>
+      {gates.map(([g, what, res, st]) => <tr><td class={`mono ${gcls[st]}`}>{g}</td><td><b>{what}.</b> {res}</td><td class={`st ${gcls[st]}`}>{st.toUpperCase()}</td></tr>)}
+    </table>
+  </div>
+
+  <div class="pair">
+    <figure>
+      <a href="/fig/rn/v347nor_vetting.png"><img src="/fig/rn/v347nor_vetting.png" alt="Plate cutouts of V347 Nor before and during the 1943 eruption" loading="lazy" /></a>
+      <figcaption>Plate cutouts around V347 Nor before and during the eruption. The circle is 10″ around the Gaia position.</figcaption>
+    </figure>
+    <figure>
+      <a href="/fig/rn/v347nor_dasch_misses.png"><img src="/fig/rn/v347nor_dasch_misses.png" alt="Plates logged as non-detections that show the star" loading="lazy" /></a>
+      <figcaption>Plates from 1943 that DASCH logs as non-detections. The star is there.</figcaption>
+    </figure>
+  </div>
+
+  <h2 id="nebula">The nebula</h2>
+  <div class="pair">
+    <div>
+      <p>Hen 2-147 sits inside a ring of ionised gas, 5.2″ by 2.0″, expanding at about 100 km/s (Corradi+ 1999). Hubble
+        imaged it in 2001 and 2004. Santander-García+ (2007) measured the growth and found that the ring expands too fast,
+        in angle, for its gas velocity at the Mira's distance. They suggested a shock front rather than ballistic gas, and
+        placed an outburst "some 200 years ago".</p>
+      <p>A 1943 origin would need the front to have slowed as <i>r</i> ∝ <i>t</i><sup>n</sup> with n = 0.25-0.57: a shell
+        sweeping up gas. That fits. But a moving front can also be older gas lit up or shocked by a recent outburst, so
+        the ring alone cannot date the eruption.</p>
+    </div>
+    <div class="wrap">
+      <table class="stack">
+        <tr><th>Sector</th><th>Ballistic age (yr, from 2004)</th><th>n for 1943</th><th>Growth 2001.75→2027: ballistic / 1943</th></tr>
+        {Object.entries(A.G8_nebula.regions).map(([k, r]: [string, any]) => <tr><td>{k}</td><td class="mono">{r.ballistic_age_yr}</td><td class="mono">{f(r.n_needed_for_1943, 2)}</td><td class="mono">{f(r.growth_2001_to_2027_ballistic, 3)} / {f(r.growth_2001_to_2027_1943, 3)}</td></tr>)}
+      </table>
+    </div>
+  </div>
+
+  <h2 id="search">How it was found</h2>
+  <p>EXP-2026-Z searched the DASCH light curves of 1,211 known symbiotic stars and cataclysmic variables for nova-like
+    eruptions that nobody recorded, against 2,101 matched field stars. The design was written down before any light
+    curve was scored. Ten targets scored above every control star; all ten are symbiotics. Nine were known outbursts,
+    slow activity or a plate flaw. V347 Nor was the tenth.</p>
+  <p>The search also tested whether a template fitted to nova physics finds more than a plain brightness threshold.
+    It does not at 1% false alarms (recall 0.39 against 0.41), but does at 0.1% (0.28 against 0.14). A neural network
+    trained on simulated eruptions learned the simulator's quirks and failed on real plates.</p>
+  <div class="pair">
+    <figure>
+      <a href="/fig/rn/rn_scores_recall.png"><img src="/fig/rn/rn_scores_recall.png" alt="Detection scores and recall of catalogued eruptions" loading="lazy" /></a>
+      <figcaption>Scores of targets and controls, and recall of 197 catalogued eruptions.</figcaption>
+    </figure>
+    <figure>
+      <a href="/fig/rn/rn_completeness.png"><img src="/fig/rn/rn_completeness.png" alt="Completeness for 356 classical novae" loading="lazy" /></a>
+      <figcaption>Completeness for repeat eruptions of 356 classical novae. None found, which limits the fraction that are recurrent to below 2.5% for typical decline times.</figcaption>
+    </figure>
+  </div>
+
+  <h2 id="decir">DE Cir 1929</h2>
+  <p>The nova DE Cir (2003) also shows a brightening on the 1929 plates, but it scores below the pre-registered threshold,
+    so it stays exploratory. Pagnotta &amp; Schaefer (2014) did not search its plates.</p>
+  <figure>
+    <a href="/fig/rn/decir_1929.png"><img src="/fig/rn/decir_1929.png" alt="DE Cir light curve around 1929" loading="lazy" /></a>
+    <figcaption>DE Cir on the Harvard plates around 1929. Exploratory only.</figcaption>
+  </figure>
+
+  <h2 id="refs">Data and references</h2>
+  <p>DASCH DR7 light curves and cutouts (Grindlay+ 2009); Gaia DR3; SPM4; POSS-II; NASA ADS. Corradi+ 1999 A&amp;A 348, 978;
+    Santander-García+ 2007 A&amp;A 465, 481; Gromadzki+ 2009 AcA 59, 169; Pagnotta &amp; Schaefer 2014 ApJ 788, 164;
+    Schaefer 2010 ApJS 187, 275. Code: <code>scripts/novae/v347nor_audit.py</code>, <code>v347nor_stamps.py</code>,
+    <code>rn_*.py</code>.</p>
+
+  <hr />
+  <p class="small">Leon &amp; Claude, 2026. <a href="/">Back to Celestrium</a>.</p>
+
+  <style>
+    .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }
+    .toc { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 1em 0.4em; margin: 1em 0; font-size: 0.95em; width: fit-content; max-width: 100%; }
+    .toc ol { margin: 0.3em 0 0.2em; padding-left: 1.6em; columns: 2; column-gap: 2.5em; }
+    @media (min-width: 900px) { .toc { float: right; margin: 0 0 1em 1.5em; } .toc ol { columns: 1; } }
+    @media (max-width: 480px) { .toc ol { columns: 1; } }
+    h2 { clear: both; }
+    .sheet td:first-child { white-space: nowrap; }
+    @media (max-width: 560px) {
+      .stack th { display: none; }
+      .stack, .stack tbody, .stack tr, .stack td { display: block; width: auto; }
+      .stack tr { border: 1px solid var(--rule); padding: 4px 8px; }
+      .stack tr + tr { border-top: 0; }
+      .stack tr:has(th) { display: none; }
+      .stack tr:has(th) + tr { border-top: 1px solid var(--rule); }
+      .stack td { border: 0; padding: 0; white-space: normal !important; }
+      .stack td:first-child { font-weight: bold; }
+    }
+    .pair { display: grid; gap: 0 1.5em; }
+    .pair > * { min-width: 0; }
+    @media (min-width: 760px) { .pair { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .panel { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 0.6em; margin: 1em 0; }
+    .lcsvg { display: block; width: 100%; height: auto; margin-bottom: 0.3em; }
+    .lcsvg text { fill: var(--muted); font: 11px "Courier New", Courier, monospace; }
+    .lcsvg .lab { fill: var(--fg); }
+    .lcsvg .ax { stroke: var(--rule); fill: none; }
+    .lcsvg .gr { stroke: var(--grid); }
+    .lcsvg .lim { fill: var(--faint); }
+    .lcsvg .det { fill: var(--opt); }
+    .lcsvg .cut { stroke: var(--alert); stroke-width: 1; }
+    .lcsvg .al { stroke: var(--alert); stroke-dasharray: 3 3; }
+    .key { font-size: 0.82em; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.2em 1em; }
+    .key i { display: inline-block; margin-right: 0.3em; font-style: normal; }
+    .k-det { width: 9px; height: 9px; border-radius: 50%; background: var(--opt); }
+    .k-lim { color: var(--faint); font-size: 0.8em; }
+    .k-cut { color: var(--alert); font-weight: bold; }
+  </style>
+</Base>
