@@ -2,17 +2,21 @@
 interface Props {
   title?: string;
   description?: string;
+  wide?: boolean;
+  ogImage?: string;
 }
 
 const {
   title,
   description = 'Celestrium: astrophysics notebook of Leon and Claude. Experiments, their audit status, and figures.',
+  wide = false,
+  ogImage = '/fig/tcrb/tcrb_uv_xray_track.png',
 } = Astro.props;
 
 const pageTitle = title ? `${title} - Celestrium` : 'Celestrium';
 const site = Astro.site || 'https://astro.subsurfaces.net';
 const canonicalUrl = new URL(Astro.url.pathname, site);
-const ogImageUrl = new URL('/fig/tcrb/tcrb_uv_xray_track.png', site);
+const ogImageUrl = new URL(ogImage, site);
 ---
 
 <!doctype html>
@@ -21,6 +25,7 @@ const ogImageUrl = new URL('/fig/tcrb/tcrb_uv_xray_track.png', site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href={canonicalUrl.href} />
     <title>{pageTitle}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -34,42 +39,63 @@ const ogImageUrl = new URL('/fig/tcrb/tcrb_uv_xray_track.png', site);
     <meta property="og:image" content={ogImageUrl.href} />
     <meta name="twitter:card" content="summary" />
     <style is:global>
-      :root { color-scheme: light; }
+      :root {
+        --bg: #ffffff; --fg: #000000; --muted: #444444; --rule: #808080; --faint: #c0c0c0;
+        --link: #0000ee; --visited: #551a8b; --th: #e0e0e0; --box: #f4f4f4; --notice: #ffffcc; --notice-rule: #c8b400;
+        --ok: #ccffcc; --rerun: #ffffcc; --syn: #e8e8e8; --no: #ffcccc;
+        --uv: #1f3fbf; --xr: #b35900; --opt: #222222; --old: #a0522d; --alert: #cc0000; --band: rgba(31, 63, 191, 0.07); --grid: #e4e4e4;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121212; --fg: #e8e6e3; --muted: #b0aca6; --rule: #5a5a5a; --faint: #3a3a3a;
+          --link: #8cb4ff; --visited: #c9a3ff; --th: #262626; --box: #1b1b1b; --notice: #2b2810; --notice-rule: #8a7a10;
+          --ok: #1d3a1d; --rerun: #393612; --syn: #2a2a2a; --no: #4a1d1d;
+          --uv: #8cb4ff; --xr: #f0a050; --opt: #e8e6e3; --old: #e0a070; --alert: #ff6b6b; --band: rgba(140, 180, 255, 0.08); --grid: #2a2a2a;
+          color-scheme: dark;
+        }
+      }
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
       body {
-        background: #ffffff;
-        color: #000000;
+        background: var(--bg);
+        color: var(--fg);
         font-family: "Times New Roman", Times, serif;
         font-size: 17px;
-        line-height: 1.4;
+        line-height: 1.45;
         max-width: 46em;
         margin: 0 auto;
         padding: 1em 16px 3em;
       }
-      a { color: #0000ee; }
-      a:visited { color: #551a8b; }
-      h1 { font-size: 2em; margin: 0.4em 0 0.1em; }
-      h2 { font-size: 1.35em; margin-top: 1.6em; }
+      body.wide { max-width: 62em; }
+      a { color: var(--link); }
+      a:visited { color: var(--visited); }
+      a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+      h1 { font-size: 2em; margin: 0.4em 0 0.1em; text-wrap: balance; }
+      h2 { font-size: 1.35em; margin: 1.8em 0 0.5em; text-wrap: balance; border-bottom: 1px solid var(--faint); padding-bottom: 0.15em; }
       h3 { font-size: 1.1em; margin: 1.4em 0 0.3em; }
-      hr { border: 0; border-top: 1px solid #808080; margin: 1.5em 0; }
-      code, tt, .st { font-family: "Courier New", Courier, monospace; font-size: 0.88em; }
+      h2:target { background: var(--notice); }
+      p { margin: 0.6em 0; }
+      hr { border: 0; border-top: 1px solid var(--rule); margin: 1.5em 0; }
+      code, tt, .st, .mono { font-family: "Courier New", Courier, monospace; font-size: 0.88em; font-variant-numeric: tabular-nums; }
       .wrap { overflow-x: auto; }
-      table { border-collapse: collapse; font-size: 0.92em; }
-      th, td { border: 1px solid #808080; padding: 4px 6px; vertical-align: top; text-align: left; }
-      th { background: #e0e0e0; }
-      td img { width: 120px; max-width: none; display: block; }
-      figure { margin: 1.2em 0; }
-      figure img { max-width: 100%; height: auto; border: 1px solid #c0c0c0; display: block; }
+      table { border-collapse: collapse; font-size: 0.92em; font-variant-numeric: tabular-nums; }
+      th, td { border: 1px solid var(--rule); padding: 4px 6px; vertical-align: top; text-align: left; }
+      th { background: var(--th); }
+      .ledger td img { width: 120px; max-width: none; display: block; }
+      figure { margin: 1.2em 0; min-width: 0; }
+      figure img { max-width: 100%; height: auto; border: 1px solid var(--faint); display: block; background: #fff; }
       figcaption { font-size: 0.92em; margin-top: 0.3em; }
-      .small { font-size: 0.85em; color: #404040; }
-      .ok { background: #ccffcc; }
-      .rerun { background: #ffffcc; }
-      .syn { background: #e8e8e8; }
-      .no { background: #ffcccc; }
-      .plan { background: #ffffff; }
-      @media (max-width: 600px) { th:nth-child(3), td:nth-child(3) { display: none; } td img { width: 80px; } }
+      .small { font-size: 0.85em; color: var(--muted); }
+      .ok { background: var(--ok); }
+      .rerun { background: var(--rerun); }
+      .syn { background: var(--syn); }
+      .no { background: var(--no); }
+      .plan { background: transparent; }
+      @media (max-width: 600px) { .ledger th:nth-child(3), .ledger td:nth-child(3) { display: none; } .ledger td img { width: 80px; } }
     </style>
   </head>
-  <body>
+  <body class={wide ? 'wide' : ''}>
     <slot />
   </body>
 </html>

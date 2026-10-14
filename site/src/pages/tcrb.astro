@@ -1,0 +1,460 @@
+---
+import Base from '../layouts/Base.astro';
+import D from '../data/tcrb.json';
+
+const n = D.n;
+const f = (x: number, d = 2) => Number(x).toFixed(d);
+const famRatio = (name: string) => {
+  const r = D.family.find((x) => x.name.startsWith(name));
+  if (!r) return '-';
+  const v = 10 ** r.log_ratio, p = 10 ** (Math.floor(Math.log10(v)) - 1);
+  return (Math.round(v / p) * p).toLocaleString('en-GB');
+};
+const tess = D.tess as Record<string, { state: string; flicker_rms_10min_6h_e_s: number; high_freq_slope: number; fap_global_max_peak: number; fap_5000_7500s: number }>;
+const sectors = ['24', '25', '51', '78'].filter((k) => tess[k]);
+const minLocalFap = Math.min(...sectors.map((k) => tess[k].fap_5000_7500s));
+
+const sheet: [string, string, string][] = [
+  ['Distance', '887 pc', 'Gaia DR3 (Bailer-Jones+ 2021)'],
+  ['White dwarf / giant mass', '1.35 / 0.93 M☉', 'Munari+ 2025'],
+  ['Orbital period', `${f(n.period_d, 2)} ± ${f(n.period_sd_d, 2)} d`, 'this work, AAVSO V'],
+  ['Quiescent ellipsoidal half-amplitude', `${f(n.ell_amp, 3)} ± ${f(n.ell_amp_sd, 3)} mag`, 'this work'],
+  ['Inclination', `≳ ${f(n.incl_lo, 0)}° (lower limit)`, 'this work; literature 55-70°'],
+  ['Known eruptions', '1866, 1946 (probably 1787, 1217)', 'Schaefer 2023'],
+  ['Recurrence intervals', n.intervals_yr.map((x: number) => f(x, 1)).join(', ') + ' yr', '1787-1866, 1866-1946, and 1217-1787 over 7 cycles'],
+  ['UVM2, 29 Aug → 29 Sep 2026', `${f(n.uv_last_bright, 2)} → ${f(n.uv_latest, 2)} mag`, 'this work, Swift/UVOT'],
+  ['Hard X-ray rate, 29 Sep 2026', `${f(n.hard_now, 3)} c/s (2-10 keV)`, 'Swift/XRT, LSXPS'],
+  ['Eruption year, recurrence clock', `${f(n.rec_median, 1)} (68%: ${f(n.rec_q16, 1)}-${f(n.rec_q84, 1)})`, 'this work'],
+];
+
+const consensus: [string, string, string][] = [
+  ['The accretion state drives the eruption clock', 'Consensus', 'Luna+ 2020; Munari+ 2025; Baptista+ 2026'],
+  ['The high state is the disk responding to more mass transfer', 'Leaning yes', 'Planquart+ 2025; Schlindwein+ 2025; Baptista+ 2026 (against: Iłkiewicz+ 2023)'],
+  ['The 2023 dip was the 1945 analogue', 'Rejected', 'Merc+ 2025; no eruption by Oct 2026'],
+  ['The dimming is dust', 'Disfavoured', 'Luna+ 2026 (no IR excess, stable 2175 Å); our 30-day UV collapse'],
+  ['A ~6000 s periodicity', 'Not significant', 'Luna+ 2026; this work (TESS)'],
+  ['Ignition at a fixed orbital phase', 'Not significant', 'Pei+ 2026'],
+  ['The white dwarf grows toward a type Ia supernova', 'Disputed', 'Starrfield+ 2025 (yes) vs Schaefer 2025 (ejects more than it accretes)'],
+];
+
+const watch: [string, string][] = [
+  ['5-30 Nov 2026', 'Swift UV recovery test (pre-registered). UVM2 brightening by 1 mag or more by 30 Nov, with hard X-rays falling, means the collapse was geometric (something on the orbit). Staying within 0.5 mag of quiescence means the accretion state changed.'],
+  ['Any night', 'Optical V has drifted 0.3-0.4 mag below its 2021-23 level once the ellipsoidal cycle is removed. A 1945-style 0.7 mag dip would be unmistakable.'],
+  ['Spectra', 'He II 4686 Å and the Balmer lines answer to the inner disk within days; their collapse would confirm the UV.'],
+  ['Apr 2027', 'T CrB near solar conjunction: a gap in ground coverage.'],
+  [`${f(n.analogue_eruption, 1)}`, 'Eruption date implied if September 2026 is the counterpart of the 1945 dip onset.'],
+  [`${f(n.rec_q16, 1)}-${f(n.rec_q84, 1)}`, `68% window of the recurrence clock alone (median ${f(n.rec_median, 1)}).`],
+];
+---
+
+<Base title="T Coronae Borealis" wide description="T CrB, the recurrent nova in Corona Borealis: its September 2026 UV collapse, light curves since 2005, the 1946 comparison, and what an accretion-disk inversion can and cannot tell." ogImage="/fig/tcrb/tcrb_uv_xray_track.png">
+  <p class="small"><a href="/">Celestrium</a> › T Coronae Borealis</p>
+  <h1>T Coronae Borealis</h1>
+  <p class="small">EXP-2026-Y · ledger status <span class="st ok">&nbsp;SOUND&nbsp;</span> · status as of 14 October 2026</p>
+
+  <div class="notice">
+    <b>News.</b> The recurrent nova has not erupted. Between 29 August and 29 September 2026 its ultraviolet
+    light fell by {f(n.uv_latest - n.uv_last_bright, 2)} magnitudes, back to the level it had before the 2015 high
+    state, while its hard X-rays rose. A viscous accretion disk cannot fade that fast by losing its supply,
+    so the inner disk itself changed state. As far as we know this has not been reported.
+  </div>
+
+  <nav class="toc" aria-label="Contents">
+    <b>Contents</b>
+    <ol>
+      <li><a href="#curves">Light curves, 2005 to now</a></li>
+      <li><a href="#system">The system</a></li>
+      <li><a href="#uvx">UV and X-rays trade places</a></li>
+      <li><a href="#dip">1945 and now</a></li>
+      <li><a href="#disk">Inside the disk</a></li>
+      <li><a href="#flicker">Flickering</a></li>
+      <li><a href="#family">The family</a></li>
+      <li><a href="#when">When?</a></li>
+      <li><a href="#lit">The literature</a></li>
+      <li><a href="#caveats">Caveats</a></li>
+      <li><a href="#data">Data and code</a></li>
+    </ol>
+  </nav>
+
+  <h3>Data sheet</h3>
+  <div class="wrap">
+    <table class="sheet stack">
+      <tr><th>Quantity</th><th>Value</th><th>Source</th></tr>
+      {sheet.map(([q, v, s]) => <tr><td>{q}</td><td class="mono">{v}</td><td>{s}</td></tr>)}
+    </table>
+  </div>
+
+  <h2 id="curves">1. Light curves, 2005 to now</h2>
+  <p>Optical V (AAVSO and ANS), Swift/UVOT UVM2 and Swift/XRT hard X-rays on one time axis. Hover or tap to read values; the last UV point is the September 2026 collapse.</p>
+  <div class="panel">
+    <div class="bar">
+      <span class="btns" role="group" aria-label="Time range">
+        <button type="button" data-range="all" aria-pressed="true">2005-2026</button>
+        <button type="button" data-range="recent" aria-pressed="false">2022-2026</button>
+      </span>
+      <span class="key"><span><i class="k-opt"></i>V</span><span><i class="k-uv"></i>UVM2</span><span><i class="k-uvw"></i>UVM2 from PSF wings</span><span><i class="k-xr"></i>XRT 2-10 keV</span><span><i class="k-al"></i>Sep 2026</span></span>
+    </div>
+    <div id="lc" class="chart" role="img" aria-label="Optical V, UVM2 and hard X-ray light curves of T CrB from 2005 to 2026"></div>
+    <div id="lc-read" class="readout mono" aria-live="polite">Hover or tap the chart.</div>
+  </div>
+  <p class="small">The shaded spans are the 2015-23 high state and the 2023 dip. UVM2 points marked as open circles come from the PSF wings, where the core saturated during the high state (wing/core ratio calibrated on unsaturated visits).</p>
+
+  <h2 id="system">2. The system</h2>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_orbit.gif" alt="Animated top-down view of T CrB: a Roche-lobe-filling red giant feeding a gas stream into an accretion disk around a white dwarf" loading="lazy" />
+      <figcaption>One 227.6-day orbit, computed rather than drawn: Roche-lobe-filling giant with gravity darkening, a ballistic stream from L1, and disk temperatures from our viscous model.</figcaption>
+    </figure>
+    <div>
+      <p>A 1.35 M☉ white dwarf and a 0.93 M☉ M3 giant, 0.96 AU apart, 887 pc away. The giant fills its Roche lobe (about 72 R☉ across; CHARA interferometry measures 69 ± 5 R☉, Norris+ 2026). Gas leaves through the inner Lagrange point and hits the disk rim about 18° ahead of the line of centres in our integration, close to the ~20° hot-spot azimuth Munari+ 2025 infer from the light curve.</p>
+      <p>Every ~80 years the hydrogen piled onto the white dwarf ignites. Eruptions were seen in 1866 and 1946, and probably in 1787 and 1217 (Schaefer 2023). Each was preceded by a decade-long accretion high state; the current one ran 2015-2023.</p>
+    </div>
+  </div>
+  <figure>
+    <img src="/fig/tcrb/tcrb_system_states.png" alt="The binary rendered in quiescence, at peak accretion and now" loading="lazy" />
+    <figcaption>The system in quiescence (2010), at peak accretion (2016.3) and now, from the disk inversion in section 5. Inclination 61°; blackbody colours.</figcaption>
+  </figure>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_roche_map.png" alt="Roche potential map of the binary" loading="lazy" />
+      <figcaption>Roche geometry of the giant and white dwarf.</figcaption>
+    </figure>
+    <figure>
+      <img src="/fig/tcrb/tcrb_ephemeris.png" alt="Period search, bootstrap period distribution and folded ellipsoidal light curve" loading="lazy" />
+      <figcaption>Period {f(n.period_d, 2)} ± {f(n.period_sd_d, 2)} d from AAVSO V with the secular trend removed, matching Fekel+ 2000 and Munari+ 2025. The double-humped fold is the tidally distorted giant.</figcaption>
+    </figure>
+  </div>
+
+  <h2 id="uvx">3. UV and X-rays trade places</h2>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_uv_xray_track.png" alt="Same-day Swift UVM2 flux against XRT hard X-ray count rate, coloured by year" loading="lazy" />
+      <figcaption>Every same-day Swift pair since 2005. The newest points sit back among the 2005-11 quiescent cloud.</figcaption>
+    </figure>
+    <div>
+      <p>When the inner disk is bright in the UV, the boundary layer is optically thick and the hard X-rays fade; when the UV fades, the hard X-rays return. The anticorrelation is known (Luna+ 2018; Pei+ 2025). We find Spearman ρ = <span class="mono">{f(n.uvx_rho, 2)}</span> over <span class="mono">{n.uvx_pairs}</span> same-day pairs (the formal p-value treats autocorrelated visits as independent, so we do not quote it).</p>
+      <p>On 29 September 2026 the UV fell to its pre-2015 level and the hard X-rays rose to <span class="mono">{f(n.hard_now, 3)}</span> c/s. By this measure the inner disk has returned to quiescence while the optical light, dominated by the giant and the outer disk, has barely moved.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <b>A disk cannot drain this fast.</b> We cut the supply to a viscous disk entirely and asked how fast its UV
+    can fade. Across the viscosity grid the fastest 2-magnitude fade takes <span class="mono">{n.drain_2mag_days}</span> days,
+    and the largest 30-day fade is <span class="mono">{f(n.drain_30d_mag, 2)}</span> mag. T CrB faded
+    {f(n.uv_latest - n.uv_last_bright, 2)} mag in {f(n.fade_days, 1)} days. The supply did not stop: the inner disk changed
+    state, by a thermal transition, truncation or obscuration. Dust is unlikely (Luna+ 2026 find no infrared excess in the 2023 faint state).
+  </div>
+  <figure>
+    <img src="/fig/tcrb/tcrb_uv_dip_onsets.png" alt="UV and hard X-ray light curves around the 2023 and 2026 UV collapses aligned on their onsets" loading="lazy" />
+    <figcaption>The 2023 and 2026 UV collapses on a common clock. Both began just after orbital phase 0 (giant in front), 5.04 orbits apart; an alignment that close happens by chance 8% of the time, so it is a hint, not a detection. If the 2026 collapse is geometric, the UV should recover by phase ~0.3 (mid-November 2026).</figcaption>
+  </figure>
+
+  <h2 id="dip">4. 1945 and now</h2>
+  <p>Before the 1946 eruption the star faded by ~0.7 mag (visual) and erupted 0.63 years after the dip began. Slide today's light curve against that template and read off the eruption date it implies. Aligning on the 2023 dip predicted late 2023; nothing happened.</p>
+  <div class="panel">
+    <div class="bar">
+      <label for="ov-slider">Onset of the modern dip:</label>
+      <input type="range" id="ov-slider" min="2022.5" max="2027.4" step="0.01" value="2026.74" />
+      <span class="btns" role="group" aria-label="Presets">
+        <button type="button" data-on="2023.33" aria-pressed="false">2023 dip</button>
+        <button type="button" data-on="2026.74" aria-pressed="true">Sep 2026 UV collapse</button>
+      </span>
+    </div>
+    <div id="ov" class="chart" role="img" aria-label="1935-46 visual light curve overlaid on the 2014-26 V light curve"></div>
+    <div id="ov-read" class="readout mono" aria-live="polite"></div>
+    <div class="key"><span><i class="k-old"></i>1935-46 visual, Δmag</span><span><i class="k-opt"></i>2014-26 V, ellipsoidal removed</span><span><i class="k-al"></i>UVM2 Δmag ÷ 4</span></div>
+  </div>
+  <p class="small">The 1940s curve is mostly one visual observer comparing against a 9.8-mag star in 0.1-mag steps, and a red giant looks different by eye than through a V filter. Treat the analogue as a monitoring window, not a forecast.</p>
+
+  <h2 id="disk">5. Inside the disk: what an inversion can and cannot tell</h2>
+  <figure>
+    <img src="/fig/tcrb/tcrb_accretion_inversion.png" alt="Fitted light curves, inferred accretion rates since 2005, and disk mass" loading="lazy" />
+    <figcaption>The light curves inverted through a 1D viscous disk with a moving inner edge. The fits are good (V scatter 0.08 mag). The accretion-rate panel is shown for transparency; its absolute scale is not identified.</figcaption>
+  </figure>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_accretion_movie.gif" alt="Animated face-on view of the inner accretion disk from 2005 to 2026" loading="lazy" />
+      <figcaption>The inner 8 R☉, face-on, 2005 to now. The dark hole is the truncation radius the light curves require.</figcaption>
+    </figure>
+    <div>
+      <p><b>What the fit is sure of: the inner edge.</b> The hot inner disk stopped near 3 R☉ in quiescence (2005-14), moved in to ~0.75-1 R☉ through the 2016-22 high state, jumped back out to 2.7 R☉ in the 2023 dip, and is at 2.7 R☉ again now. September 2026 looks like the 2023 dip, not like quiescence and not like the high state.</p>
+      <p><b>What it cannot measure: how much fuel.</b> With a free inner edge, a faint disk holding a lot of gas and a bright disk holding little produce the same light. The fit settles on accretion rates about 100 times the literature value and strains against physical priors to stay there. That is a model failure, most likely the missing nebular (Balmer) continuum, which dominates the U and UV light of symbiotic stars. So we quote no accreted mass.</p>
+    </div>
+  </div>
+
+  <h2 id="flicker">6. Flickering, seen by TESS</h2>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_tess_flicker.png" alt="TESS light curves and power spectra of T CrB" loading="lazy" />
+      <figcaption>Two-minute TESS photometry in four sectors. The flicker comes from the inner disk.</figcaption>
+    </figure>
+    <div>
+      <p>Flicker amplitude on 10-minute to 6-hour timescales: <span class="mono">{f(tess['24'].flicker_rms_10min_6h_e_s, 0)}</span> and <span class="mono">{f(tess['25'].flicker_rms_10min_6h_e_s, 0)}</span> e⁻/s at the 2020 peak, <span class="mono">{f(tess['51'].flicker_rms_10min_6h_e_s, 0)}</span> in 2022 and <span class="mono">{f(tess['78'].flicker_rms_10min_6h_e_s, 0)}</span> in May 2024, about 30% lower after the high state ended.</p>
+      <p>The power spectra are red noise (slopes {sectors.map((k) => f(tess[k].high_freq_slope, 1)).join(', ')}). Against 60 red-noise simulations per sector with the same gaps, the largest local excess near 6000 s has p = {f(minLocalFap, 2)} before correcting for four sectors and all trial frequencies; global false-alarm probabilities are {sectors.map((k) => f(tess[k].fap_global_max_peak, 2)).join(', ')}. No periodicity survives.</p>
+    </div>
+  </div>
+
+  <h2 id="family">7. The family: four symbiotic recurrent novae</h2>
+  <p>Only four Galactic recurrent novae have red-giant donors: T CrB, RS Oph, V3890 Sgr and V745 Sco. Same instrument, same filter (UVM2, no red leak), same pipeline. In quiescence RS Oph and V745 Sco are ~{famRatio('RS Oph')}× more UV-luminous than T CrB; even T CrB's 2016-22 high state reached only ~{famRatio('T CrB high')}× its own quiescence.</p>
+  <div class="panel">
+    <div id="fam" class="chart" role="img" aria-label="UV luminosity of the four symbiotic recurrent novae relative to T CrB in quiescence, log scale"></div>
+    <div class="small">UV luminosity relative to T CrB in quiescence (2005-14), log scale. Whiskers: systematic uncertainty from distance and reddening. The V3890 Sgr point is from early 2019, months before its eruption.</div>
+  </div>
+  <figure>
+    <img src="/fig/tcrb/srn_family_uv_xray.png" alt="UV absolute magnitude against cycle fraction, and UV against hard X-ray luminosity, for the four systems" loading="lazy" />
+    <figcaption>The siblings accrete steadily; T CrB stores fuel in a disk and dumps it in bursts.</figcaption>
+  </figure>
+
+  <h2 id="when">8. When?</h2>
+  <figure>
+    <img src="/fig/tcrb/tcrb_forecast_scoreboard.png" alt="Published eruption forecasts as windows against the date they were made" loading="lazy" />
+    <figcaption>Every eruption date we found in the literature, against when it was published. {n.forecasts_lapsed} of {n.forecasts_published} windows have closed without an eruption. The first forecast came the week of the 1946 eruption: Knight wrote to the BAA that the next would come in 2026-27 (Shears 2024).</figcaption>
+  </figure>
+  <div class="pair">
+    <figure>
+      <img src="/fig/tcrb/tcrb_forecast.png" alt="Survival-conditioned predictive distribution of the eruption year" loading="lazy" />
+      <figcaption>The recurrence clock alone: a log-normal fitted to the three known intervals, with a Jeffreys prior, conditioned on no eruption by today.</figcaption>
+    </figure>
+    <div>
+      <h3 style="margin-top:0">What to watch</h3>
+      <div class="wrap">
+        <table>
+          {watch.map(([d, t]) => <tr><td class="mono" style="white-space:nowrap">{d}</td><td>{t}</td></tr>)}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h2 id="lit">9. The literature</h2>
+  <figure>
+    <img src="/fig/tcrb/tcrb_literature_bibliometrics.png" alt="Papers per year mentioning T CrB, 1860 to 2026" loading="lazy" />
+    <figcaption>{n.lit.n_focused} ADS records with T CrB in the title or abstract ({n.lit.n_refereed} refereed, {n.lit.n_circulars} telegrams and circulars) and {n.lit.n_fulltext.toLocaleString('en-GB')} that mention it anywhere; {n.lit.papers_2023_2026} of the focused records appeared since 2023.</figcaption>
+  </figure>
+  <figure>
+    <img src="/fig/tcrb/tcrb_parameter_forest.png" alt="White dwarf mass and inclination estimates" loading="lazy" />
+    <figcaption>The white-dwarf mass has converged near the Chandrasekhar limit; the inclination still depends on method. The green band is our ellipsoidal-amplitude range, a lower limit because disk light dilutes the amplitude.</figcaption>
+  </figure>
+  <h3>Where the field stands</h3>
+  <div class="wrap">
+    <table class="stack">
+      <tr><th>Claim</th><th>Status</th><th>Key papers</th></tr>
+      {consensus.map(([c, s, p]) => <tr><td>{c}</td><td style="white-space:nowrap">{s}</td><td>{p}</td></tr>)}
+    </table>
+  </div>
+
+  <h2 id="caveats">10. Caveats</h2>
+  <ul>
+    <li>The September 2026 UV collapse rests on one Swift visit (two snapshots). The next visit decides whether it persists.</li>
+    <li>The inversion's absolute accretion rates are not identified; only the inner-edge history is reported as a result.</li>
+    <li>AAVSO data were sampled (rate-limited API); Munari+ 2025 ANS photometry fills 2005-2025. The newest AAVSO nights (Aug-Oct 2026) are not yet in.</li>
+    <li>Distances and reddenings of the bulge recurrent novae are uncertain by ~50%, which moves their family points by the whiskers shown.</li>
+    <li>The TESS test used 60 red-noise simulations per sector; a 300-simulation run was interrupted.</li>
+    <li>Nothing here has been sent to ATel or any other service.</li>
+  </ul>
+
+  <h2 id="data">11. Data and code</h2>
+  <p>AAVSO International Database; Munari+ 2025 ANS UBVRI photometry (VizieR J/A+A/701/A176); Swift/UVOT archive images (photometry ours); Swift/XRT LSXPS per-observation light curves (Evans+ 2023); TESS SPOC light curves (MAST); Gaia DR3 distance; NASA ADS. Code: <code>celestrium/novae/</code> and <code>scripts/novae/</code>; the numbers on this page come from <code>scripts/novae/export_site_data.py</code>.</p>
+
+  <hr />
+  <p class="small">Leon &amp; Claude, 2026. <a href="/">Back to Celestrium</a>.</p>
+
+  <style>
+    .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }
+    .toc { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 1em 0.4em; margin: 1em 0; font-size: 0.95em; width: fit-content; max-width: 100%; }
+    .toc ol { margin: 0.3em 0 0.2em; padding-left: 1.6em; columns: 2; column-gap: 2.5em; }
+    @media (min-width: 900px) { .toc { float: right; margin: 0 0 1em 1.5em; } .toc ol { columns: 1; } }
+    @media (max-width: 480px) { .toc ol { columns: 1; } }
+    h2 { clear: both; }
+    .sheet td:first-child { white-space: nowrap; }
+    @media (max-width: 560px) {
+      .stack th { display: none; }
+      .stack, .stack tbody, .stack tr, .stack td { display: block; width: auto; }
+      .stack tr { border: 1px solid var(--rule); padding: 4px 8px; }
+      .stack tr + tr { border-top: 0; }
+      .stack tr:has(th) { display: none; }
+      .stack tr:has(th) + tr { border-top: 1px solid var(--rule); }
+      .stack td { border: 0; padding: 0; white-space: normal !important; }
+      .stack td:first-child { font-weight: bold; }
+      .stack td:last-child { font-size: 0.85em; color: var(--muted); }
+    }
+    .pair { display: grid; gap: 0 1.5em; }
+    .pair > * { min-width: 0; }
+    @media (min-width: 760px) { .pair { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+    .callout { border-left: 4px solid var(--alert); padding: 0.2em 0 0.2em 0.9em; margin: 1em 0; }
+    .panel { border: 1px solid var(--rule); background: var(--box); padding: 0.5em 0.6em; margin: 1em 0; }
+    .bar { display: flex; flex-wrap: wrap; gap: 0.4em 1em; align-items: center; margin-bottom: 0.4em; }
+    .bar input[type=range] { flex: 1 1 12em; min-width: 0; accent-color: var(--link); }
+    .btns { display: inline-flex; gap: 0.3em; }
+    .btns button { font: inherit; font-size: 0.85em; padding: 2px 8px; color: var(--fg); background: var(--th); border: 2px outset var(--faint); cursor: pointer; }
+    .btns button[aria-pressed="true"] { border-style: inset; background: var(--bg); font-weight: bold; }
+    .key { font-size: 0.82em; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.2em 0.5em; align-items: center; }
+    .key > span { white-space: nowrap; margin-right: 0.6em; }
+    .key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.3em; }
+    .k-opt { background: var(--opt); } .k-uv { background: var(--uv); } .k-xr { background: var(--xr); }
+    .k-uvw { border: 1.5px solid var(--uv); } .k-al { background: var(--alert); } .k-old { background: var(--old); }
+    .chart { width: 100%; touch-action: pan-y; }
+    .chart :global(svg) { display: block; width: 100%; height: auto; }
+    .chart :global(text) { fill: var(--muted); font: 11px "Courier New", Courier, monospace; }
+    .chart :global(.ax) { stroke: var(--rule); fill: none; }
+    .chart :global(.gr) { stroke: var(--grid); }
+    .chart :global(.band) { fill: var(--band); }
+    .chart :global(.opt) { fill: var(--opt); }
+    .chart :global(.uv) { fill: var(--uv); }
+    .chart :global(.uvw) { fill: none; stroke: var(--uv); stroke-width: 1.2; }
+    .chart :global(.xr) { fill: var(--xr); }
+    .chart :global(.al) { fill: var(--alert); }
+    .chart :global(.al-l) { stroke: var(--alert); stroke-dasharray: 4 3; }
+    .chart :global(.old-l) { stroke: var(--old); fill: none; stroke-width: 1.8; }
+    .chart :global(.old) { fill: var(--old); }
+    .chart :global(.opt-l) { stroke: var(--opt); fill: none; stroke-width: 1.4; }
+    .chart :global(.fg-l) { stroke: var(--fg); stroke-width: 1.3; }
+    .chart :global(.cur) { stroke: var(--fg); stroke-width: 0.8; opacity: 0.6; }
+    .chart :global(.lbl) { fill: var(--fg); paint-order: stroke; stroke: var(--box); stroke-width: 3px; stroke-linejoin: round; }
+    .chart :global(.al-t) { fill: var(--alert); }
+    .readout { font-size: 0.8em; color: var(--muted); min-height: 2.6em; margin-top: 0.3em; }
+    ul { padding-left: 1.3em; }
+    li { margin: 0.25em 0; }
+  </style>
+
+  <script is:inline define:vars={{ D }}>
+    const $ = (id) => document.getElementById(id);
+    const NOW = 2026.785;
+    const NS = 'http://www.w3.org/2000/svg';
+    const ticks = (a, b, step) => { const out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9; t += step) out.push(+t.toFixed(6)); return out; };
+    const niceStep = (span, px, minPx) => { const raw = span * minPx / px; const p = 10 ** Math.floor(Math.log10(raw)); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw); };
+
+    // ---------- 1. light curves ----------
+    let range = 'all';
+    function lightcurves() {
+      const el = $('lc'); const W = Math.max(300, el.clientWidth); const narrow = W < 560;
+      const L = narrow ? 34 : 44, R = 10, T = 8, gap = 14, B = 22;
+      const hV = narrow ? 80 : 100, hU = narrow ? 120 : 150, hX = narrow ? 80 : 100;
+      const H = T + hV + gap + hU + gap + hX + B;
+      const [x0, x1] = range === 'recent' ? [2022, 2026.95] : [2005, 2026.95];
+      const sx = (t) => L + (t - x0) / (x1 - x0) * (W - L - R);
+      const inWin = (a) => a.t.map((_, i) => i).filter((i) => a.t[i] >= x0 && a.t[i] <= x1);
+      const V = D.V, U = D.uvm2, X = D.hard;
+      const iV = inWin(V), iU = inWin(U), iX = inWin(X);
+      const ext = (arr, ids, pad) => { const v = ids.map((i) => arr[i]); return [Math.min(...v) - pad, Math.max(...v) + pad]; };
+      const [v0, v1] = ext(V.m, iV, 0.08), [u0, u1] = ext(U.m, iU, 0.3);
+      const tV = T, tU = T + hV + gap, tX = tU + hU + gap;
+      const syV = (m) => tV + (m - v0) / (v1 - v0) * hV;
+      const syU = (m) => tU + (m - u0) / (u1 - u0) * hU;
+      const xl0 = Math.log10(0.002), xl1 = Math.log10(0.3);
+      const syX = (r) => tX + hX - (Math.log10(Math.min(0.3, Math.max(r, 0.002))) - xl0) / (xl1 - xl0) * hX;
+      let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="${NS}">`;
+      // bands
+      for (const [a, b, lab] of [[2015.1, 2023.3, 'high state'], [2023.3, 2024.4, '2023 dip']]) {
+        if (b < x0) continue; const xa = sx(Math.max(a, x0)), xb = sx(Math.min(b, x1));
+        s += `<rect class="band" x="${xa}" y="${T}" width="${xb - xa}" height="${tX + hX - T}"/>`;
+        if (xb - xa > 46) s += `<text x="${(xa + xb) / 2}" y="${T + 11}" text-anchor="middle">${lab}</text>`;
+      }
+      // x grid
+      const step = range === 'recent' ? (narrow ? 1 : 0.5) : (narrow ? 5 : 2);
+      for (const t of ticks(x0, x1, step)) {
+        s += `<line class="gr" x1="${sx(t)}" x2="${sx(t)}" y1="${T}" y2="${tX + hX}"/>`;
+        s += `<text x="${sx(t)}" y="${H - 6}" text-anchor="middle">${Number.isInteger(t) ? t : t.toFixed(1)}</text>`;
+      }
+      // panel frames and y labels
+      const ylab = (y, h, txt) => `<text class="lbl" x="${L + 5}" y="${y + h - 6}">${txt}</text>`;
+      for (const [y, h] of [[tV, hV], [tU, hU], [tX, hX]]) s += `<rect class="ax" x="${L}" y="${y}" width="${W - L - R}" height="${h}"/>`;
+      s += ylab(tV, hV, 'V mag') + ylab(tU, hU, 'UVM2 mag') + ylab(tX, hX, '2-10 keV, c/s');
+      const sv = niceStep(v1 - v0, hV, 28);
+      for (const m of ticks(v0 + 0.02, v1 - 0.02, sv)) s += `<text x="${L - 4}" y="${syV(m) + 4}" text-anchor="end">${m.toFixed(1)}</text>`;
+      for (const m of ticks(u0 + 0.1, u1 - 0.1, niceStep(u1 - u0, hU, 30))) s += `<text x="${L - 4}" y="${syU(m) + 4}" text-anchor="end">${m}</text>`;
+      for (const r of [0.01, 0.1]) s += `<text x="${L - 4}" y="${syX(r) + 4}" text-anchor="end">${r}</text>`;
+      // points
+      const rV = narrow ? 1.2 : 1.5;
+      for (const i of iV) s += `<circle class="opt" cx="${sx(V.t[i]).toFixed(1)}" cy="${syV(V.m[i]).toFixed(1)}" r="${rV}" opacity="0.55"/>`;
+      for (const i of iX) s += `<circle class="xr" cx="${sx(X.t[i]).toFixed(1)}" cy="${syX(X.r[i]).toFixed(1)}" r="2" opacity="0.8"/>`;
+      for (const i of iU) {
+        const late = U.t[i] > 2026.7, cx = sx(U.t[i]).toFixed(1), cy = syU(U.m[i]).toFixed(1);
+        s += U.w[i] ? `<circle class="uvw" cx="${cx}" cy="${cy}" r="2.5"/>` : `<circle class="${late ? 'al' : 'uv'}" cx="${cx}" cy="${cy}" r="${late ? 4.5 : 2.5}"/>`;
+      }
+      s += `<line class="cur" id="lc-cur" x1="-10" x2="-10" y1="${T}" y2="${tX + hX}"/></svg>`;
+      el.innerHTML = s;
+      const svg = el.querySelector('svg'), cur = svg.querySelector('#lc-cur');
+      const near = (a, ids, t) => ids.reduce((b, i) => (Math.abs(a.t[i] - t) < Math.abs(a.t[b] - t) ? i : b), ids[0]);
+      const move = (ev) => {
+        const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * W / r.width;
+        const t = Math.min(x1, Math.max(x0, x0 + (px - L) / (W - L - R) * (x1 - x0)));
+        cur.setAttribute('x1', sx(t)); cur.setAttribute('x2', sx(t));
+        const a = near(V, iV, t), b = near(U, iU, t), c = near(X, iX, t);
+        $('lc-read').textContent = `${t.toFixed(2)} | V ${V.m[a].toFixed(2)} (${V.t[a].toFixed(2)}) | UVM2 ${U.m[b].toFixed(2)} ± ${U.e[b].toFixed(2)} (${U.t[b].toFixed(2)}${U.w[b] ? ', wings' : ''}) | X ${X.r[c].toFixed(3)} c/s (${X.t[c].toFixed(2)})`;
+      };
+      svg.addEventListener('pointermove', move); svg.addEventListener('pointerdown', move);
+    }
+    document.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => {
+      range = b.dataset.range;
+      document.querySelectorAll('[data-range]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      lightcurves();
+    }));
+
+    // ---------- 4. 1945 overlay ----------
+    let onset = 2026.74;
+    function overlay() {
+      const O = D.overlay, el = $('ov'); const W = Math.max(300, el.clientWidth); const narrow = W < 560;
+      const L = narrow ? 34 : 46, R = 10, T = 10, B = 34, H = narrow ? 240 : 300;
+      const x0 = -3.0, x1 = 1.6, y0 = -0.45, y1 = 1.05;
+      const sx = (t) => L + (t - x0) / (x1 - x0) * (W - L - R);
+      const sy = (d) => T + (d - y0) / (y1 - y0) * (H - T - B);
+      const shift = onset - O.on_old;
+      let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="${NS}">`;
+      for (const t of ticks(x0, x1, narrow ? 1 : 0.5)) {
+        s += `<line class="gr" x1="${sx(t)}" x2="${sx(t)}" y1="${T}" y2="${H - B}"/>`;
+        s += `<text x="${sx(t)}" y="${H - B + 14}" text-anchor="middle">${t > 0 ? '+' : ''}${t}</text>`;
+      }
+      s += `<text x="${(L + W) / 2}" y="${H - 3}" text-anchor="middle">years relative to the 1946 eruption</text>`;
+      for (const d of [-0.4, 0, 0.4, 0.8]) s += `<text x="${L - 4}" y="${sy(d) + 4}" text-anchor="end">${d > 0 ? '+' : ''}${d}</text>`;
+      s += `<rect class="ax" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/>`;
+      s += `<text class="lbl" x="${L + 5}" y="${H - B - 6}">Δmag, fainter down</text>`;
+      s += `<line class="fg-l" x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${H - B}"/><text class="lbl" x="${sx(0) + 4}" y="${T + 12}">1946 eruption</text>`;
+      const today = NOW - shift - O.e46;
+      if (today > x0 && today < x1) s += `<line class="al-l" x1="${sx(today)}" x2="${sx(today)}" y1="${T}" y2="${H - B}"/><text class="al-t" x="${sx(today) + 4}" y="${H - B - 6}">today</text>`;
+      const inr = (x) => x > x0 && x < x1;
+      const path = (xs, ys) => xs.map((x, i) => `${i ? 'L' : 'M'}${sx(x).toFixed(1)},${sy(ys[i]).toFixed(1)}`).join('');
+      O.uv.t.forEach((t, i) => { const x = t - shift - O.e46; if (inr(x)) s += `<circle class="al" cx="${sx(x).toFixed(1)}" cy="${sy(Math.max(y0, Math.min(y1, O.uv.d[i]))).toFixed(1)}" r="1.8" opacity="0.5"/>`; });
+      const nx = [], ny = []; O.new.t.forEach((t, i) => { const x = t - shift - O.e46; if (inr(x)) { nx.push(x); ny.push(O.new.d[i]); } });
+      if (nx.length) s += `<path class="opt-l" d="${path(nx, ny)}"/>` + nx.map((x, i) => `<circle class="opt" cx="${sx(x).toFixed(1)}" cy="${sy(ny[i]).toFixed(1)}" r="2.2"/>`).join('');
+      const ox = [], oy = []; O.old.t.forEach((t, i) => { if (inr(t)) { ox.push(t); oy.push(O.old.d[i]); } });
+      s += `<path class="old-l" d="${path(ox, oy)}"/>` + ox.map((x, i) => `<circle class="old" cx="${sx(x).toFixed(1)}" cy="${sy(oy[i]).toFixed(1)}" r="3"/>`).join('');
+      el.innerHTML = s + '</svg>';
+      const erupt = onset + O.lead;
+      $('ov-read').textContent = `dip onset ${onset.toFixed(2)} -> implied eruption ${erupt.toFixed(2)} (${erupt < NOW ? 'already passed: this alignment is falsified' : (erupt - NOW).toFixed(2) + ' yr from today'})`;
+    }
+    const setOnset = (v) => {
+      onset = +v; $('ov-slider').value = v;
+      document.querySelectorAll('[data-on]').forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.on - onset) < 0.005)));
+      overlay();
+    };
+    $('ov-slider').addEventListener('input', (e) => setOnset(e.target.value));
+    document.querySelectorAll('[data-on]').forEach((b) => b.addEventListener('click', () => setOnset(b.dataset.on)));
+
+    // ---------- 7. family bars ----------
+    function family() {
+      const el = $('fam'); const W = Math.max(300, el.clientWidth); const narrow = W < 560;
+      const rows = D.family.slice().sort((a, b) => a.log_ratio - b.log_ratio);
+      const lab = narrow ? 128 : 190, R = 14, T = 6, rowH = 26, B = 24, H = T + rows.length * rowH + B;
+      const v0 = -0.5, v1 = 4.5;
+      const sx = (v) => lab + (v - v0) / (v1 - v0) * (W - lab - R);
+      let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="${NS}">`;
+      for (const v of [0, 1, 2, 3, 4]) {
+        s += `<line class="gr" x1="${sx(v)}" x2="${sx(v)}" y1="${T}" y2="${H - B}"/>`;
+        s += `<text x="${sx(v)}" y="${H - 8}" text-anchor="middle">${(10 ** v).toLocaleString('en-GB')}×</text>`;
+      }
+      rows.forEach((r, i) => {
+        const y = T + i * rowH + rowH / 2, tc = r.name.startsWith('T CrB');
+        const name = narrow ? r.name.replace(' quiescence', '').replace('2005-14', '(quiet)').replace(' 2016-22', '') : r.name;
+        s += `<text class="lbl" x="${lab - 6}" y="${y + 4}" text-anchor="end">${name}</text>`;
+        s += `<rect class="${r.name.includes('Sep') ? 'al' : (tc ? 'uv' : 'xr')}" x="${sx(Math.min(0, r.log_ratio))}" y="${y - 7}" width="${Math.abs(sx(r.log_ratio) - sx(0))}" height="14" opacity="0.85"/>`;
+        s += `<line class="fg-l" x1="${sx(r.log_ratio - r.sys_dex)}" x2="${sx(r.log_ratio + r.sys_dex)}" y1="${y}" y2="${y}"/>`;
+      });
+      s += `<line class="fg-l" x1="${sx(0)}" x2="${sx(0)}" y1="${T}" y2="${H - B}"/>`;
+      el.innerHTML = s + '</svg>';
+    }
+
+    const drawAll = () => { lightcurves(); overlay(); family(); };
+    drawAll();
+    let lastW = 0;
+    new ResizeObserver(() => { const w = $('lc').clientWidth; if (Math.abs(w - lastW) > 4) { lastW = w; drawAll(); } }).observe(document.body);
+  </script>
+</Base>

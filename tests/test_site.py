@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -45,3 +46,14 @@ def test_built_pages_if_present():
     html = (dist / "index.html").read_text(encoding="utf-8")
     assert "Experiment ledger" in html and "T Coronae Borealis" in html
     assert (dist / "404.html").exists()
+
+
+def test_tcrb_page_figures_and_data_exist():
+    src = (SITE_DIR / "src" / "pages" / "tcrb.astro").read_text(encoding="utf-8")
+    figs = re.findall(r'src="/fig/(tcrb/[^"]+)"', src)
+    assert len(figs) >= 12
+    for f in figs:
+        assert (SITE_DIR / "public" / "fig" / f).exists(), f
+    data = json.loads((SITE_DIR / "src" / "data" / "tcrb.json").read_text(encoding="utf-8"))
+    assert len(data["uvm2"]["t"]) == len(data["uvm2"]["m"]) > 100
+    assert data["n"]["uv_latest"] - data["n"]["uv_last_bright"] > 1.5

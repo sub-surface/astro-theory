@@ -58,14 +58,14 @@ const tcrb = [
   <p>An astrophysics notebook kept by Leon and Claude. Code and full write-ups are in the repository; this page lists what has been done and what each result is worth.</p>
   <p class="small">Last updated {updated}.</p>
 
-  <p>[ <a href="#programmes">programmes</a> | <a href="#tcrb">T CrB</a> | <a href="#ledger">ledger</a> | <a href="#dates">dates</a> ]</p>
+  <p>[ <a href="#programmes">programmes</a> | <a href="#tcrb">T CrB</a> (<a href="/tcrb/">full page</a>) | <a href="#ledger">ledger</a> | <a href="#dates">dates</a> ]</p>
 
   <hr />
 
   <h2 id="programmes">Programmes</h2>
   <ul>
     <li><b>P1 Cosmic dipole.</b> Is the quasar number-count dipole consistent with our motion against the CMB? Machinery for Quaia, CatWISE and NVSS; Euclid DR1 arrives 21 Oct 2026. The earlier tension claims did not survive the audit.</li>
-    <li><b>P2 Recurrent novae.</b> Watching T Coronae Borealis before its third recorded eruption (1866, 1946, next). Active.</li>
+    <li><b>P2 Recurrent novae.</b> Watching <a href="/tcrb/">T Coronae Borealis</a> before its next eruption (seen in 1866 and 1946). Active.</li>
     <li><b>P3 Calibrated triage.</b> Classifiers that report honest uncertainty for follow-up decisions. Being rebuilt on real labelled data.</li>
     <li><b>P4 Theory threads.</b> Inflation after ACT DR6, primordial non-Gaussianity, physics-informed denoising. Ideas, no results yet.</li>
   </ul>
@@ -74,7 +74,8 @@ const tcrb = [
 
   <h2 id="tcrb">T Coronae Borealis (EXP-Y)</h2>
   <p>A recurrent nova 0.9 kpc away: a white dwarf of about 1.35 solar masses accreting from a red giant on a 227.6-day orbit. It erupted in 1866 and 1946 and is expected to erupt again within a few years. Data: AAVSO and ANS optical photometry, Swift UVOT and XRT (2005-2026), TESS, and 1,273 papers.</p>
-  {tcrb.map(([f, cap]) => (
+  <p><b><a href="/tcrb/">Full page: T Coronae Borealis</a></b>, with interactive light curves, the 1945 comparison and the disk inversion. A selection of figures:</p>
+  {tcrb.slice(0, 4).map(([f, cap]) => (
     <figure>
       <a href={`/fig/tcrb/${f}`}><img src={`/fig/tcrb/${f}`} alt={cap} loading="lazy" /></a>
       <figcaption>{cap}</figcaption>
@@ -92,7 +93,7 @@ const tcrb = [
     <span class="st no">&nbsp;WITHDRAWN&nbsp;</span> effect absent or an artifact
   </p>
   <div class="wrap">
-    <table>
+    <table class="ledger">
       <tr><th>EXP</th><th>What</th><th>Data</th><th>Status</th><th>Note</th><th>Figure</th></tr>
       {experiments.map((e) => (
         <tr>
