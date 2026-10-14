@@ -181,3 +181,10 @@ How many RNe hide among the "classical" novae? Pagnotta & Schaefer 2014 give 24 
 
 Abrupt state changes (thermal switch vs truncation vs in-binary obscuration); why T CrB is the UV-faint family member;
 the fuel budget; scoring the published forecasts after the eruption.
+
+**Which minimum is deeper (found 2026-10-14).** Folded on our ephemeris, quiescent AAVSO V (2006–14) has its deeper
+minimum at phase 0, which is phase 0.99 of the literature light-minimum ephemeris (taken as giant in front). Our
+gravity-darkened Roche giant (`celestrium/novae/roche.py`, blackbody, i = 61°) puts the deeper minimum half an orbit
+later, with the L1 face towards us. Two possibilities: light the model omits (disk, hot spot, irradiated giant), or
+a half-orbit offset in what the literature phase zero means (check it against the spectroscopic conjunction in
+Fekel+ 2000). This matters for the inclination limit from the ellipsoidal amplitude. Shown in `tcrb_orbit.gif`.

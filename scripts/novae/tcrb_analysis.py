@@ -964,6 +964,55 @@ STAGES["export"] = stage_export
 STAGES["overlay"] = stage_overlay
 
 
+def stage_inner_edge():
+    """Public inversion figure: the data and the inner-edge history, the result that is robust across v1-v3.
+
+    Re-plots data/tcrb/inversion_history.npz (written by stage_inversion); no refit. The absolute accretion rate
+    is degenerate with the truncation (ledger, EXP-2026-Y), so it is deliberately not plotted here.
+    """
+    from celestrium.novae.tcrb import RSUN
+    av, _ = load_aavso()
+    uv = load_uvot()
+    h = np.load(DATA / "inversion_history.npz")
+    t, r = h["t_yr"], h["r_trunc"] / RSUN
+    fig, axs = plt.subplots(2, 1, figsize=(10, 6.4), sharex=True, gridspec_kw={"height_ratios": [1.3, 1]})
+    ax = axs[0]
+    for b in ("V", "B"):
+        s = jd_to_year(av[b]["jd"]) >= 2005
+        ax.plot(jd_to_year(av[b]["jd"])[s], av[b]["mag"][s], ".", ms=1.5, color=BAND_COL[b], alpha=0.6, label=f"{b} (AAVSO, ANS)")
+    ax.errorbar(jd_to_year(uv["UVM2"]["jd"]), uv["UVM2"]["mag"], uv["UVM2"]["err"], fmt="o", ms=2.5, lw=0.5,
+                color=BAND_COL["UVM2"], label="UVM2 (Swift/UVOT)")
+    ax.invert_yaxis()
+    ax.set_ylabel("mag")
+    ax.legend(fontsize=7.5, loc="upper left", ncol=3, framealpha=0.9)
+    ax.set_ylim(15.3, 8.6)
+    ax.set_title("T CrB accretion-disk inversion: what the data constrain", fontsize=10)
+    ax = axs[1]
+    for lo, hi, lab, c in ((2015.0, 2023.2, "high state", "C1"), (2023.2, 2024.3, "2023 dip", "C0"), (2026.6, 2026.9, "Sep 2026", "C3")):
+        for a in axs:
+            a.axvspan(lo, hi, color=c, alpha=0.09, lw=0)
+        edge = hi > 2026
+        ax.text(hi - 0.05 if edge else (lo + hi) / 2, 0.97, lab, transform=ax.get_xaxis_transform(),
+                ha="right" if edge else "center", va="top", fontsize=7.5, color="0.35")
+    ax.plot(t, r, color="k", lw=1.4)
+    ax.set_ylabel(r"inner disk edge (R$_\odot$)")
+    ax.set_ylim(0, max(3.6, float(r.max()) * 1.1))
+    ax.set_xlabel("year")
+    ax.set_xlim(2005, 2026.9)
+    ax.text(0.01, 0.04, "MAP history of the best-fitting viscous disk (t_visc = 0.75 yr); the same shape in inversion "
+            "variants v1-v3.\nThe absolute accretion rate is degenerate with the truncation and is not identified.",
+            transform=ax.transAxes, fontsize=7, color="0.3")
+    fig.tight_layout()
+    fig.savefig(FIG / "tcrb_inner_edge.png", dpi=140)
+    plt.close(fig)
+    i_now = -1
+    print(f"inner edge: quiescent median {np.median(r[(t > 2005) & (t < 2014)]):.2f}, "
+          f"high-state median {np.median(r[(t > 2016) & (t < 2022)]):.2f}, now ({t[i_now]:.2f}) {r[i_now]:.2f} Rsun")
+
+
+STAGES["inner_edge"] = stage_inner_edge
+
+
 if __name__ == "__main__":
     for st in (sys.argv[1:] or list(STAGES)):
         STAGES[st]()

@@ -3,7 +3,7 @@
 Outputs (docs/figures/tcrb/):
   * tcrb_roche_map.png      orbital-plane Roche potential, lobes, L-points, stream, disk
   * tcrb_system_states.png  inclined (i = 61 deg) blackbody-colour views: quiescence vs high state
-  * tcrb_orbit.gif          one orbit at i = 61 deg with the synthetic ellipsoidal light curve
+  * tcrb_orbit.gif          one orbit at i = 61 deg with the measured quiescent V fold (and the Roche model)
 Disk temperatures come from the fitted accretion history when data/tcrb/inversion_states.npz
 exists (written by scripts/tcrb_analysis.py); otherwise from steady-state disks at fiducial Mdot.
 """
@@ -186,6 +186,34 @@ def load_states():
             "labels": {"quiet": "steady disk, 2e-9 Msun/yr", "high": "steady disk, 1e-7 Msun/yr", "now": "steady disk, 2e-8 Msun/yr"}}
 
 
+def quiescent_fold(n_bins: int = 20):
+    """AAVSO V 2006-2014.5 (cold disk, giant-dominated), secular trend removed, folded on our ephemeris.
+
+    Phase 0 = deeper V minimum, which falls at phase 0.99 of the literature light-minimum (giant in front) ephemeris.
+    Returns bin centres, median offsets (mean-subtracted) and their errors, plus the raw fold.
+    """
+    import json
+    sys.path.insert(0, str(ROOT / "scripts" / "novae"))
+    from tcrb_analysis import load_aavso  # noqa: E402
+    from celestrium.novae import tcrb
+    from celestrium.novae.tcrb import year_to_jd
+    eph = json.loads((ROOT / "docs" / "results" / "experiment_y_tcrb_results.json").read_text())["ephemeris"]
+    V = load_aavso()[0]["V"]
+    t, m, e = V["jd"], V["mag"], np.hypot(V["err"], 0.04)
+    q = (t > year_to_jd(2006.0)) & (t < year_to_jd(2014.5))
+    fq = tcrb.fit_ephemeris(t[q], m[q], e[q], [eph["period_d"]], knot_spacing_d=150.0)
+    orb = m[q] - fq["trend"]
+    orb -= np.median(orb)
+    ph = tcrb.orbital_phase(t[q], eph["t_deeper_min_jd"], eph["period_d"])
+    edges = np.linspace(0, 1, n_bins + 1)
+    mid = 0.5 * (edges[1:] + edges[:-1])
+    med = np.array([np.median(orb[(ph >= a) & (ph < b)]) for a, b in zip(edges[:-1], edges[1:])])
+    err = np.array([1.253 * np.std(orb[(ph >= a) & (ph < b)]) / np.sqrt(((ph >= a) & (ph < b)).sum())
+                    for a, b in zip(edges[:-1], edges[1:])])
+    off = med.mean()
+    return mid, med - off, err, ph, orb - off
+
+
 def main():
     states = load_states()
     roche_map(states)
@@ -199,6 +227,8 @@ def main():
     # orbit animation with synthetic ellipsoidal light curve
     import imageio.v2 as imageio
     ph_lc, m_lc, _ = ellipsoidal_lightcurve(Q, INC, 5450, surf=donor_surface(Q, 1.0, 48, 96))
+    m_lc = np.asarray(m_lc) - np.mean(m_lc)
+    f_mid, f_med, f_err, f_ph, f_orb = quiescent_fold()
     frames = []
     tmp = FIG / "_frame.png"
     for k, p in enumerate(np.linspace(0, 1, 48, endpoint=False)):
@@ -206,14 +236,17 @@ def main():
         ax = fig.add_axes([0, 0.28, 1, 0.7])
         draw_view(ax, p, states["high"], surf)
         bx = fig.add_axes([0.12, 0.07, 0.8, 0.18], facecolor="black")
-        bx.plot(ph_lc, m_lc, color="#ffcc66")
+        bx.plot(f_ph, f_orb, ".", ms=1.2, color="#555555")
+        bx.plot(ph_lc, m_lc, color="#8899aa", lw=0.9, ls="--", label="Roche model, blackbody, i = 61°")
+        bx.errorbar(f_mid, f_med, f_err, fmt="o", ms=3, lw=0.8, color="#ffcc66", label="AAVSO V 2006-14, folded")
         bx.axvline(p, color="white", lw=0.8)
-        bx.invert_yaxis()
+        bx.set_ylim(0.32, -0.32)
+        bx.legend(fontsize=6.5, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2, frameon=False, labelcolor="white")
         bx.tick_params(colors="white", labelsize=8)
         for sp in bx.spines.values():
             sp.set_color("#555555")
         bx.set_xlabel("orbital phase (0 = giant in front)", color="white", fontsize=8)
-        bx.set_ylabel("$\\Delta V$ giant", color="white", fontsize=8)
+        bx.set_ylabel("$\\Delta V$ (mag)", color="white", fontsize=8)
         fig.text(0.02, 0.95, "T CrB  i = 61$^\\circ$  P = 227.6 d", color="white", fontsize=10)
         fig.savefig(tmp, dpi=80, facecolor="black")
         plt.close(fig)

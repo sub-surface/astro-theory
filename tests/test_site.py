@@ -69,3 +69,14 @@ def test_v347nor_page_figures_and_data_exist():
     assert data["det"] and data["lim"] and data["cut"]
     assert "G3_onset_from_cutouts" in data["audit"] and data["stamps"]["n_control"] > 100
     assert "CANDIDATE" in src  # must stay labelled a candidate until the original plates are checked
+
+
+def test_layout_theme_toggle_and_provenance_footer():
+    src = (SITE_DIR / "src" / "layouts" / "Base.astro").read_text(encoding="utf-8")
+    assert 'id="theme-btn"' in src and ':root[data-theme="dark"]' in src
+    assert ':root:not([data-theme="light"])' in src  # OS dark mode must yield to an explicit light choice
+    assert "https://subsurfaces.net" in src and "commitUrl" in src
+    for block in re.findall(r"<script is:inline>(.*?)</script>", src, flags=re.S):
+        assert not re.search(r"&(gt|lt|amp);", block), "HTML entities break inline scripts (CLAUDE.md N1)"
+    info = (SITE_DIR / "src" / "build-info.ts").read_text(encoding="utf-8")
+    assert "execFileSync" in info and "GIT_SHA" in info

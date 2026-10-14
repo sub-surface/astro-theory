@@ -13,6 +13,8 @@ const {
   ogImage = '/fig/tcrb/tcrb_uv_xray_track.png',
 } = Astro.props;
 
+import { sha, dirty, pushed, commitUrl, builtOn } from '../build-info';
+
 const pageTitle = title ? `${title} - Celestrium` : 'Celestrium';
 const site = Astro.site || 'https://astro.subsurfaces.net';
 const canonicalUrl = new URL(Astro.url.pathname, site);
@@ -38,6 +40,10 @@ const ogImageUrl = new URL(ogImage, site);
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageUrl.href} />
     <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      // apply a saved theme before first paint (no flash); storage can be blocked, so fail quietly
+      try { const t = localStorage.getItem('theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
     <style is:global>
       :root {
         --bg: #ffffff; --fg: #000000; --muted: #444444; --rule: #808080; --faint: #c0c0c0;
@@ -46,8 +52,9 @@ const ogImageUrl = new URL(ogImage, site);
         --uv: #1f3fbf; --xr: #b35900; --opt: #222222; --old: #a0522d; --alert: #cc0000; --band: rgba(31, 63, 191, 0.07); --grid: #e4e4e4;
         color-scheme: light;
       }
+      /* dark: follows the OS unless the visitor picked a theme with the toggle (data-theme on <html>) */
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not([data-theme="light"]) {
           --bg: #121212; --fg: #e8e6e3; --muted: #b0aca6; --rule: #5a5a5a; --faint: #3a3a3a;
           --link: #8cb4ff; --visited: #c9a3ff; --th: #262626; --box: #1b1b1b; --notice: #2b2810; --notice-rule: #8a7a10;
           --ok: #1d3a1d; --rerun: #393612; --syn: #2a2a2a; --no: #4a1d1d;
@@ -55,9 +62,17 @@ const ogImageUrl = new URL(ogImage, site);
           color-scheme: dark;
         }
       }
+      :root[data-theme="dark"] {
+        --bg: #121212; --fg: #e8e6e3; --muted: #b0aca6; --rule: #5a5a5a; --faint: #3a3a3a;
+        --link: #8cb4ff; --visited: #c9a3ff; --th: #262626; --box: #1b1b1b; --notice: #2b2810; --notice-rule: #8a7a10;
+        --ok: #1d3a1d; --rerun: #393612; --syn: #2a2a2a; --no: #4a1d1d;
+        --uv: #8cb4ff; --xr: #f0a050; --opt: #e8e6e3; --old: #e0a070; --alert: #ff6b6b; --band: rgba(140, 180, 255, 0.08); --grid: #2a2a2a;
+        color-scheme: dark;
+      }
       html { scroll-behavior: smooth; }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
       body {
+        position: relative;
         background: var(--bg);
         color: var(--fg);
         font-family: "Times New Roman", Times, serif;
@@ -71,7 +86,7 @@ const ogImageUrl = new URL(ogImage, site);
       a { color: var(--link); }
       a:visited { color: var(--visited); }
       a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
-      h1 { font-size: 2em; margin: 0.4em 0 0.1em; text-wrap: balance; }
+      h1 { font-size: 2em; margin: 0.4em 0 0.1em; padding-right: 1.4em; text-wrap: balance; }
       h2 { font-size: 1.35em; margin: 1.8em 0 0.5em; text-wrap: balance; border-bottom: 1px solid var(--faint); padding-bottom: 0.15em; }
       h3 { font-size: 1.1em; margin: 1.4em 0 0.3em; }
       h2:target { background: var(--notice); }
@@ -93,9 +108,49 @@ const ogImageUrl = new URL(ogImage, site);
       .no { background: var(--no); }
       .plan { background: transparent; }
       @media (max-width: 600px) { .ledger th:nth-child(3), .ledger td:nth-child(3) { display: none; } .ledger td img { width: 80px; } }
+      .theme-btn { position: absolute; top: calc(0.6em + env(safe-area-inset-top, 0px)); right: 16px; display: inline-flex; align-items: center; justify-content: center;
+        width: 2em; height: 2em; padding: 0; color: var(--fg); background: var(--th); border: 2px outset var(--faint); cursor: pointer; }
+      .theme-btn:active { border-style: inset; }
+      .theme-btn svg { width: 1.1em; height: 1.1em; }
+      .theme-btn .sun { display: none; }
+      :root[data-theme="dark"] .theme-btn .sun { display: block; }
+      :root[data-theme="dark"] .theme-btn .moon { display: none; }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .theme-btn .sun { display: block; }
+        :root:not([data-theme="light"]) .theme-btn .moon { display: none; }
+      }
+      .site-foot { margin-top: 2.5em; }
+      .site-foot a { color: var(--muted); }
     </style>
   </head>
   <body class={wide ? 'wide' : ''}>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.4 14.6A8.5 8.5 0 0 1 9.4 3.6a8.5 8.5 0 1 0 11 11z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg>
+    </button>
     <slot />
+    <footer class="small site-foot">
+      <hr />
+      <a href="/">Celestrium</a> · Leon &amp; Claude, 2026 · figures may be reused with credit ·
+      built {builtOn} from <a href={commitUrl} title={pushed ? 'source commit on GitHub' : 'commit not yet pushed; links to the history'}><code>{sha || 'unknown'}{dirty ? '+' : ''}</code></a>{dirty && ' (with uncommitted changes)'} ·
+      <a href="https://subsurfaces.net">subsurfaces.net</a>
+    </footer>
+    <script is:inline>
+      (function () {
+        var btn = document.getElementById('theme-btn');
+        var root = document.documentElement;
+        var isDark = function () {
+          return root.dataset.theme ? root.dataset.theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        };
+        var label = function () { btn.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode'); btn.title = btn.getAttribute('aria-label'); };
+        label();
+        btn.addEventListener('click', function () {
+          var next = isDark() ? 'light' : 'dark';
+          root.dataset.theme = next;
+          try { localStorage.setItem('theme', next); } catch (e) {}
+          label();
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -102,8 +102,8 @@ const watch: [string, string][] = [
   <h2 id="system">2. The system</h2>
   <div class="pair">
     <figure>
-      <img src="/fig/tcrb/tcrb_orbit.gif" alt="Animated top-down view of T CrB: a Roche-lobe-filling red giant feeding a gas stream into an accretion disk around a white dwarf" loading="lazy" />
-      <figcaption>One 227.6-day orbit, computed rather than drawn: Roche-lobe-filling giant with gravity darkening, a ballistic stream from L1, and disk temperatures from our viscous model.</figcaption>
+      <img src="/fig/tcrb/tcrb_orbit.gif" alt="Animated view of T CrB through one orbit, with the measured and modelled ellipsoidal light curves" loading="lazy" />
+      <figcaption>One 227.6-day orbit, computed rather than drawn: Roche-lobe-filling giant with gravity darkening, a ballistic stream from L1, and disk temperatures from our viscous model. Below: the measured quiescent V light curve (AAVSO 2006-14, folded) against the pure-giant model. On the literature light-minimum ephemeris the data's deeper minimum comes with the giant in front, while a gravity-darkened giant alone puts it half an orbit later. Either light the model leaves out (disk, hot spot, irradiation) or a half-orbit offset in that ephemeris's phase zero; not yet resolved.</figcaption>
     </figure>
     <div>
       <p>A 1.35 M☉ white dwarf and a 0.93 M☉ M3 giant, 0.96 AU apart, 887 pc away. The giant fills its Roche lobe (about 72 R☉ across; CHARA interferometry measures 69 ± 5 R☉, Norris+ 2026). Gas leaves through the inner Lagrange point and hits the disk rim about 18° ahead of the line of centres in our integration, close to the ~20° hot-spot azimuth Munari+ 2025 infer from the light curve.</p>
@@ -167,8 +167,8 @@ const watch: [string, string][] = [
 
   <h2 id="disk">5. Inside the disk: what an inversion can and cannot tell</h2>
   <figure>
-    <img src="/fig/tcrb/tcrb_accretion_inversion.png" alt="Fitted light curves, inferred accretion rates since 2005, and disk mass" loading="lazy" />
-    <figcaption>The light curves inverted through a 1D viscous disk with a moving inner edge. The fits are good (V scatter 0.08 mag). The accretion-rate panel is shown for transparency; its absolute scale is not identified.</figcaption>
+    <a href="/fig/tcrb/tcrb_inner_edge.png"><img src="/fig/tcrb/tcrb_inner_edge.png" alt="Optical and UV light curves since 2005 and the inferred inner-disk edge radius" loading="lazy" /></a>
+    <figcaption>The light curves (top) inverted through a 1D viscous disk with a moving inner edge (bottom; V fit scatter 0.08 mag). The inner edge is the robust output. The accretion rate is not shown because its absolute scale is not identified; the full fit, rate panel included, is <a href="/fig/tcrb/tcrb_accretion_inversion.png">here</a>.</figcaption>
   </figure>
   <div class="pair">
     <figure>
@@ -254,8 +254,6 @@ const watch: [string, string][] = [
   <h2 id="data">11. Data and code</h2>
   <p>AAVSO International Database; Munari+ 2025 ANS UBVRI photometry (VizieR J/A+A/701/A176); Swift/UVOT archive images (photometry ours); Swift/XRT LSXPS per-observation light curves (Evans+ 2023); TESS SPOC light curves (MAST); Gaia DR3 distance; NASA ADS. Code: <code>celestrium/novae/</code> and <code>scripts/novae/</code>; the numbers on this page come from <code>scripts/novae/export_site_data.py</code>.</p>
 
-  <hr />
-  <p class="small">Leon &amp; Claude, 2026. <a href="/">Back to Celestrium</a>.</p>
 
   <style>
     .notice { background: var(--notice); border: 1px solid var(--notice-rule); padding: 0.6em 0.8em; margin: 1em 0; }

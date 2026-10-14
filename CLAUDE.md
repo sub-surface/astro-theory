@@ -39,7 +39,7 @@ celestrium/                 the package
   cli.py hub.py dashboard.py config.py paths.py net.py watchlist.py modal_app.py   surfaces and shared infrastructure
 scripts/<programme>/        runnable experiments: dipole/ novae/ engines/ transients/ explore/ infra/
 docs/                       ledger.md, programmes/, results/, figures/, reference/, engineering/, manuscripts/, history/
-tests/                      hermetic test suite (`python -m pytest`; 270 fast tests, slow ones marked `slow`)
+tests/                      hermetic test suite (`python -m pytest`; 271 fast tests, slow ones marked `slow`)
 data/ checkpoints/ cache/   local only (git-ignored)
 Archive/                    shelved June 2026 dipole pipeline (G)
 site/                       one-page public listing (astro.subsurfaces.net); wrangler.toml deploys it to Cloudflare Workers
@@ -83,7 +83,7 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (270 fast tests pass as of 2026-10-14).
+- Verify regularly: `python -m pytest` (271 fast tests pass as of 2026-10-14).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.
@@ -135,6 +135,8 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 - **Cloudflare Edge Deployment**: Web platform deployed to Cloudflare Workers with static assets serving [https://astro.subsurfaces.net](https://astro.subsurfaces.net). Automated builds via `wrangler.toml` (`[build] command = "npm --prefix site install && npm --prefix site run build"`). Custom OpenGraph suite and SVG/ICO favicons live at edge.
   - **Deploying**: `git push` does not redeploy the site. Run `npx wrangler deploy` from the repo root (builds `site/` and uploads). Stop any `astro preview` server first: it locks `site/node_modules` and `npm ci` fails with EPERM.
   - `site/src/data/` is tracked despite the repo-wide `data/` ignore; regenerate it with `python scripts/novae/export_site_data.py`.
+  - The footer shows the commit the site was built from (`site/src/build-info.ts`): commit before deploying, or it reads `sha+` (uncommitted changes in `site/`). A commit not yet on GitHub links to the commit list instead of 404ing. Builds without `.git` can pass `GIT_SHA`.
+  - Theme: tokens on `:root` (light), redefined for OS dark under `:root:not([data-theme="light"])` and for the toggle under `:root[data-theme="dark"]` (`site/src/layouts/Base.astro`). New colours go in all three blocks.
 
 ---
 
