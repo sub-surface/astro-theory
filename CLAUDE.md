@@ -39,10 +39,10 @@ celestrium/                 the package
   cli.py hub.py dashboard.py config.py paths.py net.py watchlist.py modal_app.py   surfaces and shared infrastructure
 scripts/<programme>/        runnable experiments: dipole/ novae/ engines/ transients/ explore/ infra/
 docs/                       ledger.md, programmes/, results/, figures/, reference/, engineering/, manuscripts/, history/
-tests/                      hermetic test suite (`python -m pytest`; 269 fast tests, slow ones marked `slow`)
+tests/                      hermetic test suite (`python -m pytest`; 259 fast tests, slow ones marked `slow`)
 data/ checkpoints/ cache/   local only (git-ignored)
 Archive/                    shelved June 2026 dipole pipeline (G)
-site/                       Astro web platform; wrangler.toml deploys it to Cloudflare Workers
+site/                       one-page public listing (astro.subsurfaces.net); wrangler.toml deploys it to Cloudflare Workers
 ```
 
 New programme code goes in its subpackage and its scripts in `scripts/<programme>/`; scripts set
@@ -83,7 +83,7 @@ New programme code goes in its subpackage and its scripts in `scripts/<programme
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (269 fast tests pass as of 2026-10-14).
+- Verify regularly: `python -m pytest` (259 fast tests pass as of 2026-10-14).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.

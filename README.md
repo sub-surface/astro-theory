@@ -48,14 +48,11 @@ The experiment index is an internal working ledger, not a certification that lis
 
 ---
 
-## 🌐 Interactive Research Platform & Manuscript Status
+## Website
 
-Celestrium's interactive web platform is deployed at **[`astro.subsurfaces.net`](https://astro.subsurfaces.net)**. It provides project scope and a research-status noticeboard. Manuscript, catalog, and taxonomy details are withheld or marked in preparation until their release evidence is checked.
-
-- **Research roadmap**: release gates, status definitions, and outstanding validation work.
-- **Social Media & Metadata**:
-  - Bespoke 1200×675 OpenGraph social share cards tailored to each individual paper.
-  - Vector SVG and multi-resolution astronomical favicon suite.
+**[`astro.subsurfaces.net`](https://astro.subsurfaces.net)** is one plain page (`site/src/pages/index.astro`): the programmes,
+the T CrB figures, and every experiment with its ledger status and figure. `tests/test_site.py` checks that its statuses
+match `docs/ledger.md` and that every figure it lists exists. Build with `npm --prefix site run build`.
 
 ---
 

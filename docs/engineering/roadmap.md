@@ -409,6 +409,8 @@ Phase 7 executes a sequenced experimental program organized by scientific promis
 
 Celestrium's public face and interactive research portal live at **[`astro.subsurfaces.net`](https://astro.subsurfaces.net)**.
 
+> **Superseded 2026-10-14.** The site was cut down to a single plain listing page (programmes, T CrB figures, ledger with audit statuses). The simulators, manuscript pages and OG cards below were removed; they remain in git history before that date.
+
 1. **Editorial Architecture & Philosophy (`site/`)**:
    - Built on Astro 6 with dual light (pure white canvas) and dark (OLED true-black `#000000`) modes.
    - Minimalist Swiss high-design typography (Lora serif, Inter sans, JetBrains Mono) with strictly zero border radius (`border-radius: 0 !important;`) and delicate hairline gradient dividers.

@@ -32,3 +32,6 @@ dist/
 site/node_modules/
 site/dist/
 site/.astro/
+
+# browser-automation screenshots
+.playwright-mcp/
