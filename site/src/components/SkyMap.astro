@@ -87,6 +87,32 @@ const hits = [
     var hits = JSON.parse(document.getElementById('sky-hits').textContent);
     var shown = { search: true, obj: true, dir: true };
     var idle = read.textContent;
+    // Readout transition: keep the shared prefix, then let the rest settle left to right,
+    // each letter flicking through one or two glyphs first (a split-flap board, quietly).
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789·:+-°';
+    var cur_txt = idle, from = idle, goal = idle, t0 = 0, raf = 0, p0 = 0, stag = 4;
+    var say = function (t) {
+      if (t === goal) return;
+      if (still) { goal = cur_txt = t; read.textContent = t; return; }
+      from = cur_txt; goal = t; t0 = performance.now();
+      p0 = 0; while (p0 < from.length && p0 < t.length && from[p0] === t[p0]) p0++;
+      stag = Math.min(5, 220 / Math.max(1, Math.max(from.length, t.length) - p0));
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    var step = function (now) {
+      var el = now - t0, n = Math.max(from.length, goal.length), out = goal.slice(0, p0), done = true;
+      for (var i = p0; i < n; i++) {
+        var at = (i - p0) * stag;
+        if (el >= at + 45) { if (i < goal.length) out += goal[i]; continue; }
+        done = false;
+        if (el < at) out += i < from.length ? from[i] : '';
+        else out += (i < goal.length && goal[i] === ' ') ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      }
+      cur_txt = done ? goal : out; read.textContent = cur_txt;
+      read.setAttribute('aria-busy', done ? 'false' : 'true'); // screen readers hear only the settled text
+      raf = done ? 0 : requestAnimationFrame(step);
+    };
     var nearest = function (x, y) {
       var best = null, bd = 1e9;
       for (var i = 0; i < hits.length; i++) {
@@ -106,13 +132,13 @@ const hits = [
       var p = toSvg(ev); at = nearest(p.x, p.y);
       if (at) {
         cur.setAttribute('cx', at[0]); cur.setAttribute('cy', at[1]);
-        read.textContent = at[2] + '  (' + at[3] + ')' + (at[4] ? '  → click to open' : '');
+        say(at[2] + '  (' + at[3] + ')' + (at[4] ? '  → click to open' : ''));
         svg.style.cursor = at[4] ? 'pointer' : 'crosshair';
-      } else { cur.setAttribute('cx', -20); read.textContent = idle; svg.style.cursor = 'crosshair'; }
+      } else { cur.setAttribute('cx', -20); say(idle); svg.style.cursor = 'crosshair'; }
     };
     svg.addEventListener('pointermove', show);
     svg.addEventListener('pointerdown', show); // touch: a tap shows the readout
-    svg.addEventListener('pointerleave', function (ev) { if (ev.pointerType !== 'mouse') return; cur.setAttribute('cx', -20); read.textContent = idle; });
+    svg.addEventListener('pointerleave', function (ev) { if (ev.pointerType !== 'mouse') return; cur.setAttribute('cx', -20); say(idle); });
     svg.addEventListener('click', function (ev) {
       if (ev.target.closest('a')) return;
       var p = toSvg(ev); var h = nearest(p.x, p.y);
