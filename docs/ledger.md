@@ -1,0 +1,568 @@
+# Celestrium Experiment Ledger
+
+**Last updated**: 2026-10-14 · **Curators**: Leon & Claude
+**Scope**: every experiment, its data, artifacts and findings. One source of truth; programme context lives in [`programmes/`](./programmes/).
+
+## 0. Audit of 2026-10-14 (read first)
+
+Every entry was re-checked against its code (with direct spot-checks of B, D, L, N and W). Most results written June–September 2026 came from synthetic data or carried leaks that the repo's own standards (CLAUDE.md §3) forbid. The statuses now say what each result is worth:
+
+| Status | Meaning |
+|---|---|
+| **SOUND** | Real data, honest uncertainties; cite freely. |
+| **SOUND (synthetic validation)** | Valid as a method test on mocks; says nothing about the sky. |
+| **NEEDS RERUN** | Real data and useful machinery, but a specific flaw (leak, likelihood, calibration) invalidates the headline number. |
+| **SYNTHETIC ONLY** | Benchmark on simulated data, often separable by construction; not a scientific result. |
+| **NOT DEMONSTRATED** / **WITHDRAWN** | The claimed effect is absent or an artifact (oracle read, sampler failure, inverted conclusion). |
+
+Systemic issues: Galactic coordinates used as classifier features (B, J); labels encoded in features or errors (F, H, Q, S, T, X); an oracle read of simulation truth (N); independent-Poisson likelihoods that ignore clustering (O, P, W); p-values quoted at the 1/(N+1) Monte-Carlo floor (E, O, R); a nested-model likelihood violation (W). The original write-ups are kept below for the record, each with its audit note. Rerun queues live in the programme docs.
+
+---
+
+## 1. Experiment Registry & Master Table
+
+Each experiment in the Celestrium research program receives a persistent identifier (`EXP-YYYY-X`), a pre-registered hypothesis, provenance links to data and figures, and an empirical finding summary.
+
+| ID | Title & Focus | Primary Data Source | Checkpoint / Artifact | Status | Key Metric / Finding | Diagnostic Figure |
+|:---|:---|:---|:---|:---:|:---|:---:|
+| **EXP-2026-A** | **Real-Time Transient Alert Evidential Triage** | Rubin Burst Simulator & Fink Precursor Stream | `astrojev_evidential_h100_scaled.pt` | **SYNTHETIC ONLY** | **12.37 ms** mean latency; 6 urgent follow-ups dispatched; 76 auto-cataloged | [`experiment_a_streaming_triage.png`](./figures/experiment_a_streaming_triage.png) |
+| **EXP-2026-B** | **Quaia Quasar Cosmic Dipole Mode Deconvolution** | Quaia G20.5 (1,295,502 quasars) | `Archive/.../quaia_G20.5.fits` | **NEEDS RERUN** | Deconvolved **$D = 0.0729$** @ $(219.6^\circ, 39.7^\circ)$; $32.6^\circ$ from CMB; $\text{cond}(K) = 1.63$ | [`experiment_b_quaia_dipole_deconvolution.png`](./figures/experiment_b_quaia_dipole_deconvolution.png) |
+| **EXP-2026-D** | **Conformal Risk Control (CRC) Contamination Bounds** | Quaia G20.5 ($N=2,000$ split) | `analysis.conformal_risk_control` | **SYNTHETIC ONLY** | Target risk $\alpha = 0.05$; calibrated $\hat{\lambda}_{\text{CRC}} = 0.4325$; empirical risk $= 4.95\%$; retention $= 51.55\%$ | [`experiment_d_conformal_risk_control.png`](./figures/experiment_d_conformal_risk_control.png) |
+| **EXP-2026-E** | **Distributed Serverless Monte Carlo Null Engine** | Modal Cloud (200 HEALPix realizations) | Modal Run `ap-hmPf6a3f3Lwvt4hapC3lR0` | **WITHDRAWN** | 200 realizations in **6.84s** (29.25 maps/s); null $\bar{D} = 0.0051 \pm 0.0006$; Quaia tension **$> 100\sigma$** ($p < 10^{-5}$) | [`experiment_e_cloud_monte_carlo_null.png`](./figures/experiment_e_cloud_monte_carlo_null.png) |
+| **EXP-2026-F** | **Real-Data 12-Class Foundation AstroJev on Modal H100** | Gaia DR3 + Quaia + unWISE (80,000 real sources) | `/vol/checkpoints/foundation_astrojev_12class_h100.pt` | **NEEDS RERUN** | **88.14%** 12-class accuracy; **285,979 src/s**; $\hat{E}^2_{\text{db}} = \mathbf{0.000118}$; cost **$0.0061 USD** | [`foundation_astrojev_modal_h100_results.json`](./results/foundation_astrojev_modal_h100_results.json) |
+| **EXP-2026-G** | **Multi-Survey Data Sources & Streaming Audit** | 10 live astronomical archives (TAP, REST, FITS) | `scripts/infra/check_data_sources.py` | **SOUND** | All 10 pipelines verified live; zero-bloat compressed streaming ($96\,\text{B}/\text{src}$); auto-fallbacks verified | [`data_sources_audit_report.json`](./results/data_sources_audit_report.json) |
+| **EXP-2026-H** | **RL on Calibrated Decisions (RLCD) & Rewarding Doubt** | Real Survey Test Split ($N=10,000$) | `scripts/engines/experiment_rl_calibrated_decisions.py` | **NEEDS RERUN** | **70.9x** calibration gain ($E^2_{\text{db}} = 0.000266$); empirical FDR $\le 5.0\%$ under Conformal Risk Control | [`rlcd_decision_calibration_benchmark.png`](./figures/rlcd_decision_calibration_benchmark.png) |
+| **EXP-2026-I** | **Quaia Selection-Function & Galactic Cut Parameter Grid** | 1.29M Quaia quasars across $|b| \in [10^\circ, 35^\circ]$ | *(script missing)* | **SOUND (descriptive)** | Replicated published $2.08\% - 3.12\%$ dipole band; apex converges to $(l=342^\circ, b=+25^\circ)$ | *(artifact missing)* |
+| **EXP-2026-J** | **Full-Catalog Conformal Filtering Run** | 1,295,502 Quaia sources | `scripts/dipole/run_full_catalog_conformal_filter.py` | **NEEDS RERUN** | Purified 921,999 quasars with non-asymptotic $\text{FDR} \le 5\%$; purged halo contaminants (`OBJ-HALO-05`) | [`quaia_conformal_filtered_results.json`](./results/quaia_conformal_filtered_results.json) |
+| **EXP-2026-K** | **Dipole Injection-Recovery Benchmark & Linearity Response Audit** | Full-sky mock injections ($D_{\rm true} \in [0.0, 0.08]$) | `scripts/dipole/benchmark_dipole_injection_recovery.py` | **SOUND (synthetic validation)** | Decoupled estimator response $b = 0.975 \pm 0.021$; CRC suppresses stellar leakage to $\Delta D < 0.0025$ | [`dipole_injection_recovery_benchmark.png`](./figures/dipole_injection_recovery_benchmark.png) |
+| **EXP-2026-L** | **Quaia Selection Function Deprojection & Literature Reconciliation** | Quaia selection map $S_p$ ($N_{\rm side}=64$) | `scripts/dipole/deproject_quaia_selection_dipole.py` | **NEEDS RERUN** | Collapsed $D_z$ gradient (+0.055 to +0.011); matched Dam+24 and McTier+24 literature values | [`quaia_selection_deprojection_progression.png`](./figures/quaia_selection_deprojection_progression.png) |
+| **EXP-2026-M** | **Foundation AstroJev Spatial Hold-Out & Coordinate Invariance** | 80,000 real survey sources (Galactic N vs S) | `scripts/engines/benchmark_spatial_holdout_foundation.py` | **WITHDRAWN** | Coordinate ablation accuracy delta only **$0.09\%$**; proves predictions driven by SED, not memorization | [`foundation_spatial_holdout_generalization.png`](./figures/foundation_spatial_holdout_generalization.png) |
+| **EXP-2026-N** | **Dynamic Multi-Tier Telescope Queue Scheduling with Epistemic RLCD** | 75 30-night semesters (150 alerts/night) | `scripts/transients/benchmark_rlcd_telescope_scheduling.py` | **WITHDRAWN** | **$2.92\times$** rare transient yield gain (38.0 vs 13.0); 100% false alarm elimination on 8m | [`rlcd_telescope_queue_scheduling.png`](./figures/rlcd_telescope_queue_scheduling.png) |
+| **EXP-2026-O** | **Vectorized 10,000-Realization Null-Model Monte Carlo Audit** | 10,000 end-to-end $\Lambda$CDM kinematic mocks | `scripts/dipole/benchmark_large_null_dipole_monte_carlo.py` | **NEEDS RERUN** | Strict empirical $p < 1.00 \times 10^{-4}$ (0 exceedances, $\Delta\chi^2=143.22$); GEV tail $p = 2.88 \times 10^{-6}$ | [`large_null_dipole_monte_carlo.png`](./figures/large_null_dipole_monte_carlo.png) |
+| **EXP-2026-P** | **Affine-Invariant Bayesian MCMC Quasar Dipole Parameter Estimation** | 1,142,792 Quaia quasars ($|b| > 20^\circ$) | `scripts/dipole/run_bayesian_mcmc_dipole_inference.py` | **NEEDS RERUN** | $|\mathbf{D}| = 3.20\% \pm 0.19\%$; $\Delta\text{BIC} = \mathbf{+214.8}$; insensitivity minimum $|\mathbf{D}|_{\min} = 2.93\%$ | [`bayesian_mcmc_dipole_posteriors.png`](./figures/bayesian_mcmc_dipole_posteriors.png) |
+| **EXP-2026-Q** | **Calibrated Exoplanetary Transit & RV Disentanglement under Red Noise** | TESS SPOC + Kepler PDCSAP + HARPS/ESPRESSO CCF | `celestrium/explore/exoplanet.py` | **SYNTHETIC ONLY** | Target: Habitable Earth-analogs ($S/N < 7$); Gaussian Process stellar noise; conformal transit false alarm $\le 1\%$ | *Proposal Active* |
+| **EXP-2026-R** | **Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage** | GraceDB O4/O5 + IceCube GCN + ZTF/Rubin Broker | `celestrium/transients/multimessenger.py` & `too_protocol.py` | **SYNTHETIC ONLY** | Empirical FDR = **3.02%** under CRC ($\alpha = 0.05$); **$p = 1.996 \times 10^{-3}$** (0/500 null exceedances); 100% kilonova recovery $\le 200\,\text{Mpc}$; **0.12 ms** latency | [`experiment_r_multimessenger_triage.png`](./figures/experiment_r_multimessenger_triage.png) |
+| **EXP-2026-S** | **Cosmic Dawn ($z > 10$) Lyman-Break Discrimination & Lensed Quasars** | JWST JADES/CEERS + Euclid DR1 Wide + DESI EDR | `celestrium/evidential.py` | **SYNTHETIC ONLY** | Target: Distinguish $z > 10$ galaxies from Galactic T-dwarfs via epistemic vacuity; TDCOSMO lenses | *Proposal Active* |
+| **EXP-2026-T** | **Solar Flare Space Weather Forecasting & Short-Arc NEO Impact Triage** | SDO/HMI SHARP + JPL Scout Sentry-II | `celestrium/archives/solarsystem.py` | **SYNTHETIC ONLY** | Target: 12–24h M/X flare forecasting under extreme class imbalance; short-arc asteroid orbit triage | *Proposal Active* |
+| **EXP-2026-U** | **Active 3D GW Error-Volume Tiling MDP** | 100 simulated GW events | `scripts/transients/benchmark_active_gw_tiling_mdp.py` | **SYNTHETIC ONLY** | 97% vs 89% greedy kilonova recovery (n = 100) | [`experiment_u_active_gw_tiling_benchmark.png`](./figures/experiment_u_active_gw_tiling_benchmark.png) |
+| **EXP-2026-V** | **Continuous-Flow Multi-Survey Cross-Calibration** | Real SEDs + injected zero-points | `scripts/engines/benchmark_continuous_flow_cross_calibration.py` | **NOT DEMONSTRATED** | ZP RMSE 0.0365 mag (≈ injected σ) | [`experiment_v_flow_cross_calibration.png`](./figures/experiment_v_flow_cross_calibration.png) |
+| **EXP-2026-W** | **Multi-Tracer Dipole Co-Inference (Quaia + CatWISE + NVSS)** | Quaia, CatWISE, NVSS | `scripts/dipole/benchmark_multi_tracer_co_inference.py` | **WITHDRAWN** | v_bulk 664 ± 188 km/s; ΔBIC is a sampler artifact | [`experiment_w_multi_tracer_coinference.png`](./figures/experiment_w_multi_tracer_coinference.png) |
+| **EXP-2026-X** | **Fast Radio Burst Evidential Triage & Host Localization** | CHIME/FRB Catalog 1 (600 real bursts) | `celestrium/transients/frb.py` | **NEEDS RERUN** | 164 8m GMOS spectroscopy ToO dispatches ($z \in [0.11, 2.25]$); $22.1\%$ RLCD error reduction; $0.076\,\text{ms}$ latency | [`experiment_x_frb_triage.png`](./figures/experiment_x_frb_triage.png) |
+| **EXP-2026-Y** | **T Coronae Borealis: Multi-Wavelength Pre-Eruption Status & Accretion Inversion** | AAVSO + Munari+25 ANS UBV (2006–26), Swift UVOT/XRT (2005–26), TESS S24/25/51/78, 1273 ADS papers; RS Oph, V3890 Sgr, V745 Sco | `celestrium/novae/`, `scripts/novae/` | **ACTIVE · SOUND** | Sep 2026 UVM2 collapse (2.05 mag in 30 d) with hard X-rays rising; viscous drain needs ≥ 288 d → state change, not supply loss; $i \ge 59$–$76^\circ$ from ellipsoidal amplitude; no QPO in TESS | [`tcrb_uv_xray_track.png`](./figures/tcrb/tcrb_uv_xray_track.png) |
+| **EXP-2026-01** | **Euclid DR1 Photometric Injection & Dipole Recovery** | Euclid DR1 Wide ($I_{\scriptscriptstyle\text{E}}, Y, J, H$, 2500 $\text{deg}^2$) | `celestrium/dipole/mocks.py` & `tap.py` | **PLANNED** | Target Date: **21 Oct 2026**. Definitive test of $4.9\sigma$ kinematic anomaly | [`euclid_dr1_photometric_injection.png`](./figures/euclid_dr1_photometric_injection.png) |
+| **EXP-2026-04** | **Bayesian Active Learning (BALD) for 4MOST/DESI** | DESI EDR/Y1 Spectroscopic Catalog | `TelescopeQueueMDP` | **PLANNED** | Target Date: **10 Nov 2026**. $3.2\times$ higher information yield per fiber-hour | *Pending Run* |
+| **EXP-2026-05** | **Zone-of-Avoidance Multi-Wavelength Fusion** | eROSITA eRASS1 + CatWISE2020 | Heteroscedastic missing-band AstroJev | **PLANNED** | Target Date: **01 Dec 2026**. Piercing $|b| < 15^\circ$ Galactic plane dust | *Pending Run* |
+
+---
+
+## 2. Ingested Data Taxonomy & Storage Locations
+
+| Dataset Identifier | Physical Path / URI | Source Survey | Object Count | Format / Schema | Status |
+|:---|:---|:---|:---:|:---|:---:|
+| **QUAIA_G20_5** | `Archive/2026-06-G-dipole/data/quaia/quaia_G20.5.fits` | Gaia DR3 + unWISE | 1,295,502 | FITS Binary Table: RA, Dec, G, BP-RP, W1, W1-W2, pm, pm_err | **Active On Disk** |
+| **RUBIN_TRIAGE_STREAM** | `data/alerts/rubin_triage_stream.jsonl` | Rubin LSST Sim / Fink | 100 | JSON Lines: alert_id, action, class, conf, u_epi, BALD gain, latency | **Active On Disk** |
+| **MODAL_H100_WEIGHTS** | `/vol/checkpoints/astrojev_evidential_nvidia_h100_80gb_hbm3.pt` | Modal Cloud Volume | 500,000 | PyTorch checkpoint (TorchInductor compiled state_dict, d_model=128) | **Active in Cloud** |
+| **LOCAL_H100_WEIGHTS** | `checkpoints/astrojev_evidential_h100_scaled.pt` | Local Synced Mirror | 500,000 | PyTorch checkpoint (99.71% accuracy, $\hat{E}^2_{\text{db}} \approx 0$) | **Active On Disk** |
+| **MC_NULL_RESULTS** | `docs/results/mc_dipole_results.json` | Modal Ephemeral CPU Grid | 200 | JSON: 200 pseudo-Cl realizations, f_sky=0.745, null covariance | **Active On Disk** |
+| **CHIME_FRB_CAT1** | `data/chime_frb_catalog1.npz` | CHIME/FRB Public Catalog 1 | 600 | NPZ: name, ra, dec, glon, glat, dm, dm_exc, snr, scat, width, flux, fluence | **Active On Disk** |
+
+---
+
+## 3. Deep Experiment Summaries & Findings
+
+### EXP-2026-A: Real-Time Transient Alert Evidential Triage
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** Latency measured on simulated alerts (RubinBurstSimulator); triage quality never tested on real packets. **Rerun:** replay archived ZTF/Fink alert packets with known outcomes.
+* **Execution Command**: `python -m celestrium.cli jev stream --broker rubin-sim --limit 100 --output data/alerts/rubin_triage_stream.jsonl`
+* **Findings**:
+  1. **Sub-15ms Latency SLA**: Average triage latency across 100 alerts was **12.37 ms** (steady-state alert processing took ~7.1 ms), fully meeting the Rubin sub-second broker dissemination requirement.
+  2. **TruthRL Action Gating**:
+     - `AUTO_CATALOG` (76%): High-confidence extragalactic quasars and stars with verified calibration.
+     - `URGENT_FOLLOWUP` (6%): High Dirichlet BALD mutual information ($\mathcal{I}_{\text{BALD}} > 0.35$ nats) triggering autonomous follow-up requests.
+     - `EXTEND_DELIBERATION` (14%): Alerts with Banach contraction tension ($\Delta_{\text{eq}} > 0.12$), routing to extended fixed-point iterations.
+     - `PASS_DEFER` (4%): Low SNR / high photon shot noise alerts deferred.
+* **Diagnostic Plot**: [`docs/figures/experiment_a_streaming_triage.png`](./figures/experiment_a_streaming_triage.png)
+
+---
+
+### EXP-2026-B: Quaia Quasar Cosmic Dipole Mode Deconvolution
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Classifier weights use Galactic (l, b) as features (spatial-prior leak, CLAUDE.md §3.I.3); a failed weight load silently falls back to unit weights; σ not validated on Poisson mocks; the quoted "4.9σ" is computed nowhere (it was a dashboard literal). **Rerun:** drop (l, b), assert checkpoint load, validate σ on ≥300 mocks.
+* **Execution Command**: `python -m celestrium.cli jev dipole Archive/2026-06-G-dipole/data/quaia/quaia_G20.5.fits --nside 32`
+* **Findings**:
+  1. Continuous AstroJev weights ($w_i = \bar{p}_{\text{QSO}}$) suppressed stellar contaminants smoothly across the Galactic plane cut ($|b| < 10^\circ$).
+  2. The mode-coupling matrix $M_{\ell\ell'}$ had condition number $\text{cond}(K) = 1.63$, confirming stable pseudo-$C_\ell$ inversion without numerical regularization artifacts.
+  3. **Cosmic Dipole Vector**:
+     - Raw Masked: $D = 0.0621$ @ $(l = 219.6^\circ, b = 48.2^\circ)$ (Offset to CMB: $29.3^\circ$).
+     - Deconvolved: **$D = 0.0729 \pm 0.0000$** @ $(l = 219.6^\circ, b = 39.7^\circ)$ (Offset to CMB: $32.6^\circ$).
+     - CMB Kinematic Benchmark: $D = 0.0070$ @ $(l = 264.0^\circ, b = 48.0^\circ)$.
+  4. The deconvolved dipole amplitude remains an order of magnitude larger than the kinematic CMB benchmark, maintaining the $4.9\sigma$ tension.
+* **Diagnostic Plot**: [`docs/figures/experiment_b_quaia_dipole_deconvolution.png`](./figures/experiment_b_quaia_dipole_deconvolution.png)
+
+---
+
+### EXP-2026-D: Conformal Risk Control Contamination Calibration
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** Quaia has no truth labels, so CRC ran on Beta-distributed synthetic scores (caps/analysis.py); ">660k pristine quasars" is 51.55% × 1.29M extrapolated. **Rerun:** labelled spectroscopic subset with a held-out calibration split.
+* **Execution Command**: `python -m celestrium.cli jev crc --catalog Archive/2026-06-G-dipole/data/quaia/quaia_G20.5.fits --risk 0.05`
+* **Findings**:
+  1. For a target contamination risk bound $\alpha_{\text{risk}} = 0.05$ (5.0%), the calibrated retention threshold was determined to be **$\hat{\lambda}_{\text{CRC}} = 0.4325$**.
+  2. The empirical false discovery rate on held-out test splits was **$4.95\%$**, satisfying the theoretical finite-sample upper bound ($\mathbb{E}[\ell] \le \alpha_{\text{risk}}$).
+  3. Catalog retention at this threshold is **$51.55\%$**, yielding an ultra-pure cosmological sample of $>660,000$ pristine quasars.
+* **Diagnostic Plot**: [`docs/figures/experiment_d_conformal_risk_control.png`](./figures/experiment_d_conformal_risk_control.png)
+
+---
+
+### EXP-2026-E: Distributed Serverless Monte Carlo Null Engine
+
+> **Audit 2026-10-14 — WITHDRAWN.** 200 null draws cannot support p < 10⁻⁵; compared against EXP-B's number on a different mask; the null ignores the selection function. **Rerun:** same-mask, selection-aware, clustering-aware mocks (≥10⁴).
+* **Execution Command**: `modal run celestrium/modal_app.py --action mc --realizations 200`
+* **Findings**:
+  1. **Serverless Scalability**: Dispatched 200 full-sky HEALPix Poisson realizations across 50 ephemeral Modal CPU containers, completing the entire ensemble in **6.84 seconds** (throughput: **29.25 maps/sec**).
+  2. **Isotropic Null Distribution**: Under an input kinematic CMB dipole ($D_{\text{true}} = 0.0070$), the empirical recovered mean was $\bar{D}_{\text{null}} = 0.0051 \pm 0.0006$ due to Galactic plane mask suppression.
+  3. **Definitive Non-Gaussian $p$-Value**: The observed Quaia dipole ($D_{\text{obs}} = 0.0729$) is **$> 100$ standard deviations** away from the isotropic null distribution ($p < 10^{-5}$). This mathematically proves that Poisson shot noise and Galactic mask coupling cannot account for the observed cosmic dipole anomaly.
+* **Diagnostic Plot**: [`docs/figures/experiment_e_cloud_monte_carlo_null.png`](./figures/experiment_e_cloud_monte_carlo_null.png)
+
+---
+
+### EXP-2026-F: Real-Data 12-Class Foundation AstroJev on Modal H100
+
+> **Audit 2026-10-14 — NEEDS RERUN.** 7 of 12 classes synthetic; W1 photometry built from class-constant offsets (label leak, §3.M.2); per-class accuracy as low as 59% not reported; CRC with 0.06% retention is vacuous. **Rerun:** real labelled 12-class set, per-class metrics.
+* **Execution Command**: `modal run scripts/engines/modal_train_foundation_astrojev.py --sources 80000 --epochs 25 --batch-size 4096`
+* **Findings**:
+  1. Trained on **80,000 real-first physical survey sources** (Gaia DR3 + Quaia G20.5 + unWISE + rare transient classes) in **4.90 seconds** on NVIDIA H100 80GB HBM3 (**285,979 sources/sec**).
+  2. Achieved **88.14% overall 12-class accuracy** across all major astrophysical categories (100% on Brown Dwarfs, 99.5% on MS Dwarfs, 99.2% on Red Giants, 99.1% on LRGs, 98.8% on White Dwarfs).
+  3. Stanford debiased calibration error plummeted to $\hat{E}^2_{\text{db}} = \mathbf{0.00011875}$ (verified finite-sample calibration).
+  4. Total execution cost was **$0.0061 USD** (< 1 cent), preserving > $22.16 USD balance.
+  5. Checkpoint committed to Modal Volume: `/vol/checkpoints/foundation_astrojev_12class_h100.pt`.
+* **Artifact**: [`docs/results/foundation_astrojev_modal_h100_results.json`](./results/foundation_astrojev_modal_h100_results.json)
+
+---
+
+### EXP-2026-G: Multi-Survey Astronomical Data Source & Streaming Audit
+
+> **Audit 2026-10-14 — SOUND.** Live archive checks with returned rows recorded.
+* **Execution Command**: `python scripts/infra/check_data_sources.py`
+* **Findings**:
+  1. Live verification across all 10 major astronomical pipelines: Gaia DR3 TAP (3.76s), IRSA AllWISE TAP (26.33s), Euclid Science Archive TAP (3.28s, 103 tables discovered), Quaia FITS (0.65s), ALeRCE Broker (5.57s), MAST STScI (7.43s), SDSS (4.97s), and SkyView/HiPS Cutout Engine (1.98s).
+  2. Verified compressed streaming architecture: $96\,\text{bytes}/\text{source}$ in `.npz` format, achieving >99.9% local storage reduction.
+  3. In-flight error jittering $\tilde{\mathbf{x}} \sim \mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\sigma}^2)$ and presence masks ($\mathbf{m}$) verified against missing-band survey dropout.
+* **Artifact**: [`docs/results/data_sources_audit_report.json`](./results/data_sources_audit_report.json) & [`docs/reference/data-sources-and-streaming.md`](./reference/data-sources-and-streaming.md)
+
+---
+
+### EXP-2026-H: Reinforcement Learning on Calibrated Decisions (RLCD)
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Trained/evaluated on the EXP-F dataset (inherits its label leak); uncalibrated baseline; in-sample calibration; a missing checkpoint silently gives untrained weights. **Rerun:** real labels, checkpoint assert, held-out CRC.
+* **Execution Command**: `python scripts/engines/experiment_rl_calibrated_decisions.py`
+* **Findings**:
+  1. Compared Standard Greedy (Argmax), Rewarding Doubt (TUM 2026 logarithmic scoring rule), and Full RLCD (with Conformal Risk Control).
+  2. Rewarding Doubt improved debiased calibration error by **70.9x** ($E^2_{\text{db}} = 0.000266$ vs $0.01888$ for Greedy), aligning confidence directly with true epistemic probabilities.
+  3. Conformal Risk Control strictly bounded False Discovery Rate on high-value cosmological tracers to $\le 5.0\%$, creating an ultra-pure cosmological sample.
+  4. Proved that heteroscedastic noise ($\sigma$) naturally expands aleatoric entropy $u_{\text{ale}}$, preventing catastrophic false overconfidence.
+* **Diagnostic Figure**: [`docs/figures/rlcd_decision_calibration_benchmark.png`](./figures/rlcd_decision_calibration_benchmark.png)
+
+---
+
+### EXP-2026-I: Mining 1.3M Survey Sources for Remarkable Astrophysical Objects
+
+> **Audit 2026-10-14 — SOUND (descriptive).** Real Quaia + SIMBAD mining; objects are examples, not statistics. The parameter-grid script and JSON cited in the table do not exist. **Rerun:** restore or drop the grid claim.
+* **Execution Command**: `python scripts/dipole/mine_remarkable_objects.py`
+* **Findings**:
+  1. Mined all 1,295,502 real sources in Quaia G20.5 (Gaia DR3 + unWISE) in 0.96s.
+  2. Identified 5 benchmark objects spanning critical observational regimes:
+     - **`OBJ-APEX-01`**: Dipole Apex Anchor (`SDSS J092724.22+120713.0`, $z=1.851$, $0.43^\circ$ from CMB apex).
+     - **`OBJ-ANTI-02`**: Dipole Anti-Apex Counterpart ($z=1.805$, $0.085^\circ$ from anti-apex).
+     - **`OBJ-HIGHZ-03`**: Cosmic Dawn Beacon (`[VV2006] J162159.1+311006`, $z=4.606$, sharp Lyman-dropout in BP band).
+     - **`OBJ-HOTDOG-04`**: Extreme Obscured Hyper-Luminous AGN ($W_1 - W_2 = 2.32$, steep IR torus rise).
+     - **`OBJ-HALO-05`**: Fast-Moving Halo Interloper ($PM = 7.6\,\text{mas/yr}$, contaminated catalog quasar flagged by astrometric gate).
+  3. Integrated CDS SIMBAD cross-identification and deep multi-survey color cutouts (Legacy Surveys DR10, Pan-STARRS DR1, DSS2).
+  4. Extracted multi-wavelength SED profiles across 5 bands (Gaia BP, G, RP and unWISE W1, W2).
+* **Diagnostic Artifacts**:
+  - Contact Sheet & SED Gallery: [`docs/figures/remarkable_objects_discovery_gallery.png`](./figures/remarkable_objects_discovery_gallery.png)
+  - Catalog JSON: [`docs/results/remarkable_objects_catalog.json`](./results/remarkable_objects_catalog.json)
+  - Scientific Prospectus: [`docs/manuscripts/prospectus.md`](./manuscripts/prospectus.md)
+
+---
+
+### EXP-2026-J: Full-Catalog Conformal Filtering & 3-Vector Dipole Inference
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Classifier features include (l, b) (spatial leak); λ̂ = 0.50 is hard-coded, so the FDR ≤ 5% bound is unsupported. **Rerun:** remove (l, b); calibrate λ on a labelled subset.
+* **Execution Command**: `python scripts/dipole/run_full_catalog_conformal_filter.py`
+* **Findings**:
+  1. Ran GPU batch inference across all 1,295,502 Quaia sources in **3.90 seconds** ($332,567\,\text{sources/sec}$).
+  2. Verified catalog proper motion scaling law $\mu < 10^{+0.4(G - 18.25)}\,\text{mas/yr}$, proving that faint stars leak into the quasar locus at $G \sim 20.5$ with $\mu$ up to $7.8\,\text{mas/yr}$.
+  3. Formulated 3D Cartesian vector inference $\mathbf{D} = (D_x, D_y, D_z)$ with 200 empirical bootstrap realizations for $\mathbf{\Sigma}_D$, testing $H_0: \mathbf{D} = \mathbf{D}_{\rm CMB}$ via $\Delta\chi^2$.
+  4. Identified persistent $+0.055$ North-South survey exposure gradient ($D_z$), proving that catalog cuts alone cannot de-bias the dipole without explicit selection-function template deprojection.
+* **Artifacts**:
+  - Purified arrays: `data/quaia_conformal_purified_indices.npz` (13.53 MB)
+  - Results JSON: [`docs/results/quaia_conformal_filtered_results.json`](./results/quaia_conformal_filtered_results.json)
+
+---
+
+### EXP-2026-K: Dipole Injection-Recovery Benchmark & Linearity Response Audit
+
+> **Audit 2026-10-14 — SOUND (synthetic validation).** Valid estimator injection–recovery on mocks; the CRC-leakage statement depends on the assumed contamination model.
+* **Execution Command**: `python scripts/dipole/benchmark_dipole_injection_recovery.py`
+* **Findings**:
+  1. Injected 8 dipole amplitudes $D_{\rm true} \in [0.0, 0.08]$ with 50 Monte Carlo realizations per step on a $|b| < 10^\circ$ cut sky ($f_{\rm sky} = 0.823$).
+  2. Quantified estimator response functions:
+     - Naive Masked Estimator: $D_{\rm rec} = 0.0023 + 1.285 \cdot D_{\rm true}$ (distorted by partial sky geometry).
+     - Decoupled Estimator ($M^{-1} D$): $D_{\rm rec} = 0.0020 + 0.975 \cdot D_{\rm true}$ ($b = 0.975 \approx 1.00$—near-perfect linear response).
+  3. Proved that Conformal Risk Control ($\text{FDR} \le 5\%$) suppresses stellar contamination dipole leakage from $\Delta D = 0.043$ down to $\Delta D < 0.0025$.
+  4. Verified that reconstructed dipole apex converges directly to the CMB dipole apex $(l = 264.0^\circ, b = +48.3^\circ)$.
+* **Diagnostic Figure**:
+  - 4-Panel Benchmark: [`docs/figures/dipole_injection_recovery_benchmark.png`](./figures/dipole_injection_recovery_benchmark.png)
+
+---
+
+### EXP-2026-L: Quaia Selection Function Deprojection & Literature Reconciliation
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Purified-branch deprojection uses η = N_pur/N_raw, which cancels the purification (§3.K.3). The raw-sample deprojection and literature reconciliation stand. **Rerun:** model the actual post-cut selection mask.
+* **Execution Command**: `python scripts/dipole/deproject_quaia_selection_dipole.py`
+* **Findings**:
+  1. Deprojected official Quaia selection function map $S(\hat{\mathbf{n}})$ ($N_{\text{side}}=64$ in ICRS) across $|b| > 10^\circ$ to $|b| > 35^\circ$.
+  2. Solved the anomalous North-South exposure gradient: $D_z$ collapsed from $+0.055$ down to $+0.011$.
+  3. Reconciled measured dipole directly with published literature band (Dam et al. 2024; McTier et al. 2024):
+     - $|b| > 20^\circ$: $D = 3.12\% \pm 0.35\%$ (Purified: $3.46\%$)
+     - $|b| > 30^\circ$: $D = 2.08\% \pm 0.39\%$ (Purified: $2.12\%$)
+     - $|b| > 35^\circ$: $D = 1.57\% \pm 0.41\%$ (Purified: $1.58\%$, apex latitude $b = +47.0^\circ$, within $1.2^\circ$ of CMB $+48.25^\circ$).
+* **Diagnostic Figure**:
+  - Progression Panel: [`docs/figures/quaia_selection_deprojection_progression.png`](./figures/quaia_selection_deprojection_progression.png)
+  - Results JSON: [`docs/results/quaia_deprojected_dipole_results.json`](./results/quaia_deprojected_dipole_results.json)
+
+---
+
+### EXP-2026-M: Foundation AstroJev Spatial Hold-Out Validation & Coordinate Invariance
+
+> **Audit 2026-10-14 — WITHDRAWN.** Conclusion inverted: the hemisphere hold-out drops accuracy 88% → 55% (ECE 0.24) and OOD AUROC is 0.49 (no detection). **Rerun:** survey-level hold-out, report AUROC.
+* **Execution Command**: `python scripts/engines/benchmark_spatial_holdout_foundation.py`
+* **Findings**:
+  1. Audited spatial coordinate memorization across 80,000 real survey sources.
+  2. Hemispheric Holdout (Train on Galactic North $b > +10^\circ$, Test on Galactic South $b < -10^\circ$):
+     - Spatial Holdout: $55.23\%$ Top-1 Accuracy, $\text{ECE} = 0.2406$.
+     - Coordinate-Ablated ($l, b$ strictly zeroed): $55.14\%$ Top-1 Accuracy, $\text{ECE} = 0.2516$.
+     - Difference is only **$0.09\%$**, proving that predictions are driven by astrophysical SED properties ($G - RP$, $BP - RP$, $W_1 - W_2$, proper motion, error bars), not coordinate memorization.
+  3. Epistemic Uncertainty correctly escalates from $0.4035$ (in-distribution random) to $0.4988$ (unseen hemisphere).
+* **Diagnostic Figure**:
+  - Generalization Panel: [`docs/figures/foundation_spatial_holdout_generalization.png`](./figures/foundation_spatial_holdout_generalization.png)
+  - Results JSON: [`docs/results/foundation_spatial_holdout_results.json`](./results/foundation_spatial_holdout_results.json)
+
+---
+
+### EXP-2026-N: Dynamic Multi-Tier Telescope Queue Scheduling with Epistemic RLCD
+
+> **Audit 2026-10-14 — WITHDRAWN.** Oracle leak: Tier-1 screening sets probabilities from alert.true_type (scripts/transients/benchmark_rlcd_telescope_scheduling.py ~l.343; §3.J.3). The yield gain reads ground truth. **Rerun:** screening must sample from the classifier posterior.
+* **Execution Command**: `python scripts/transients/benchmark_rlcd_telescope_scheduling.py`
+* **Findings**:
+  1. Formulated transient alert follow-up as a Constrained MDP across 75 30-night observing semesters (150 alerts/night) under stochastic weather, lunar cycles, and exponential decay.
+  2. Heterogeneous Facilities: Tier 1 (1m imager, 0.25h), Tier 2 (4m spectrograph, 1.0h), Tier 3 (8m spectrograph, 3.5h).
+  3. Rare Transients Discovered (Kilonovae, FBOTs, SLSN, TDEs):
+     - Naive Greedy: $13.0 \pm 2.6$
+     - Static Threshold: $11.0 \pm 2.3$
+     - **Epistemic RLCD**: **$38.0 \pm 2.8$** (**$2.92\times$ yield gain!**)
+  4. Follow-Up Efficiency: Epistemic RLCD achieved **$27.95\,{\rm U/hr}$** vs $17.64\,{\rm U/hr}$ (+58.4% efficiency), eliminating 8m false alarms via active Tier 1 screening.
+* **Diagnostic Figure**:
+  - Queue Benchmark: [`docs/figures/rlcd_telescope_queue_scheduling.png`](./figures/rlcd_telescope_queue_scheduling.png)
+  - Results JSON: [`docs/results/rlcd_telescope_scheduling_results.json`](./results/rlcd_telescope_scheduling_results.json)
+
+---
+
+### EXP-2026-O: Vectorized 10,000-Realization Null-Model Monte Carlo Audit
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Observed amplitude hard-coded (0.0312); the independent-Poisson null ignores clustering; p < 10⁻⁴ is the 1/(N+1) floor. **Rerun:** clustering-aware (jackknife / lognormal) mocks.
+* **Execution Command**: `python scripts/dipole/benchmark_large_null_dipole_monte_carlo.py`
+* **Findings**:
+  1. Addressed Supervisor Review Point 2: simulated $N = 10,000$ end-to-end realizations of the $\Lambda$CDM kinematic null hypothesis ($D_{\rm CMB} = 0.007$) with Quaia selection function and $|b| > 20^\circ$ mask in 52.12 seconds (191.9 real/sec).
+  2. Recovered exact null mean vector: $\bar{\mathbf{D}}_{\rm null} = [-0.00045, -0.00463, +0.00521]$ (expected: $[-0.00049, -0.00464, +0.00522]$).
+  3. Evaluated 3D Cartesian vector test: $\Delta\chi^2_{\rm obs} = \mathbf{143.22}$.
+  4. Exceedances out of 10,000: **0**.
+  5. Strict Empirical $P$-Value: **$p < 1.00 \times 10^{-4}$** ($\frac{1}{N+1} = 1.00 \times 10^{-4}$); Parametric GEV Tail: **$p = 2.88 \times 10^{-6}$**; Theoretical $\chi^2(3)$: $p = 7.63 \times 10^{-31}$.
+* **Diagnostic Figure**:
+  - Null Audit Panel: [`docs/figures/large_null_dipole_monte_carlo.png`](./figures/large_null_dipole_monte_carlo.png)
+  - Results JSON: [`docs/results/large_null_dipole_monte_carlo_results.json`](./results/large_null_dipole_monte_carlo_results.json)
+
+---
+
+### EXP-2026-P: Affine-Invariant Bayesian MCMC Quasar Dipole Parameter Estimation
+
+> **Audit 2026-10-14 — NEEDS RERUN.** MCMC machinery and R̂ < 1.05 are sound; the independent-Poisson likelihood without overdispersion overstates ΔBIC and ln B. **Rerun:** clustering-aware likelihood or mock-calibrated evidence.
+* **Execution Command**: `python scripts/dipole/run_bayesian_mcmc_dipole_inference.py`
+* **Findings**:
+  1. Ran Goodman & Weare (2010) ensemble MCMC (48 walkers, 2,500 steps) on 1,142,792 Quaia quasars ($|b| > 20^\circ, f_{\rm sky} = 0.658$).
+  2. Verified chain convergence: Gelman-Rubin $\hat{R}(D_x) = 1.012$, $\hat{R}(D_y) = 1.016$, $\hat{R}(D_z) = 1.014$ (all $< 1.05$).
+  3. Posterior Dipole Estimates:
+     - Standard Selection Model: $|\mathbf{D}| = 3.20\% \pm 0.19\%$ towards $(l = 342.5^\circ \pm 3.6^\circ, b = +25.2^\circ \pm 2.6^\circ)$.
+     - Joint Selection Exponent Model: $|\mathbf{D}| = 3.07\% \pm 0.19\%$, $\gamma_{\rm sel} = 0.963 \pm 0.005$.
+  4. Model Selection & Evidence:
+     - $\Delta\text{BIC} = +214.8$ against the $\Lambda$CDM Kinematic Null ($\ln \mathcal{B}_{10} = 107.4$—decisive evidence on Jeffreys scale).
+  5. Systematic Non-Linearity Insensitivity:
+     - Across selection exponent grid $\gamma_{\rm sel} \in [0.6, 1.6]$, the minimum possible recovered dipole is $|\mathbf{D}|_{\min} = 2.93\%$, proving that no continuous selection depth non-linearity can reconcile Quaia with the CMB kinematic benchmark ($0.70\%$).
+* **Diagnostic Figure**:
+  - Posterior & Model Comparison: [`docs/figures/bayesian_mcmc_dipole_posteriors.png`](./figures/bayesian_mcmc_dipole_posteriors.png)
+  - Results JSON: [`docs/results/bayesian_mcmc_dipole_results.json`](./results/bayesian_mcmc_dipole_results.json)
+
+---
+
+### EXP-2026-Q: Calibrated Exoplanetary Transit & RV Disentanglement under Correlated Stellar Noise
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** The generator draws classes from disjoint ranges, so 0 false triggers / 100% routing hold by construction (§3.M.2). **Rerun:** real TESS/Kepler + RV labelled sets.
+* **Scale**: Stellar & Exoplanetary (AU)
+* **Execution Command**: `python scripts/explore/benchmark_exoplanet_transit_rv_triage.py`
+* **Findings**:
+  1. **Matérn-3/2 GP & Multi-Indicator RV Modeling**: Formulated correlated red noise covariance $k(\Delta t) = \sigma^2(1 + \sqrt{3}\Delta t/\rho)e^{-\sqrt{3}\Delta t/\rho}$ and CCF activity regression (BIS, FWHM, $S$-index) across 10,000 transit and RV candidates, simulating sub-m/s reflex velocities down to Earth radii ($50\,\text{ppm}$).
+  2. **Disentangled RLCD Calibration (TUM 2026)**: Freezing representation trunks and optimizing Dirichlet readout heads under composite loss (Brier + logarithmic doubt scoring + CARL regularizer):
+     - **Binned ECE**: Collapsed from $5.96\%$ down to **$2.47\%$** ($\mathbf{58.5\%}$ relative error reduction).
+     - **Debiased Squared Calibration Error $\hat{E}^2_{\rm db}$ (Stanford NeurIPS 2019)**: Collapsed from $0.003107$ down to **$0.000214$** ($\mathbf{93.1\%}$ error reduction!).
+     - **Rewarding Doubt Score**: Increased from $-0.1340$ to **$-0.0857$**.
+  3. **Stellar Activity Null Model Audit (2,000 Pure Starspot/Faculae Mimics)**:
+     - Pure activity signals with $K \sim 1 - 6\,\text{m/s}$ and periods matching stellar rotation:
+     - **False 8m VLT ESPRESSO Triggers**: Strictly **$0$ ($0.00\%$)**, easily satisfying pre-registered CRC FDR $\le 1.0\%$.
+     - **Doubt-Routed to Activity Monitoring**: **$2,000 / 2,000$ ($100.0\%$)** were safely diverted to rotational monitoring rather than burning expensive 8m spectrograph time.
+  4. **True Exoplanet Recovery Horizon**:
+     - Dispatched 263 confirmed candidates to 8m ESPRESSO with **$84.1\%$ exoplanet recall** and zero activity contamination.
+  5. **Analytical Error Bar Retention**: Every candidate decision retains Dirichlet standard deviation $\sigma_k$, 95% Credible Intervals $[p_k \pm 1.96\sigma_k]$, and conformal prediction sets.
+* **Diagnostic Figure**: [`docs/figures/experiment_q_exoplanet_triage.png`](./figures/experiment_q_exoplanet_triage.png)
+* **Results JSON**: [`docs/results/experiment_q_exoplanet_results.json`](./results/experiment_q_exoplanet_results.json)
+* **Status**: ran to completion — see the audit note at the top of this section
+
+---
+
+### EXP-2026-R: Real-Time Multi-Messenger (GW + Neutrino) Counterpart Triage in Massive Error Volumes
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** p = 1/(N+1) estimator floor; 0.000% 8m false alarms is the veto boundary; kilonovae injected. **Rerun:** replay real GraceDB/IceCube/ZTF with field-level FDR.
+* **Execution Commands**:
+  - Phase 1 (Architecture & Permutation): `python scripts/transients/benchmark_multimessenger_triage.py`
+  - Phase 2 (Real Data Streaming & Disentangled RLCD Calibration): `python scripts/transients/benchmark_real_stream_rlcd_triage.py`
+  - Phase 3 (Scaled Cloud Broker Stress Test on Modal GPU): `modal run scripts/transients/modal_stress_test_multimessenger_rlcd.py --sources 50000`
+* **Findings**:
+  1. **Multi-Stream Heteroscedastic Ingestion**: Seamlessly ingests GraceDB O4 VOEvents, IceCube Gold/Bronze alerts, ALeRCE ZTF broker transients, and GLADE+ galaxies, correcting for Galactic dust extinction ($A_V$) and computing host distance compatibility $\Delta\chi^2_{\rm dist}$.
+  2. **Memory-Efficient Real Survey Streaming**: Implemented [`RealAstroDataStreamer`](../celestrium/engines/data_streamer.py#L300-L474) and [`RealMultiMessengerStreamer`](../celestrium/engines/data_streamer.py#L535-L858) streaming chunks across 1,295,502 Quaia quasars (`quaia_G20.5.fits` via `memmap=True`, <50MB RAM footprint), 80,000 real survey sources (`data/real_phenomena_dataset.npz`), 30,000 Gaia DR3 sources (`data/gaia_tap_cache.npz`), real GraceDB O4 superevents (`S240422ed`, `S230518h`, `S230522a`, `S240426d`), and real IceCube alerts (`IceCube-240422A`, `IceCube-230518A`). Includes in-flight heteroscedastic noise modeling $\tilde{\mathbf{x}}_i \sim \mathcal{N}(\mu_i, \sigma_i^2)$ accounting for real photometric and astrometric covariance.
+  3. **Disentangled RLCD Calibration (TUM 2026 / Rewarding Doubt)**: Following Bani-Harouni et al. (2026), froze the deep representation trunk (`input_proj`, `recurrent_cell`) and fine-tuned the Dirichlet readout head under a composite loss (Brier score + clipped logarithmic doubt reward + USC/AWS 2026 CARL Dirichlet barycentric regularizer):
+     - **Plugin ECE**: Collapsed from $86.36\%$ (95% CI: $[85.52\%, 87.46\%]$) down to **$9.94\%$** (95% CI: $[7.96\%, 12.78\%]$) $\implies$ **$88.5\%$ relative error reduction**!
+     - **Debiased Squared Calibration Error $\hat{E}^2_{\rm db}$ (Stanford NeurIPS 2019)**: Collapsed from $0.75037$ down to **$0.01297$** $\implies$ **$98.27\%$ error reduction**, removing finite-sample positive variance bias.
+     - **Rewarding Doubt Score**: Increased from $-2.1143$ (normalized $0.388$) to **$-0.5065$** (normalized $0.853$).
+  4. **Scaled Modal Cloud Broker Stress Test ($N = 50,000$ Candidates on GPU)**:
+     - Dispatched full 50,000-candidate broker stream across severe environmental sky perturbations (Galactic extinction $A_V \in [0.0, 5.0]$, bright lunar photon noise, cadence dropouts) in **0.037 seconds** on Modal GPU (**$1,347,895\,\text{candidates/sec}$**).
+     - **Overall Debiased Calibration Error**: $\hat{E}^2_{\rm db} = \mathbf{0.009599}$ (< 0.010 threshold across full sky).
+     - **Environmental Latitude Slices**:
+       - Galactic Plane ($|b| < 15^\circ$, $N = 12,970$): $\text{ECE} = 6.87\%$, $\hat{E}^2_{\rm db} = 0.00811$.
+       - Mid-Latitude ($15^\circ \le |b| < 35^\circ$, $N = 15,816$): $\text{ECE} = 7.68\%$, $\hat{E}^2_{\rm db} = 0.00949$.
+       - High-Latitude Clean ($|b| \ge 35^\circ$, $N = 21,214$): $\text{ECE} = 8.52\%$, $\hat{E}^2_{\rm db} = 0.01072$.
+       - Bright Moon Elevated Noise ($N = 15,131$): $\text{ECE} = 5.34\%$, $\hat{E}^2_{\rm db} = 0.00721$.
+     - **Zero-Tolerance 8m Aperture Protection**: Gemini 8m false alarm rate was strictly **$0.000\%$** (0 false alarms). Ambiguous/high-vacuity candidates ($N = 49,710$) were safely routed to LCOGT 1m screening to reward doubt before burning expensive GMOS spectroscopy.
+  5. **Strict Error Bar & Prediction Set Retention on All Decisions**: Every triage decision retains explicit analytical Dirichlet standard deviations $\sigma_k = \sqrt{\frac{p_k(1-p_k)}{S+1}}$, 95% Credible Intervals $[p_k \pm 1.96\sigma_k]$, and conformal prediction sets $C_\lambda(X)$.
+  6. **Spatiotemporal Scrambling Permutation Test**: 500 Monte Carlo coordinate and date permutation realizations yielded **0 exceedances** above the true kilonova candidate score, establishing decisive non-parametric significance **$p = 1.996 \times 10^{-3}$** ($p < 2 \times 10^{-3}$).
+  7. **Kasen Injection-Recovery Horizon**:
+     - $\le 200\,\text{Mpc}$ (O4 BNS detection horizon): **$100.0\%$ total detection efficiency** with 100% prompt Gemini 8m Rapid ToO dispatch.
+     - $260\,\text{Mpc}$: **$96.0\%$** Gemini Rapid ToO, **$4.0\%$** LCOGT 1m screening ($100\%$ total yield).
+     - $320\,\text{Mpc}$: **$84.0\%$** Gemini Rapid ToO, **$16.0\%$** LCOGT 1m screening ($100\%$ total yield).
+  8. **Turnkey Protocol Serialization**: Validated automated LCOGT RequestGroup and Gemini GMOS Phase II payload schemas with 100% compliance.
+* **Diagnostic Figures**:
+  - Phase 1 Multimessenger Triage: [`docs/figures/experiment_r_multimessenger_triage.png`](./figures/experiment_r_multimessenger_triage.png)
+  - Phase 2 Real Stream RLCD Calibration: [`docs/figures/experiment_r_real_stream_rlcd_triage.png`](./figures/experiment_r_real_stream_rlcd_triage.png)
+  - Phase 3 Modal Cloud Broker Stress Test: [`docs/figures/experiment_r_modal_stress_test.png`](./figures/experiment_r_modal_stress_test.png)
+* **Results JSON**:
+  - Phase 1 Baseline & Horizon: [`docs/results/experiment_r_multimessenger_results.json`](./results/experiment_r_multimessenger_results.json)
+  - Phase 2 Real Stream & RLCD Audit: [`docs/results/experiment_r_real_stream_rlcd_results.json`](./results/experiment_r_real_stream_rlcd_results.json)
+  - Phase 3 Modal Stress Test: [`docs/results/experiment_r_modal_stress_test_results.json`](./results/experiment_r_modal_stress_test_results.json)
+* **Model Checkpoints**:
+  - Base Evidential Model: `checkpoints/multimessenger_evidential.pt`
+  - Calibrated RLCD Model: `checkpoints/multimessenger_rlcd_calibrated.pt`
+* **Status**: ran to completion — see the audit note at the top of this section
+
+---
+
+### EXP-2026-S: Cosmic Dawn ($z > 10$) Lyman-Break Discrimination & Lensed Quasar Time-Delay Cosmography
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** No JWST/Euclid/DESI photometry is read; Lyman-break classes separable by construction. **Rerun:** real JADES/CEERS/Euclid photometry.
+* **Scale**: Extragalactic & Cosmological (Gpc)
+* **Execution Command**: `python scripts/explore/benchmark_cosmic_dawn_triage.py`
+* **Findings**:
+  1. **Real Multi-Survey Ingestion**: Ingested 80,000 real survey sources from `data/real_phenomena_dataset.npz` (Galactic Brown Dwarfs and High-$z$ Quasars) paired with JWST NIRCam (F090W–F444W), Euclid DR1 Wide ($I_{\scriptscriptstyle\rm E}, Y, J, H$), and DESI Legacy optical photometry across 10,000 sources (throughput: $6,805\,\text{sources/sec}$).
+  2. **Disentangled RLCD Calibration (TUM 2026)**: Freezing representation trunks and optimizing Dirichlet readout heads under composite loss (Brier + logarithmic doubt scoring + CARL regularizer):
+     - **Binned ECE**: Collapsed from $3.69\%$ down to **$0.90\%$** ($\mathbf{75.5\%}$ relative error reduction).
+     - **Debiased Squared Calibration Error $\hat{E}^2_{\rm db}$ (Stanford NeurIPS 2019)**: Collapsed from $0.001360$ down to **$0.000082$** ($\mathbf{94.0\%}$ error reduction!).
+     - **Rewarding Doubt Score**: Improved from $-0.0376$ to **$-0.0091$**.
+  3. **Brown Dwarf & Dusty Interloper Null Audit (2,000 Contaminants)**:
+     - Injected 1,000 pure Galactic brown dwarfs (methane absorption, point-source morphology $r_{1/2} < 0.045''$, non-zero proper motions) and 1,000 dusty $z \sim 2 - 5$ starbursts (steep mid-IR slope $F277W - F444W > 0.8$):
+     - **False JWST NIRSpec Triggers**: Strictly **$0$ ($0.00\%$)**, completely eliminating brown dwarf leakage into the 10-hour microshutter queue and easily satisfying the pre-registered CRC FDR $\le 1.0\%$ ceiling.
+     - **Purged Brown Dwarfs**: **$1,000 / 1,000$ ($100.0\%$)** successfully identified and purged.
+  4. **Cosmic Dawn Recovery & Cosmography**:
+     - Recovered **$99.6\%$** of true $z > 10$ Cosmic Dawn galaxies (237/238 dispatched to 10h NIRSpec).
+     - Confirmed 275 Quadruply Lensed Quasar systems dispatched to VLT MUSE for $H_0$ time-delay cosmography.
+  5. **Analytical Error Bar Retention**: All decisions retain explicit Dirichlet standard deviation $\sigma_k$, 95% Credible Intervals $[p_k \pm 1.96\sigma_k]$, and conformal prediction sets.
+* **Diagnostic Figure**: [`docs/figures/experiment_s_cosmic_dawn_triage.png`](./figures/experiment_s_cosmic_dawn_triage.png)
+* **Results JSON**: [`docs/results/experiment_s_cosmic_dawn_results.json`](./results/experiment_s_cosmic_dawn_results.json)
+* **Status**: ran to completion — see the audit note at the top of this section
+
+---
+
+### EXP-2026-T: Solar Flare Space Weather Forecasting & Short-Arc Near-Earth Object (NEO) Impact Triage
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** TSS = HSS = 1.0 by generator construction; generator X-class prevalence (6%) contradicts the stated <0.1%. **Rerun:** GOES + HMI SHARP archive, skill vs climatology.
+* **Scale**: Solar & Astrodynamic (Sub-AU)
+* **Execution Command**: `python scripts/explore/benchmark_space_weather_triage.py`
+* **Findings**:
+  1. **SDO/HMI SHARP & Short-Arc Orbital Ingestion**: Modeled vector magnetic field parameters (unsigned flux $\Phi_{\rm tot}$, shear angle $\psi$, vertical current $I_z$, free energy proxy, twist $\alpha$) and short-arc asteroid trajectories ($\Delta t_{\rm arc} < 4\,\text{h}$) across 10,000 simulated events under extreme class imbalance (<0.1% X-class flare hours).
+  2. **Cost-Sensitive Conformal Skill Scores**:
+     - **True Skill Statistic (TSS)**: Achieved **$\text{TSS} = 1.0000$** ($\text{TPR} = 100\%$, $\text{FPR} = 0.00\%$) on Major X-Class storm detection.
+     - **Heidke Skill Score (HSS)**: Achieved **$\text{HSS} = 1.0000$** under severe class imbalance.
+     - **False Alarm Rate (FAR)**: Strictly **$0.00\%$** (well within the pre-registered conformal ceiling $\text{FAR} \le 2.0\%$).
+  3. **Operational Triage Dispatch**:
+     - 74 Major X-class solar flare storms successfully triggered `TRIGGER_GLOBAL_SPACE_WEATHER_ALERT` with zero false grid alarms.
+     - 62 hazardous short-arc asteroids ($\Delta t < 4\,\text{h}$) intercepted by `DISPATCH_PLANETARY_DEFENSE_RADAR` (Goldstone planetary radar recovery).
+  4. **Analytical Dirichlet Error Bar Retention**: All events retain analytical standard deviation $\sigma_k$, 95% Credible Intervals, and epistemic vacuity $u_{\rm epi}$.
+* **Diagnostic Figure**: [`docs/figures/experiment_t_space_weather_triage.png`](./figures/experiment_t_space_weather_triage.png)
+* **Results JSON**: [`docs/results/experiment_t_space_weather_results.json`](./results/experiment_t_space_weather_results.json)
+* **Status**: ran to completion — see the audit note at the top of this section
+
+---
+### EXP-2026-U: Active-Evidential 3D Gravitational Wave Error-Volume Tiling MDP
+
+> **Audit 2026-10-14 — SYNTHETIC ONLY.** n = 100 simulations: 97% vs 89% is within noise; "evidential" does not enter the scoring. **Rerun:** GLADE+ skymaps, ≥1000 sims with CIs.
+* **Scale**: Time-Domain & Multi-Messenger (Mpc)
+* **Execution Command**: `python scripts/transients/benchmark_active_gw_tiling_mdp.py`
+* **Findings**:
+  1. **Dynamic Constrained MDP Formulation**: Modeled autonomous wide-field telescope pointing (DECam 3 deg$^2$) over 100 realistic O4 BNS error volumes (50 - 250 deg$^2$) with Kasen (2017) optical decay ($m(t) = m_0 + 1.1 t$), rapid reddening ($\dot{C}_{g-r} > +0.35\,\text{mag/day}$), and GLADE+ 3D host galaxy stellar mass clustering.
+  2. **Kilonova Detection & Discovery Rate**:
+     - Greedy 2D Ranking (Standard Status Quo): $89.0\%$
+     - Static 3D Mass Ranking: $58.0\%$ (suffers from over-concentration on barren galaxy clusters)
+     - **Active-Evidential RLCD Tiling**: **$97.0\%$** ($\mathbf{+8.0\%}$ gain over status quo, recovering 97/100 kilonovae before optical fading).
+  3. **Dual-Epoch Kasen Reddening Confirmation**:
+     - Greedy 2D: $0.0\%$ (single-band passes fail to establish color rate)
+     - Static 3D Mass: $0.0\%$
+     - **Active-Evidential RLCD**: **$97.0\%$** (100% of discovered candidates receive dual-band $g$ and $r$ passes, confirming Kasen reddening and collapsing epistemic doubt).
+  4. **Rapid Discovery Horizon**:
+     - Mean discovery time was **$3.17\,\text{hours}$** post-merger for Active-Evidential vs $3.73\,\text{hours}$ for Greedy 2D and $4.41\,\text{hours}$ for Static 3D.
+  5. **Observatory Shutter Efficiency**:
+     - Maintained **$84.6\%$ shutter-on-target efficiency**, minimizing excessive telescope slewing overheads.
+* **Diagnostic Figure**: [`docs/figures/experiment_u_active_gw_tiling_benchmark.png`](./figures/experiment_u_active_gw_tiling_benchmark.png)
+* **Results JSON**: [`docs/results/experiment_u_active_gw_tiling_results.json`](./results/experiment_u_active_gw_tiling_results.json)
+* **Status**: ran to completion — see the audit note at the top of this section
+
+---
+
+### EXP-2026-V: Continuous-Flow Foundation AstroJev for Multi-Survey Cross-Calibration
+
+> **Audit 2026-10-14 — NOT DEMONSTRATED.** Zero-point RMSE 0.0365 mag ≈ injected σ 0.035: no better than predicting zero. **Rerun:** real cross-survey photometry with known calibrators.
+* **Scale**: Pan-Chromatic & Cosmological (Multi-Survey)
+* **Scientific Focus**: Simulation-free Conditional Flow Matching (CFM) modeling multi-band spectral energy distributions (SEDs) across Euclid DR1 Wide ($I_{\scriptscriptstyle\rm E}, Y, J, H$), DESI Legacy Surveys DR10 ($g, r, z$), and Rubin LSST DP0 optical bands ($u, g, r, i, z, y$) under heteroscedastic noise.
+* **Noise Model & Sources of Uncertainty**: Cross-instrument zero-point offsets ($\Delta m_{\rm zp} \sim 0.01 - 0.05\,\text{mag}$), aperture losses, missing-band dropout masks, and apparent magnitude-dependent heteroscedastic noise ($\sigma_m \propto 1 / \text{SNR}$).
+* **Decision Engine Architecture**: Continuous normalizing flow paired with Dirichlet evidential readout for autonomous multi-object spectrograph focal-plane allocation (e.g., DESI 5,000-fiber positioners) under Conformal Risk Control ($\alpha_{\rm risk} = 0.02$).
+* **Key Findings & Benchmarks**:
+  - **Zero-Point Recovery**: $\text{RMSE} = \mathbf{0.0365\,\text{mag}}$ ($\text{MAE} = 0.0293\,\text{mag}$), disentangling cross-instrument zero-point drift.
+  - **Calibration & RLCD**: Binned $\text{ECE} = \mathbf{10.00\%}$, Stanford debiased calibration error $\hat{E}^2_{\rm db} = \mathbf{0.012877}$.
+  - **Spectroscopic Target Allocation**:
+    - High-$z$ Quasar Recall ($z > 2.15$, 120-min fibers): **$79.6\%$** (226/284 targets awarded high-priority fibers).
+    - Total Focal-Plane Exposure: **$663.0\,\text{fiber-hours}$**.
+  - **Brown Dwarf & Contaminant Null Audit**:
+    - Evaluated across 261 brown dwarf / artifact interlopers.
+    - Purged **$73.8\%$** (1,476/2,000) of low-priority / contaminant candidates.
+  - **Modal Cloud Scaled Benchmark (40,000 Real Sources on GPU)**:
+    - Run URI: [`https://modal.com/apps/sub-surface/main/ap-UEoEha7P4qFX0P0KTivgGP`](https://modal.com/apps/sub-surface/main/ap-UEoEha7P4qFX0P0KTivgGP)
+    - Throughput: **$254,515\,\text{sources/sec}$** on cloud GPU (6,000 test sources inferred in $0.024\,\text{s}$).
+    - High-$z$ Quasar Recall ($z > 2.15$, 120-min fibers): **$90.4\%$** (689/762 targets awarded fibers).
+    - Total Focal-Plane Exposure Allocated: **$2,982.2\,\text{fiber-hours}$**.
+    - Zero-Point Recovery: $\text{RMSE} = \mathbf{0.0363\,\text{mag}}$ ($\text{MAE} = 0.0290\,\text{mag}$).
+    - Stanford Debiased Error: $\hat{E}^2_{\rm db} = \mathbf{0.010101}$, Binned ECE: **$9.83\%$**.
+* **Artifacts**:
+  - Local Summary JSON: [`docs/results/experiment_v_flow_calibration_results.json`](../docs/results/experiment_v_flow_calibration_results.json)
+  - Modal Scaled JSON: [`docs/results/experiment_v_modal_scaled_results.json`](../docs/results/experiment_v_modal_scaled_results.json)
+  - Publication Figures: [`docs/figures/experiment_v_flow_cross_calibration.png`](../docs/figures/experiment_v_flow_cross_calibration.png), [`docs/figures/experiment_v_modal_scaled_cross_calibration.png`](../docs/figures/experiment_v_modal_scaled_cross_calibration.png)
+  - Engine & Tests: [`celestrium/engines/continuous_flow_astrojev.py`](../celestrium/engines/continuous_flow_astrojev.py), [`tests/test_continuous_flow_astrojev.py`](../tests/test_continuous_flow_astrojev.py), [`tests/test_modal_continuous_flow.py`](../tests/test_modal_continuous_flow.py)
+* **Status**: ran to completion — see the audit note at the top of this section (Modal script: [`scripts/engines/modal_scaled_continuous_flow_cross_calibration.py`](../scripts/engines/modal_scaled_continuous_flow_cross_calibration.py))
+
+---
+
+### EXP-2026-W: Unified Multi-Tracer Anisotropy & Cosmic Dipole Co-Inference
+
+> **Audit 2026-10-14 — WITHDRAWN.** Nested-model violation: H2 max lnL (6803117.9) < H1 (6803174.8), so ΔBIC = +180.7 is a sampler artifact (§3.L.1); the Poisson likelihood ignores clustering. **Rerun:** fix the sampler; clustering-aware covariance.
+* **Scale**: Global Cosmological Horizon (Gpc)
+* **Scientific Focus**: Simultaneous joint cosmological Bayesian MCMC inference of the cosmic bulk velocity $\vec{v}_{\rm bulk}$ across Quaia quasars (1,295,502 sources), CatWISE2020 AGNs (1,360,788 sources), and NVSS 1.4 GHz radio galaxies (208,790 sources) under verified selection function deprojection and Ellis-Baldwin kinematic response coupling ($k_i = 2 + x_i(1+\alpha_i)$).
+* **Noise Model & Sources of Uncertainty**: Tracer-specific clustering dipoles, non-uniform sky coverage masks ($|b| > 30^\circ$, LMC/SMC cone exclusion, hot-pixel 6$\sigma$ artifact clips), and Poisson shot noise across 24,000+ HEALPix pixels per survey.
+* **Decision Engine Architecture**: Vectorized Goodman & Weare (2010) affine-invariant ensemble MCMC (32 walkers) evaluating joint hierarchical Poisson likelihoods across three cosmological hypotheses:
+  - $\mathcal{H}_0$: Strict CMB Kinematic Null ($v_{\rm bulk} = 369.82\,\text{km/s}$ toward $(l,b)=(264.0^\circ, 48.3^\circ)$)
+  - $\mathcal{H}_1$: Unified Cosmological Bulk Flow (shared $\vec{\beta} \in \mathbb{R}^3$)
+  - $\mathcal{H}_2$: Decoupled Independent Dipoles (3 separate dipole vectors)
+* **Key Findings & Benchmarks**:
+  - **Total Real Cosmic Sources**: **2,865,080** across optical (Gaia $\times$ unWISE), mid-IR (WISE W1/W2), and radio (1.4 GHz).
+  - **Inferred Cosmic Bulk Velocity**: $v_{\rm bulk} = \mathbf{664.5 \pm 188.4\,\text{km/s}}$ (95% Credible Interval: $[461.9, 1194.4]\,\text{km/s}$).
+  - **Inferred Apex Direction**: $(l, b) = (\mathbf{289.2^\circ, 50.8^\circ})$, separating by **only $16.4^\circ$** from the CMB dipole apex $(264.0^\circ, 48.3^\circ)$!
+  - **Velocity Ratio**: $v_{\rm bulk} / v_{\rm CMB} = \mathbf{1.80\times}$.
+  - **Model Evidence (Jeffreys Scale)**:
+    - $\Delta\text{AIC}(\mathcal{H}_0 - \mathcal{H}_1) = \mathbf{+34.4}$ (decisive preference for excess bulk flow over strict CMB null).
+    - $\Delta\text{BIC}(\mathcal{H}_0 - \mathcal{H}_1) = \mathbf{+7.0}$ (strong evidence for unified velocity flow).
+    - $\Delta\text{BIC}(\mathcal{H}_2 - \mathcal{H}_1) = \mathbf{+180.7}$ (overwhelmingly rules out decoupled independent systematics in favor of a unified cosmological flow).
+  - **Conformal Sky Risk Control**: Pearson non-conformity residuals bounded at $\tau_{\rm conf} \approx 2.05 - 2.19$ ($\alpha_{\rm risk} = 0.05$, exact 4.99% anomaly bounds).
+* **Artifacts**:
+  - Summary JSON: [`docs/results/experiment_w_multi_tracer_results.json`](../docs/results/experiment_w_multi_tracer_results.json)
+  - Publication Figure: [`docs/figures/experiment_w_multi_tracer_coinference.png`](../docs/figures/experiment_w_multi_tracer_coinference.png)
+  - Engine & Tests: [`celestrium/dipole/multi_tracer.py`](../celestrium/dipole/multi_tracer.py), [`tests/test_multi_tracer.py`](../tests/test_multi_tracer.py)
+* **Status**: ran to completion — see the audit note at the top of this section (Benchmark script: [`scripts/dipole/benchmark_multi_tracer_co_inference.py`](../scripts/dipole/benchmark_multi_tracer_co_inference.py))
+
+---
+
+### EXP-2026-X: Fast Radio Burst Evidential Dispersion Triage & Host Localization
+
+> **Audit 2026-10-14 — NEEDS RERUN.** Labels are heuristic functions of the input features (|b|, DM excess), so the classifier learns the rule; CRC/FDR measure rule agreement. **Rerun:** independent labels (localised FRBs with host z).
+* **Scale**: Extragalactic / Cosmological Radio Transient Sky ($z \sim 0.1 - 2.5$)
+* **Scientific Focus**: Real-time evidential dispersion triage across all 600 real bursts from the CHIME/FRB Public Catalog 1 (The CHIME/FRB Collaboration 2021) to decouple cosmological IGM dispersion from Galactic disk plasma and host galaxy local excess, automating rapid Target-of-Opportunity (ToO) dispatch for 8m optical host spectroscopy (Gemini GMOS) versus robotic radio monitoring arrays.
+* **Noise Model & Sources of Uncertainty**: Multi-path temporal scattering ($\tau_{\rm scat}$ vs. Galactic Bhat et al. 2004 empirical relation), Galactic interstellar electron density model divergence ($\Delta{\rm DM}_{\rm ISM} = |{\rm DM}_{\rm NE2001} - {\rm DM}_{\rm YMW16}|$), observational signal-to-noise ratio (${\rm SNR}$), and distribution-free Conformal Risk Control ($\alpha_{\rm CRC} \le 0.05$).
+* **Decision Engine Architecture**: `FRBEvidentialNet` with Disentangled RLCD (TUM 2026 / Rewarding Doubt): representation trunk is frozen during calibration head training to prevent feature distortion, optimizing Stanford Debiased Squared Calibration Error ($\hat{E}^2_{\rm db}$) under Dirichlet log-likelihood doubt penalties.
+* **Key Findings & Benchmarks**:
+  - **Real Catalog Scale**: 600 real Fast Radio Bursts (506 one-off events, 94 repeating burst components).
+  - **Triage Latency**: Dispatches alerts in **$0.076\,\text{ms/alert}$** ($45.90\,\text{ms}$ total across all 600 bursts), comfortably meeting the $< 1\,\text{s}$ VOEvent broker SLA.
+  - **Disentangled RLCD Gain**: Stanford debiased error dropped from $E^2_{\rm db} = \mathbf{0.217889} \to \mathbf{0.169785}$ (**$22.08\%$ relative error reduction**); plugin ECE reduced from $46.66\%$ to $41.86\%$.
+  - **Conformal Risk Control**: Calibrated $\hat{\lambda}_{\rm CRC} = \mathbf{0.4396}$, rigorously guaranteeing that the false discovery rate of non-cosmological contaminants into 8m spectroscopy queues is bounded below $5.0\%$.
+  - **Autonomous Follow-Up Allocations**:
+    - `COMMIT_8M_HOST_SPECTROSCOPY`: **164 bursts (27.3%)** representing pristine cosmological candidates ($u_{\rm epi} \le 0.58$, $\text{CI}_{95,\rm low} \ge 0.15$, $|b| \ge 10^\circ$), mapping an inferred cosmological redshift horizon $z \in [0.105, 2.247]$ (median $z = 0.627$).
+    - `MONITOR_RADIO_REPETITION`: **190 bursts (31.7%)** routed to robotic radio arrays to search for repeat bursts and periodicity.
+    - `FLAG_LOCAL_PLASMA_CONTAMINANT`: **72 bursts (12.0%)** flagged due to Galactic disk proximity ($|b| < 7^\circ$) or extreme scattering excess.
+    - `REJECT_RFI`: **174 bursts (29.0%)** purged as instrumental artifacts or low dispersion measure excess.
+  - **Zero Naked Predictions**: Every decision outputs explicit analytical Dirichlet standard deviations $\sigma_k$, 95% credible intervals, epistemic vacuity $u_{\rm epi} = K/S$, and conformal prediction sets.
+* **Artifacts**:
+  - Results JSON: [`docs/results/experiment_x_frb_results.json`](../docs/results/experiment_x_frb_results.json)
+  - Diagnostic Figure: [`docs/figures/experiment_x_frb_triage.png`](../docs/figures/experiment_x_frb_triage.png)
+  - Engine & Tests: [`celestrium/transients/frb.py`](../celestrium/transients/frb.py), [`tests/test_frb.py`](../tests/test_frb.py)
+* **Status**: ran to completion — see the audit note at the top of this section (Benchmark script: [`scripts/transients/benchmark_frb_cosmological_triage.py`](../scripts/transients/benchmark_frb_cosmological_triage.py))
+
+### EXP-2026-Y: T Coronae Borealis — Multi-Wavelength Pre-Eruption Status & Accretion Inversion
+
+> **Audit 2026-10-14 — ACTIVE · SOUND.** Real multi-archive data; observational claims sound. Caveats: the UV/X-ray ρ p-value treats autocorrelated pairs as independent; absolute Ṁ is not identified (reported as such). **Rerun:** autocorrelation-aware UV/X test; nebular-continuum inversion.
+* **Scale**: Galactic symbiotic recurrent nova (d = 887 pc; P_orb = 227.6 d; eruptions 1866, 1946; next expected 2026–2030), plus the three sibling symbiotic RNe RS Oph, V3890 Sgr, V745 Sco.
+* **Scientific Focus**: Where is T CrB in its eruption cycle? Same-pipeline multi-wavelength status (optical, Swift UV, hard X-ray, TESS flicker), a 1D viscous-disk inversion of the light curves into mass-transfer and accretion histories, and a curated reading of the ~1270-paper literature (forecast scoreboard, parameter forest, consensus table).
+* **Noise Model & Sources of Uncertainty**: per-band flicker jitter fitted jointly; ellipsoidal modulation removed by an orbital Fourier model; UVOT coincidence-loss/sensitivity-loss corrections; family comparison carries E(B−V) and distance systematics; inversion uncertainties calibrated by 24-run injection–recovery (Laplace curvature was ~15× overconfident); QPO false-alarm rates from Timmer & König red-noise simulations of the fitted bending power law.
+* **Key Findings & Benchmarks**:
+  - **Sep 2026 UV collapse** (unreported in ATels/literature as of 2026-10-13): UVM2 fell from 12.12 to 14.17 mag in 30.4 d (onset 2026.742), back to the pre-2015 quiescent level, while XRT 2–10 keV rose to 0.060 c/s. UV/hard-X anticorrelation over 366 same-day pairs: Spearman ρ = −0.49 (p = 6×10⁻²⁴).
+  - **Disk drain test**: cutting the supply to a viscous disk entirely gives a fastest 2-mag UVM2 fade of 288 d across the viscosity grid (max 30-d fade 0.11 mag) → the 30-d collapse is an inner-disk state change (thermal / truncation / obscuration), not exhaustion. Consistent with Luna+ 2026 (no dust).
+  - **Orbit locking hint**: the 2023 and 2026 UV collapses both start just after the giant-in-front conjunction, 5.04 orbits apart (chance p ≈ 0.08). Pre-registered test in `celestrium/watchlist.py` (`tcrb-uv-recovery`, 5–30 Nov 2026).
+  - **1946 overlay**: aligning on the 2023 dip predicted eruption 2023.96 (falsified); aligning on the Sep 2026 UV collapse gives 2027.38 (window 2027-03..08 in the watchlist).
+  - **Ephemeris & inclination**: P = 227.60 ± 0.06 d; quiescent ellipsoidal half-amplitude 0.182 ± 0.011 mag (173 nights); with TiO temperature sensitivity I ∝ T^15–21, i ≥ 62–76° (q = 0.689) or 59–71° (q = 0.504) — a lower limit (disk dilution).
+  - **TESS flicker** (S24/25 2020 SAP peak, S51 2022, S78 2024): band-limited rms 354/306/347/247 e⁻/s; no significant periodicity (global FAP 0.42–0.70; S51 local p = 0.033 at 5040 s near the disputed ~6000 s signal, not significant after trials).
+  - **Family (Swift UVM2, dereddened)**: in quiescence T CrB is the UV-faint member — RS Oph ×2800 (±0.42 dex), V3890 Sgr ×290, V745 Sco ×2800 (±0.77 dex) brighter; T CrB's 2016–22 high state was ×61 its own quiescence. RS Oph still quiescent Sep 2026 (UVM2 14.85) against Iijima 2025's Oct–Nov 2026 forecast.
+  - **Forecast scoreboard**: 15 published dated forecasts curated with bibcodes, 5 lapsed by 2026-10-13. Recurrence clock alone (survival-conditioned log-normal): median 2028.13, 68% 2027.12–2030.90, P(before 2027) = 0.11.
+  - **Accretion inversion**: 1D viscous disk + moving inner edge, fitted to V/B/U/UVM2 (best t_visc = 0.75 yr; V jitter 0.08 mag). **Robust**: inner-edge history — ~3 R☉ in quiescence 2005–14, 0.75–1 R☉ through the 2016–22 high state, 2.7 R☉ in the 2023 dip and again in Sep 2026 (the current state matches the 2023 dip). **Not identified**: absolute Ṁ. v2 (free edge law) ran to a switch-like index a = 33 with Ṁ pinned at 7×10⁻⁷ M☉/yr; v3 with physical priors (a ~ N(0.8, 0.35), log η ~ N(−1, 0.5)) still lands at 5–8×10⁻⁷ M☉/yr (~100× literature) by pulling the priors 4–6σ — a brightness ↔ truncation degeneracy, most likely from the missing nebular (Balmer) continuum. No accreted mass is quoted; v2 kept in results JSON as `inversion_v2_degenerate`. Next: add a nebular continuum component and an X-ray-luminosity energy budget.
+* **Artifacts**:
+  - Results JSON: [`docs/results/experiment_y_tcrb_results.json`](./results/experiment_y_tcrb_results.json)
+  - Figures: [`docs/figures/tcrb/`](./figures/tcrb/) (orbit GIF, system states, UV/X track, dip onsets, 1945 overlay, TESS flicker, family, inversion, forecast scoreboard, bibliometrics, parameter forest)
+  - Code & tests: [`celestrium/novae/`](../celestrium/novae/) (`tcrb.py`, `inversion.py`, `roche.py`, `literature.py`), [`scripts/novae/`](../scripts/novae/), [`tests/test_tcrb.py`](../tests/test_tcrb.py); observing calendar [`celestrium/watchlist.py`](../celestrium/watchlist.py)
+* **Status**: **ACTIVE** — awaiting the Nov 2026 UV-recovery test and the eruption.
+
+---
+
+## 4. Modal Cloud Compute Spend & Balance Tracking
+
+* **Monthly Compute Allocation**: ~$30.00 USD
+* **Initial Available Balance**: $22.25 USD
+* **Spend in Current Session**:
+  - Scaled H100 SXM5 Synthetic Run (500k sources): **$0.0574**
+  - Cloud Decision Service Deployment: **$0.0050**
+  - Distributed Monte Carlo Engine (200 realizations): **$0.0120**
+  - Live Triage & Health Probes: **$0.0020**
+  - Real-Data H100 Foundation Training (EXP-2026-F, 80k real sources): **$0.0061**
+  - Multi-Messenger Broker Stress Test (EXP-2026-R Phase 3, 50k alerts): **$0.0075**
+  - Scaled Continuous-Flow Cross-Calibration (EXP-2026-V, 40k sources): **$0.0070**
+  - **Total Session Spend**: **~$0.0970 USD**
+* **Remaining Active Balance**: **~$22.14 USD**
+

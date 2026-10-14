@@ -8,11 +8,11 @@ Covers:
 import numpy as np
 import pytest
 
-from celestrium.astrojev import (
+from celestrium.engines.astrojev import (
     dirichlet_bald_information_gain,
     conformal_risk_control_calibrate,
 )
-from celestrium.followup import (
+from celestrium.transients.followup import (
     TelescopeQueueMDP,
     triage_sources,
 )

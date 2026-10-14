@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from celestrium.frb import (
+from celestrium.transients.frb import (
     FRBBurstRecord,
     FRBEvidentialNet,
     FRBTriageEngine,
@@ -20,7 +20,7 @@ from celestrium.frb import (
     RealCHIMEFRBStreamer,
     train_frb_model,
 )
-from celestrium.data_streamer import CHIMEFRBStreamer
+from celestrium.engines.data_streamer import CHIMEFRBStreamer
 
 
 def test_bhat_scattering_and_macquart_redshift():

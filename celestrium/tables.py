@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 from astropy.table import Table
 
-from . import candidates, config
+from celestrium import candidates, config
 
 # RA/Dec column-name aliases seen across archives (Gaia, VizieR/CDS, ALeRCE,
 # hand-built tables). Shared so crossmatch (tui/app.py), the watch packet's
@@ -40,13 +40,13 @@ def load_table_ref(ref: str, archives: Optional[dict] = None) -> Tuple[Table, st
 
     recipe = config.SAMPLE_RECIPES.get(ref)
     if recipe is not None:
-        from .core.kernel import Kernel
+        from celestrium.core.kernel import Kernel
         k = Kernel()
         art = k.run("archive.sample", {"recipe": ref})
         return k.load(art.id), f"sample recipe {ref!r} ({recipe.archive})"
 
     try:
-        from .core.kernel import Kernel
+        from celestrium.core.kernel import Kernel
         k = Kernel()
         return k.load(ref), f"cached pull {ref}"
     except Exception:

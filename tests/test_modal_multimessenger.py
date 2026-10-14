@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import torch
 
-from scripts.modal_stress_test_multimessenger_rlcd import (
+from scripts.transients.modal_stress_test_multimessenger_rlcd import (
     generate_stress_cohort,
     run_broker_stress_test,
     sanitize_payload,

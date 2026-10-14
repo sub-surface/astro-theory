@@ -1,7 +1,7 @@
 import pytest
 from astropy.table import Table
 
-from celestrium import spectra
+from celestrium.archives import spectra
 
 
 def test_render_spectrum_table_writes_artifact(tmp_path):

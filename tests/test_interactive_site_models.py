@@ -404,29 +404,6 @@ def test_wrangler_subsurface_route_configuration():
     assert 'directory = "./site/dist"' in content
 
 
-def test_astronomy_work_index_coverage():
-    """Verify astronomy-work-index.md enumerates all sub-fields and open research gaps."""
-    work_index = REPO_ROOT / "docs" / "research" / "astronomy-work-index.md"
-    assert work_index.exists(), "astronomy-work-index.md missing"
-    content = work_index.read_text(encoding="utf-8")
-
-    # Physical scales
-    for scale in ["Solar and Planetary", "Stellar and Galactic", "Extragalactic", "Cosmology"]:
-        assert scale in content, f"Missing scale branch: {scale}"
-
-    # Messengers
-    for messenger in ["Radio", "Optical", "High-Energy", "Gravitational Wave", "Neutrino"]:
-        assert messenger in content, f"Missing messenger branch: {messenger}"
-
-    # Experiments A through W
-    for exp_id in ["EXP-B", "EXP-I", "EXP-J", "EXP-L", "EXP-U", "EXP-W"]:
-        assert exp_id in content, f"Missing experiment tracking: {exp_id}"
-
-    # Gaps
-    for gap in ["21 cm", "Fast Radio Bursts", "Sub-Millimeter", "Wide Binaries", "Pulsar Timing", "Astrobiology"]:
-        assert gap.lower() in content.lower(), f"Missing gap identification: {gap}"
-
-
 def test_evidential_engine_extreme_edge_cases():
     """Stress test evidential Dirichlet calculations under extreme input values."""
     extreme_cases = [

@@ -1,6 +1,6 @@
 from astropy.table import Table
 
-from celestrium import mast
+from celestrium.archives import mast
 
 
 def test_fetch_uv_optical_observations_filters_mast_collections(monkeypatch):

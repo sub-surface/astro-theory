@@ -12,12 +12,12 @@ The design rule that replaces the old "one brain, two surfaces" convention:
 **a capability is a single object**, so no surface can hardcode a capability
 list and drift from another. Parity is structural, not maintained.
 """
-from . import capability                     # the module, not the decorator
-from .artifact import Artifact, KINDS, artifact_id, canonical_text, jsonable
-from .capability import CAPS, Capability, Param, all_caps, for_target, wings
-from .events import Event
-from .kernel import Context, Kernel, Payload
-from .ledger import Ledger
+from celestrium.core import capability                     # the module, not the decorator
+from celestrium.core.artifact import Artifact, KINDS, artifact_id, canonical_text, jsonable
+from celestrium.core.capability import CAPS, Capability, Param, all_caps, for_target, wings
+from celestrium.core.events import Event
+from celestrium.core.kernel import Context, Kernel, Payload
+from celestrium.core.ledger import Ledger
 
 # NOTE: `capability` above is deliberately the *submodule*. Re-exporting the
 # decorator of the same name here would shadow it, so

@@ -1,7 +1,7 @@
 """The theory wing — literature in, effort maps out."""
 from __future__ import annotations
 
-from ..core.capability import Param, capability
+from celestrium.core.capability import Param, capability
 
 
 @capability(
@@ -10,7 +10,7 @@ from ..core.capability import Param, capability
     summary="Literature search via ADS/SciX.",
 )
 def lit_papers(ctx, query, rows):
-    from .. import ads
+    from celestrium.archives import ads
     ctx.progress(f"ADS: {query}")
     docs = ads.search(query, rows=rows)
     payload = {"query": query, "docs": docs}
@@ -24,7 +24,7 @@ def lit_papers(ctx, query, rows):
     summary="Append BibTeX for these bibcodes to refs.bib (deduped).",
 )
 def lit_cite(ctx, bibcodes):
-    from .. import ads
+    from celestrium.archives import ads
     codes = [c.strip() for c in bibcodes.replace(" ", ",").split(",") if c.strip()]
     if not codes:
         raise ValueError("lit.cite needs at least one bibcode")
@@ -40,7 +40,7 @@ def lit_cite(ctx, bibcodes):
     summary="Field-effort census: where a field actually spends its effort.",
 )
 def lit_census(ctx, topics):
-    from .. import census
+    from celestrium.archives import census
     ctx.progress("tallying arXiv topic volumes")
     table = census.tally(topics or None)
     return ctx.table(table, label="field-effort census")
@@ -53,7 +53,7 @@ def lit_census(ctx, topics):
     tags=("target",),
 )
 def lit_bibliography(ctx, target, rows):
-    from .. import resolvers
+    from celestrium.archives import resolvers
     docs = resolvers.bibliography(target, limit=rows)
     listed = list(docs) if docs is not None else []
     return ctx.data({"target": target, "docs": [dict(d) if hasattr(d, "keys") else str(d)

@@ -13,7 +13,7 @@ import math
 import numpy as np
 import pytest
 
-from celestrium.multi_tracer import (
+from celestrium.dipole.multi_tracer import (
     SPEED_OF_LIGHT_KMS,
     V_CMB_KMS,
     BETA_CMB_MAGNITUDE,

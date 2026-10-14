@@ -1,0 +1,773 @@
+{
+  "data_summary": {
+    "aavso_nights": {
+      "V": 307
+    },
+    "aavso_raw_obs": 632,
+    "uvot_nights": {
+      "UVM2": 192,
+      "UVW1": 118,
+      "UVW2": 192
+    },
+    "uvot_wing_ratio": {
+      "UVM2": {
+        "ratio": 0.08778150304184076,
+        "sd": 0.009076787263437486,
+        "n_cal": 66
+      },
+      "UVW1": {
+        "ratio": 0.09456308850347347,
+        "sd": 0.01563096051783237,
+        "n_cal": 38
+      },
+      "UVW2": {
+        "ratio": 0.10615893855828173,
+        "sd": 0.02130298815235559,
+        "n_cal": 66
+      }
+    },
+    "xrt_obs": {
+      "Total": 416,
+      "Soft": 27,
+      "Medium": 11,
+      "Hard": 422
+    },
+    "gaia_epochs": {
+      "G": 113,
+      "BP": 105,
+      "RP": 105
+    }
+  },
+  "uv_dips": {
+    "uvm2_threshold_mag": 13.0,
+    "onset_2023_yr": 2023.6007227214584,
+    "onset_2026_yr": 2026.7420908616198,
+    "last_bright_2026_yr": 2026.6588812827003,
+    "uvm2_2026_last_bright_mag": 12.119129834530193,
+    "uvm2_2026_latest_mag": 14.165454248171999,
+    "uvm2_2026_latest_date_yr": 2026.7420908616198
+  },
+  "uv_xray_track": {
+    "n_pairs": 366,
+    "spearman_rho": -0.494531600914479,
+    "spearman_p": 5.695658060379001e-24,
+    "latest": [
+      {
+        "yr": 2026.7420782772333,
+        "uvm2_flux": 1.7777676933608787e-14,
+        "hard_rate": 0.059991
+      }
+    ],
+    "median_2023_dip": {
+      "uvm2_flux": 7.238157308247606e-14,
+      "hard_rate": 0.0770859
+    },
+    "median_2025_26_high": {
+      "uvm2_flux": 2.4100731247821983e-13,
+      "hard_rate": 0.026581399999999998
+    }
+  },
+  "forecast": {
+    "recurrence": {
+      "p_survive_to_now": 0.3453865,
+      "median": 2028.130886501968,
+      "q16": 2027.1195342365554,
+      "q84": 2030.9032745761403,
+      "p_before_2027.00": 0.10642859521145152,
+      "p_before_2027.78": 0.4033235230676358,
+      "p_before_2030.00": 0.7801347186412902
+    },
+    "intervals_yr": [
+      78.44490075290896,
+      79.74537987679672,
+      81.44428571428573
+    ]
+  },
+  "viscous_drain_test": {
+    "supply_shutoff_from_mdot": 2e-08,
+    "grid": [
+      {
+        "t_visc_out_yr": 0.75,
+        "n_exp": 0.5,
+        "days_uvm2_fade_2mag": 288,
+        "days_mdot_drop_10x": 257,
+        "uvm2_fade_after_30d_mag": 0.10815128752499678
+      },
+      {
+        "t_visc_out_yr": 0.75,
+        "n_exp": 1.0,
+        "days_uvm2_fade_2mag": 416,
+        "days_mdot_drop_10x": 372,
+        "uvm2_fade_after_30d_mag": 0.027062837932823332
+      },
+      {
+        "t_visc_out_yr": 0.75,
+        "n_exp": 1.5,
+        "days_uvm2_fade_2mag": 747,
+        "days_mdot_drop_10x": 676,
+        "uvm2_fade_after_30d_mag": 0.00031804117047721966
+      },
+      {
+        "t_visc_out_yr": 1.5,
+        "n_exp": 0.5,
+        "days_uvm2_fade_2mag": 574,
+        "days_mdot_drop_10x": 512,
+        "uvm2_fade_after_30d_mag": 0.022674909614932712
+      },
+      {
+        "t_visc_out_yr": 1.5,
+        "n_exp": 1.0,
+        "days_uvm2_fade_2mag": 829,
+        "days_mdot_drop_10x": 742,
+        "uvm2_fade_after_30d_mag": 0.0017853404970881012
+      },
+      {
+        "t_visc_out_yr": 1.5,
+        "n_exp": 1.5,
+        "days_uvm2_fade_2mag": 1492,
+        "days_mdot_drop_10x": 1351,
+        "uvm2_fade_after_30d_mag": 1.1771124437856602e-06
+      },
+      {
+        "t_visc_out_yr": 3.0,
+        "n_exp": 0.5,
+        "days_uvm2_fade_2mag": 1146,
+        "days_mdot_drop_10x": 1022,
+        "uvm2_fade_after_30d_mag": 0.001956803834703946
+      },
+      {
+        "t_visc_out_yr": 3.0,
+        "n_exp": 1.0,
+        "days_uvm2_fade_2mag": 1656,
+        "days_mdot_drop_10x": 1482,
+        "uvm2_fade_after_30d_mag": 2.0075699650304177e-05
+      },
+      {
+        "t_visc_out_yr": 3.0,
+        "n_exp": 1.5,
+        "days_uvm2_fade_2mag": 2983,
+        "days_mdot_drop_10x": 2700,
+        "uvm2_fade_after_30d_mag": 2.8346972425420964e-10
+      },
+      {
+        "t_visc_out_yr": 6.0,
+        "n_exp": 0.5,
+        "days_uvm2_fade_2mag": 2290,
+        "days_mdot_drop_10x": 2042,
+        "uvm2_fade_after_30d_mag": 3.717369636712078e-05
+      },
+      {
+        "t_visc_out_yr": 6.0,
+        "n_exp": 1.0,
+        "days_uvm2_fade_2mag": 3311,
+        "days_mdot_drop_10x": 2963,
+        "uvm2_fade_after_30d_mag": 1.4481667043527825e-08
+      },
+      {
+        "t_visc_out_yr": 6.0,
+        "n_exp": 1.5,
+        "days_uvm2_fade_2mag": null,
+        "days_mdot_drop_10x": null,
+        "uvm2_fade_after_30d_mag": 3.0135233329790266e-15
+      }
+    ],
+    "fastest_2mag_fade_days": 288,
+    "max_fade_in_30d_mag": 0.10815128752499678,
+    "observed_2026_fade_mag": 2.0463244136418055,
+    "observed_2026_interval_days": 30.392298700319145
+  },
+  "dips": {
+    "1935_46_visual_nights_used": 307,
+    "1935_46_visual_nights_rejected_too_bright": 26,
+    "1945_baseline_vis_mag": 9.8,
+    "1945_dip_onset_yr": 1945.4722792607777,
+    "1945_dip_onset_years_before_eruption": 0.6344969199205934,
+    "1945_dip_onset_0.15mag_years_before_eruption": 0.6344969199205934,
+    "1945_dip_bin_halfwidth_yr": 0.12320328542094455,
+    "1945_dip_depth_vis_mag": 0.6999999999999993,
+    "1945_dip_minimum_years_before_eruption": 0.6344969199205934,
+    "1945_last_bin_before_eruption_mag": 10.0,
+    "2023_dip_depth_V": 0.5212499999999984
+  },
+  "inversion": {
+    "best_viscosity": {
+      "t_visc_out_yr": 0.75,
+      "n_exp": 1.0
+    },
+    "grid_neg_log_post": {
+      "0.75_1.0": -4082.5575808629947,
+      "1.5_1.0": -3981.732666504385,
+      "3.0_1.0": -3853.7558868196916,
+      "1.5_0.5": -4052.3753821358355
+    },
+    "accreted_mass_msun": {
+      "quiescence_2005_2015.0": {
+        "map": 5.576607517207672e-06,
+        "lo68": 1.1300799191331012e-06,
+        "hi68": 2.7518895676717513e-05,
+        "sd_dex": 0.6932609220019138,
+        "calibrated": {
+          "q2.5": 5.69670199858352e-06,
+          "q16": 5.966246319676659e-06,
+          "q50": 7.023992281648432e-06,
+          "q84": 1.2597945023228152e-05,
+          "q97.5": 1.5140903704976924e-05,
+          "n_injections": 24
+        }
+      },
+      "high_state_2015.0_2023.3": {
+        "map": 6.657317901937873e-06,
+        "lo68": 2.012829001716712e-06,
+        "hi68": 2.20187018418667e-05,
+        "sd_dex": 0.5194924146731561,
+        "calibrated": {
+          "q2.5": 6.734106108066504e-06,
+          "q16": 7.576106895411884e-06,
+          "q50": 9.620867149206393e-06,
+          "q84": 1.7784126495966694e-05,
+          "q97.5": 2.3844739037530663e-05,
+          "n_injections": 24
+        }
+      },
+      "post_2023.3_2026.7": {
+        "map": 2.0919173314285653e-06,
+        "lo68": 5.28054364826971e-07,
+        "hi68": 8.287249217161861e-06,
+        "sd_dex": 0.5978658812539802,
+        "calibrated": {
+          "q2.5": 2.165504028863898e-06,
+          "q16": 2.4088709944364138e-06,
+          "q50": 2.9903886971659593e-06,
+          "q84": 5.53088340016209e-06,
+          "q97.5": 7.415688478406048e-06,
+          "n_injections": 24
+        }
+      },
+      "total_2005_2026.7": {
+        "map": 1.434399303022843e-05,
+        "lo68": 3.7667196113319153e-06,
+        "hi68": 5.4623162136161344e-05,
+        "sd_dex": 0.5807067723196722,
+        "calibrated": {
+          "q2.5": 1.4600709584792397e-05,
+          "q16": 1.6324076549217162e-05,
+          "q50": 2.0596541737558933e-05,
+          "q84": 3.814721463699264e-05,
+          "q97.5": 5.110388504552465e-05,
+          "n_injections": 24
+        }
+      },
+      "mdot_q": {
+        "map": 5.103280321097642e-07,
+        "lo68": 2.6371290789048187e-12,
+        "hi68": 0.09875690289122327,
+        "sd_dex": 5.286718036987154,
+        "calibrated": {
+          "q2.5": 3.64168444381343e-07,
+          "q16": 5.082343463596395e-07,
+          "q50": 7.6686507883828e-07,
+          "q84": 1.0846560904200383e-06,
+          "q97.5": 1.5236161825096768e-06,
+          "n_injections": 24
+        }
+      }
+    },
+    "viscosity_systematic": {
+      "quiescence_2005_2015.0": {
+        "min": 5.576607517207672e-06,
+        "max": 6.873740318837202e-06
+      },
+      "high_state_2015.0_2023.3": {
+        "min": 6.657317901937873e-06,
+        "max": 7.5981405703692764e-06
+      },
+      "post_2023.3_2026.7": {
+        "min": 2.0919173314285653e-06,
+        "max": 2.5134192093659505e-06
+      },
+      "total_2005_2026.7": {
+        "min": 1.434399303022843e-05,
+        "max": 1.7007440060843073e-05
+      },
+      "mdot_q": {
+        "min": 5.103280321097642e-07,
+        "max": 6.576146945386996e-07
+      }
+    },
+    "xray_anchored": {
+      "accreted_mass_msun": {
+        "quiescence_2005_2015.0": 5.378086347873761e-06,
+        "high_state_2015.0_2023.3": 6.447269950077045e-06,
+        "post_2023.3_2026.7": 2.017935409814189e-06,
+        "total_2005_2026.7": 1.3860839932626681e-05,
+        "mdot_q": 5.084826317615277e-07
+      },
+      "neg_log_post": -4074.2068242474875,
+      "mdot_acc_now": 5.196841093959978e-07,
+      "mdot_acc_peak": 9.781017155730794e-07
+    },
+    "calibration_inflation": 14.86393218973252,
+    "jitter_mag": {
+      "V": 0.07830920265107373,
+      "B": 0.1195482948316683,
+      "U": 0.40187470666823477,
+      "UVM2": 0.6620509751624646
+    },
+    "eta": 0.0005813499912247035,
+    "giant_v": 10.098508988896024,
+    "giant_v_at_max_app": 10.104382017779397,
+    "mdot_c_truncation": 5.156990955763032e-06,
+    "truncation_index_a": 3.0223575122833504,
+    "model": "v3: giant prior + truncation + physical priors (a, eta)",
+    "mdot_q_msun_yr": 5.103280321097642e-07,
+    "mdot_acc_peak": 1.0047304110773527e-06,
+    "mdot_acc_peak_year": 2016.2785763175907,
+    "mdot_acc_now": 5.395279681081457e-07,
+    "mdot_acc_now_68": [
+      1.1928605317852816e-07,
+      2.440272107379118e-06
+    ]
+  },
+  "dip_overlay": {
+    "baseline_visual_1942_44.8": 9.8,
+    "baseline_V_2021_23": 9.860929362060187,
+    "dip_onset_2023_V_yr": 2023.3285711868593,
+    "uv_collapse_2026_yr": 2026.7420908616198,
+    "lead_1945_yr": 0.6344969199205934,
+    "implied_eruption_alignment_A": 2023.96306810678,
+    "implied_eruption_alignment_B": 2027.3765877815404
+  },
+  "literature": {
+    "n_focused": 436,
+    "n_fulltext": 1273,
+    "n_refereed": 213,
+    "n_circulars": 59,
+    "papers_2023_2026": 132,
+    "top_cited": [
+      {
+        "bibcode": "1999ApJ...522..487H",
+        "title": "A Wide Symbiotic Channel to Type IA Supernovae",
+        "cites": 391
+      },
+      {
+        "bibcode": "1971AcA....21....1P",
+        "title": "Evolution of Single Stars. IV. Helium Stars",
+        "cites": 287
+      },
+      {
+        "bibcode": "1964ApJ...139..457K",
+        "title": "Binary Stars among Cataclysmic Variables. III. Ten Old Novae.",
+        "cites": 258
+      },
+      {
+        "bibcode": "2000AJ....119.1375F",
+        "title": "Infrared Spectroscopy of Symbiotic Stars. I. Orbits for Well-Known S-Type Systems",
+        "cites": 211
+      },
+      {
+        "bibcode": "1981MNRAS.197...31B",
+        "title": "The distances of cataclysmic variables.",
+        "cites": 204
+      },
+      {
+        "bibcode": "2001ApJ...558..323H",
+        "title": "Recurrent Novae as a Progenitor System of Type Ia Supernovae. I. RS Ophiuchi Subclass: Systems with a Red Giant Companion",
+        "cites": 199
+      },
+      {
+        "bibcode": "1987ApJ...314..653W",
+        "title": "The Nature of the Recurrent Novae",
+        "cites": 198
+      },
+      {
+        "bibcode": "2008ASSL..352..233W",
+        "title": "Common Envelope Evolution Redux",
+        "cites": 126
+      },
+      {
+        "bibcode": "1986AJ.....91..125K",
+        "title": "Spectroscopic orbits for symbiotic stars. I. The recurrent nova T Coronae Borealis.",
+        "cites": 120
+      },
+      {
+        "bibcode": "2001MNRAS.326..553S",
+        "title": "A search for rapid photometric variability in symbiotic binaries",
+        "cites": 113
+      }
+    ]
+  },
+  "forecast_scoreboard": {
+    "n_published": 15,
+    "n_lapsed": 5,
+    "first_forecast": "Knight & Lindley 1946: 2026-27 (Shears 2024)"
+  },
+  "tess_flicker": {
+    "24": {
+      "state": "2020 SAP peak",
+      "btjd": [
+        1955.799179725818,
+        1982.2842593542268
+      ],
+      "median_flux_e_s": 132980.84375,
+      "flicker_rms_10min_6h_e_s": 354.358902124139,
+      "flicker_rms_frac": 0.002664736454750754,
+      "break_freq_hz": 4.4139390536546895e-15,
+      "break_timescale_min": 3775916809015.9434,
+      "high_freq_slope": 1.4227249361231487,
+      "max_peak_period_s": 3221.174923060946,
+      "max_peak_ratio": 8.516626014566663,
+      "fap_global_max_peak": 0.5166666666666667,
+      "peak_ratio_5000_7500s": 6.5272335626250335,
+      "fap_5000_7500s": 0.2
+    },
+    "25": {
+      "state": "2020 SAP peak",
+      "btjd": [
+        1983.638416526112,
+        2009.3087843247304
+      ],
+      "median_flux_e_s": 117688.2890625,
+      "flicker_rms_10min_6h_e_s": 305.7100484124826,
+      "flicker_rms_frac": 0.002597625055540837,
+      "break_freq_hz": 8.208267327529522e-16,
+      "break_timescale_min": 20304731804687.586,
+      "high_freq_slope": 1.3155527009642933,
+      "max_peak_period_s": 3500.2368039068233,
+      "max_peak_ratio": 8.048051949258308,
+      "fap_global_max_peak": 0.5,
+      "peak_ratio_5000_7500s": 6.856270484809438,
+      "fap_5000_7500s": 0.15
+    },
+    "51": {
+      "state": "2022 late SAP",
+      "btjd": [
+        2698.8019298591753,
+        2717.5381192009486
+      ],
+      "median_flux_e_s": 116126.86328125,
+      "flicker_rms_10min_6h_e_s": 346.9430976698159,
+      "flicker_rms_frac": 0.002987621363969398,
+      "break_freq_hz": 1.233957065520401e-15,
+      "break_timescale_min": 13506682795027.213,
+      "high_freq_slope": 1.3109900682593283,
+      "max_peak_period_s": 5039.310303736097,
+      "max_peak_ratio": 7.97071628299746,
+      "fap_global_max_peak": 0.4166666666666667,
+      "peak_ratio_5000_7500s": 7.97071628299746,
+      "fap_5000_7500s": 0.03333333333333333
+    },
+    "78": {
+      "state": "2024 May post-dip recovery",
+      "btjd": [
+        3434.2859193381387,
+        3452.3261738079054
+      ],
+      "median_flux_e_s": 131461.234375,
+      "flicker_rms_10min_6h_e_s": 246.60252918404095,
+      "flicker_rms_frac": 0.001875857399000183,
+      "break_freq_hz": 1.1303885242885799e-05,
+      "break_timescale_min": 1474.419308808534,
+      "high_freq_slope": 1.1710915008747493,
+      "max_peak_period_s": 903.8713597250213,
+      "max_peak_ratio": 7.438209764955782,
+      "fap_global_max_peak": 0.7,
+      "peak_ratio_5000_7500s": 6.142510782151783,
+      "fap_5000_7500s": 0.36666666666666664
+    }
+  },
+  "ephemeris": {
+    "incl_from_ellipsoidal": {
+      "quiescent_amp_half_period_mag": 0.18203083545195542,
+      "quiescent_amp_sd": 0.010946980874792903,
+      "n_quiescent_nights": 173,
+      "lo": 62.13627908321944,
+      "hi": 75.9220279988027,
+      "by_model": {
+        "Munari+25 q=0.689 blackbody": {
+          "i_best": NaN,
+          "lo": NaN,
+          "hi": NaN,
+          "model_amp_at_61": 0.11911638711152138,
+          "model_amp_max": 0.16403947459665208
+        },
+        "Munari+25 q=0.689 k15": {
+          "i_best": 71.61837531087322,
+          "lo": 67.94366148542191,
+          "hi": 75.9220279988027,
+          "model_amp_at_61": 0.1474804998300873,
+          "model_amp_max": 0.2098408324301122
+        },
+        "Munari+25 q=0.689 k18": {
+          "i_best": 67.57382737091591,
+          "lo": 64.5761511961692,
+          "hi": 70.83913294964903,
+          "model_amp_at_61": 0.15727903967110263,
+          "model_amp_max": 0.2265127008396386
+        },
+        "Munari+25 q=0.689 k21": {
+          "i_best": 64.76220172081604,
+          "lo": 62.13627908321944,
+          "hi": 67.51001786101864,
+          "model_amp_at_61": 0.16623946682567545,
+          "model_amp_max": 0.2422598050507866
+        },
+        "Hinkle+25 q=0.504 blackbody": {
+          "i_best": NaN,
+          "lo": 81.2592956484235,
+          "hi": NaN,
+          "model_amp_at_61": 0.12756408342458608,
+          "model_amp_max": 0.1762173070314164
+        },
+        "Hinkle+25 q=0.504 k15": {
+          "i_best": 67.50299898754804,
+          "lo": 64.45611459443799,
+          "hi": 70.8462025465592,
+          "model_amp_at_61": 0.15796876058221646,
+          "model_amp_max": 0.22554910138800474
+        },
+        "Hinkle+25 q=0.504 k18": {
+          "i_best": 64.24460185175741,
+          "lo": 61.61480876448092,
+          "hi": 66.99060421351508,
+          "model_amp_at_61": 0.16847832871306237,
+          "model_amp_max": 0.24352681577760565
+        },
+        "Hinkle+25 q=0.504 k21": {
+          "i_best": 61.85634994697699,
+          "lo": 59.48926111944633,
+          "hi": 64.27718956337696,
+          "model_amp_at_61": 0.17808899554822,
+          "model_amp_max": 0.26051203740233136
+        }
+      },
+      "note": "lower limit on i: residual disk/hot-spot light dilutes the amplitude; blackbody intensities cannot reach the observed amplitude at any i"
+    },
+    "period_d": 227.6,
+    "period_sd_d": 0.06358112927591206,
+    "period_map_d": 227.6,
+    "t_deeper_min_jd": 2461061.17364,
+    "amp_half_period_mag": 0.14902241065204935,
+    "amp_period_mag": 0.038877119515206233,
+    "phase_of_deeper_min_in_lit_light_min_ephem": 0.9891172929029888,
+    "n_nights": 1308,
+    "rms_resid": 0.08178095391358552
+  },
+  "srn_family": {
+    "T CrB": {
+      "n_uv_quiescent": 192,
+      "uvm2_abs_median_quiescent": 1.0296719467417423,
+      "uvm2_abs_sys_mag": 0.18954620329292096,
+      "cycle_fraction_range": [
+        0.7760851465011115,
+        1.0079011357702483
+      ],
+      "xrt_hard_rate_median_quiescent": 0.0312590700366894,
+      "xrt_hard_lum_proxy_median": 0.024593667273696086
+    },
+    "RS Oph": {
+      "n_uv_quiescent": 14,
+      "uvm2_abs_median_quiescent": -4.152344590747757,
+      "uvm2_abs_sys_mag": 1.0424997729403336,
+      "cycle_fraction_range": [
+        0.1747312289620974,
+        0.45797512829996223
+      ],
+      "xrt_hard_rate_median_quiescent": 0.0036394305709894,
+      "xrt_hard_lum_proxy_median": 0.02613984613307427
+    },
+    "V3890 Sgr": {
+      "n_uv_quiescent": 1,
+      "uvm2_abs_median_quiescent": -1.6850619518173122,
+      "uvm2_abs_sys_mag": 1.1703517941619381,
+      "cycle_fraction_range": [
+        1.0128901911953347,
+        1.0128901911953347
+      ],
+      "xrt_hard_rate_median_quiescent": null,
+      "xrt_hard_lum_proxy_median": null
+    },
+    "V745 Sco": {
+      "n_uv_quiescent": 2,
+      "uvm2_abs_median_quiescent": -4.15209170693624,
+      "uvm2_abs_sys_mag": 1.9354646269302025,
+      "cycle_fraction_range": [
+        0.36173358344066403,
+        0.4012285921219791
+      ],
+      "xrt_hard_rate_median_quiescent": null,
+      "xrt_hard_lum_proxy_median": null
+    },
+    "uv_luminosity_vs_tcrb_quiescence": {
+      "T CrB quiescence 2005-14": {
+        "log10_ratio": -0.0,
+        "sys_dex": 0.0758184813171684,
+        "abs_mag": 4.475042018901547
+      },
+      "T CrB high state 2016-22": {
+        "log10_ratio": 1.7831851006392547,
+        "sys_dex": 0.0758184813171684,
+        "abs_mag": 0.01707926730341036
+      },
+      "T CrB 2026 Sep 29": {
+        "log10_ratio": 0.2688823479552717,
+        "sys_dex": 0.0758184813171684,
+        "abs_mag": 3.802836149013368
+      },
+      "RS Oph quiescence": {
+        "log10_ratio": 3.4509546438597214,
+        "sys_dex": 0.41699990917613344,
+        "abs_mag": -4.152344590747757
+      },
+      "V3890 Sgr quiescence": {
+        "log10_ratio": 2.464041588287544,
+        "sys_dex": 0.4681407176647753,
+        "abs_mag": -1.6850619518173122
+      },
+      "V745 Sco quiescence": {
+        "log10_ratio": 3.450853490335115,
+        "sys_dex": 0.774185850772081,
+        "abs_mag": -4.15209170693624
+      }
+    }
+  },
+  "inversion_v2_degenerate": {
+    "best_viscosity": {
+      "t_visc_out_yr": 1.5,
+      "n_exp": 1.0
+    },
+    "grid_neg_log_post": {
+      "1.5_1.0": -4082.3412182441375,
+      "3.0_1.0": -3928.137269456507,
+      "6.0_1.0": -3761.664936824858,
+      "3.0_0.5": -4037.698056249775
+    },
+    "accreted_mass_msun": {
+      "quiescence_2005_2015.0": {
+        "map": 7.193710548513242e-06,
+        "lo68": 5.412216605555212e-06,
+        "hi68": 9.561603909694574e-06,
+        "sd_dex": 0.12357778980592649,
+        "calibrated": {
+          "q2.5": 7.348629992785742e-06,
+          "q16": 7.696336697974574e-06,
+          "q50": 9.060807527381926e-06,
+          "q84": 1.6251093469200184e-05,
+          "q97.5": 1.953145857233538e-05,
+          "n_injections": 24
+        }
+      },
+      "high_state_2015.0_2023.3": {
+        "map": 5.841475130975355e-06,
+        "lo68": 4.485521276187321e-06,
+        "hi68": 7.6073280238250996e-06,
+        "sd_dex": 0.11470961109618955,
+        "calibrated": {
+          "q2.5": 5.908853075525973e-06,
+          "q16": 6.6476681256692104e-06,
+          "q50": 8.441846554172766e-06,
+          "q84": 1.5604712615882348e-05,
+          "q97.5": 2.09226075942366e-05,
+          "n_injections": 24
+        }
+      },
+      "post_2023.3_2026.7": {
+        "map": 2.3089109420121534e-06,
+        "lo68": 1.7649183883694063e-06,
+        "hi68": 3.0205757803162683e-06,
+        "sd_dex": 0.11668255391539512,
+        "calibrated": {
+          "q2.5": 2.3901307533031424e-06,
+          "q16": 2.658742060878546e-06,
+          "q50": 3.3005803240995454e-06,
+          "q84": 6.104599359529572e-06,
+          "q97.5": 8.184914390786414e-06,
+          "n_injections": 24
+        }
+      },
+      "total_2005_2026.7": {
+        "map": 1.5362547210319076e-05,
+        "lo68": 1.178702118384463e-05,
+        "hi68": 2.0022688778463954e-05,
+        "sd_dex": 0.11505916646379703,
+        "calibrated": {
+          "q2.5": 1.56374929789658e-05,
+          "q16": 1.7483234697878087e-05,
+          "q50": 2.2059083837097868e-05,
+          "q84": 4.08560144004505e-05,
+          "q97.5": 5.473272644431066e-05,
+          "n_injections": 24
+        }
+      },
+      "mdot_q": {
+        "map": 2.313345626842149e-06,
+        "lo68": 1.597057720668297e-07,
+        "hi68": 3.3508920309970354e-05,
+        "sd_dex": 1.1609199110143156,
+        "calibrated": {
+          "q2.5": 1.6507960081297081e-06,
+          "q16": 2.303854831766658e-06,
+          "q50": 3.4762424654088527e-06,
+          "q84": 4.916806966349849e-06,
+          "q97.5": 6.906637713439557e-06,
+          "n_injections": 24
+        }
+      }
+    },
+    "viscosity_systematic": {
+      "quiescence_2005_2015.0": {
+        "min": 1.7024367941717555e-06,
+        "max": 7.193710548513242e-06
+      },
+      "high_state_2015.0_2023.3": {
+        "min": 2.158170520260493e-06,
+        "max": 5.869399767104215e-06
+      },
+      "post_2023.3_2026.7": {
+        "min": 6.050279030859715e-07,
+        "max": 2.312993635993049e-06
+      },
+      "total_2005_2026.7": {
+        "min": 4.470642334060327e-06,
+        "max": 1.5362547210319076e-05
+      },
+      "mdot_q": {
+        "min": 2.618122019119122e-07,
+        "max": 3.3941038410983648e-06
+      }
+    },
+    "xray_anchored": {
+      "accreted_mass_msun": {
+        "quiescence_2005_2015.0": 6.9178740469960925e-06,
+        "high_state_2015.0_2023.3": 5.6182304772759745e-06,
+        "post_2023.3_2026.7": 2.219628200794434e-06,
+        "total_2005_2026.7": 1.477345282639876e-05,
+        "mdot_q": 2.2260356551949127e-06
+      },
+      "neg_log_post": -4071.8791023322224,
+      "mdot_acc_now": 6.400589615404884e-07,
+      "mdot_acc_peak": 2.7870320357537835e-06
+    },
+    "calibration_inflation": 14.86393218973252,
+    "jitter_mag": {
+      "V": 0.07835989419974851,
+      "B": 0.11798766550015317,
+      "U": 0.3888049318754628,
+      "UVM2": 0.7164272132062861
+    },
+    "eta": 0.0006397079001762428,
+    "giant_v": 10.072716671359718,
+    "giant_v_at_max_app": 10.073782595598635,
+    "mdot_c_truncation": 8.349145489865169e-07,
+    "truncation_index_a": 32.62541278200733,
+    "model": "v2: giant prior + truncation",
+    "mdot_q_msun_yr": 2.313345626842149e-06,
+    "mdot_acc_peak": 2.8709972197537597e-06,
+    "mdot_acc_peak_year": 2004.0951403148529,
+    "mdot_acc_now": 6.662314242547099e-07,
+    "mdot_acc_now_68": [
+      5.058325331376245e-07,
+      8.774926118555802e-07
+    ],
+    "verdict": "degenerate: truncation index ran to a=32.6 (on/off switch); Mdot_acc pinned at ~7e-7 Msun/yr 2006-2026 while R_trunc swings 0.4-160 Rsun; reprocessing eta=6e-4 hides the accretion power. Light curves fit well, Mdot unidentified."
+  }
+}

@@ -2,7 +2,7 @@
 Tests for Celestrium Target-of-Opportunity (ToO) API Serializers and Pipeline Validator.
 """
 import pytest
-from celestrium.too_protocol import (
+from celestrium.transients.too_protocol import (
     build_lcogt_too_request,
     build_gemini_too_request,
     build_voevent_packet,

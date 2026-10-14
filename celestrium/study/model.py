@@ -16,7 +16,7 @@ import itertools
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from ..core.artifact import canonical_text
+from celestrium.core.artifact import canonical_text
 
 
 @dataclass(frozen=True)

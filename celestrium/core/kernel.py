@@ -31,12 +31,12 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from .. import paths
-from . import events as ev
-from .artifact import (Artifact, SUFFIX, artifact_id, jsonable, now_utc,
+from celestrium import paths
+from celestrium.core import events as ev
+from celestrium.core.artifact import (Artifact, SUFFIX, artifact_id, jsonable, now_utc,
                        relative)
-from .capability import Capability, ParamError, get as get_cap
-from .ledger import Ledger, default as default_ledger
+from celestrium.core.capability import Capability, ParamError, get as get_cap
+from celestrium.core.ledger import Ledger, default as default_ledger
 
 RETRY_BACKOFFS = (2.0, 5.0)
 _sleep = time.sleep          # module attr so tests stub the waiting
@@ -432,7 +432,7 @@ _DEFAULT: Optional[Kernel] = None
 def default() -> Kernel:
     global _DEFAULT
     if _DEFAULT is None:
-        from .capability import load_all
+        from celestrium.core.capability import load_all
         load_all()
         _DEFAULT = Kernel()
     return _DEFAULT

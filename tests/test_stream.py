@@ -4,14 +4,14 @@ import json
 import pytest
 import numpy as np
 
-from celestrium.stream import (
+from celestrium.transients.stream import (
     AlertRecord,
     TriageDecision,
     RubinBurstSimulator,
     FinkLiveAlertSource,
     StreamingTriageEngine,
 )
-from celestrium.astrojev import NUM_FEATURES
+from celestrium.engines.astrojev import NUM_FEATURES
 
 
 def test_rubin_burst_simulator():

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import importlib
 
-from .. import config
-from ..core.capability import Param, capability
+from celestrium import config
+from celestrium.core.capability import Param, capability
 
 LABELS = {
     "neo": "JPL CNEOS close approaches",
@@ -48,8 +48,8 @@ for _key, (_module, _func) in config.GLOBAL_FEED_EXECUTORS.items():
     tags=("target", "feed"),
 )
 def feed_near(ctx, target, radius_arcmin, days):
-    from .. import transients
-    from .objects import resolve
+    from celestrium.archives import alerce as transients
+    from celestrium.caps.objects import resolve
     found = resolve(ctx, target)
     table = transients.fetch_transients_near(found.ra, found.dec,
                                              radius_arcmin=radius_arcmin,

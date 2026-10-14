@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from celestrium.astrojev import (
+from celestrium.engines.astrojev import (
     AstroJev,
     ContinuousFourierEncoder,
     KMContractiveBlock,
@@ -109,7 +109,7 @@ def test_calibration_metrics_evaluator():
 
 
 def test_tsallis_score_reward_properties():
-    from celestrium.astrojev import tsallis_score_reward, normalized_log_score, brier_score_reward
+    from celestrium.engines.astrojev import tsallis_score_reward, normalized_log_score, brier_score_reward
 
     probs = torch.tensor([[0.9, 0.1], [0.1, 0.9], [0.5, 0.5]])
     targets = torch.tensor([0, 0, 0])
@@ -130,7 +130,7 @@ def test_tsallis_score_reward_properties():
 
 
 def test_focal_brier_score_reward():
-    from celestrium.astrojev import focal_brier_score_reward
+    from celestrium.engines.astrojev import focal_brier_score_reward
 
     # Highly confident correct prediction
     p_easy = torch.tensor([[0.99, 0.01]])
@@ -150,7 +150,7 @@ def test_focal_brier_score_reward():
 
 
 def test_conformal_evidential_calibration():
-    from celestrium.astrojev import conformal_evidential_calibrate, conformal_predict_sets
+    from celestrium.engines.astrojev import conformal_evidential_calibrate, conformal_predict_sets
 
     rng = np.random.default_rng(42)
     n = 200

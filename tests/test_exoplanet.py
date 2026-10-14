@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from celestrium.exoplanet import (
+from celestrium.explore.exoplanet import (
     simulate_matern32_gp_noise,
     simulate_exoplanet_dataset,
     ExoplanetEvidentialNet,

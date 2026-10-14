@@ -19,7 +19,7 @@ venv/
 .env
 
 # research PDFs stay local — the bibliographic record lives in refs.bib
-docs/research/*.pdf
+docs/reference/papers/*.pdf
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/

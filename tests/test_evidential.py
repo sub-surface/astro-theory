@@ -2,12 +2,12 @@
 import torch
 import pytest
 
-from celestrium.evidential_astrojev import (
+from celestrium.engines.evidential_astrojev import (
     EvidentialAstroJev,
     evidential_brier_loss,
     kl_divergence_dirichlet,
 )
-from celestrium.astrojev import NUM_FEATURES, NUM_CLASSES
+from celestrium.engines.astrojev import NUM_FEATURES, NUM_CLASSES
 
 
 def test_kl_divergence_dirichlet_non_negative():

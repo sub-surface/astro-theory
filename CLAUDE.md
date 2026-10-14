@@ -7,40 +7,46 @@ Read this first when picking up work in this repo.
 
 ## 1. What Celestrium Is
 
-**Celestrium** is an operational astrophysics research instrument operating across three wings:
-1. **Theory Workshop & Evidential AI**: Deep evidential decision engines (`celestrium/astrojev.py`, `celestrium/multimessenger.py`), Dirichlet calibration, and Conformal Risk Control.
-2. **Experimental Validation & Data Streaming**: Multi-catalog stream ingestion (`celestrium/data_streamer.py`), TAP queries (`celestrium/tap.py`), selection deprojection, and MCMC inference.
-3. **Observatory Follow-Up & ToO Dispatch**: Autonomous Multi-Tier Target-of-Opportunity serialization (`celestrium/too_protocol.py`) for Gemini 8m GMOS and LCOGT 1m networks.
+**Celestrium** is Leon's and Claude's astrophysics research instrument: data access to the major archives,
+calibrated inference machinery, and a set of research programmes run on real data with honest uncertainties.
 
-**Primary Living Ledgers & Handoffs**:
-- Autonomous Experimenter Protocol: [`docs/research/autonomous-experimenter-handoff.md`](./docs/research/autonomous-experimenter-handoff.md) (Standard loop for local-to-cloud testing, catalog expansion, calibrated RL, and taxonomy gaps).
-- Field Work Index: [`docs/research/astronomy-work-index.md`](./docs/research/astronomy-work-index.md) (Master taxonomy of sub-fields, active experiments, and gaps).
-- Experiments Ledger: [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) (All experiments EXP-2026-A through W).
-- Literature Convergence & Novelty Matrix: [`docs/research/literature-convergence-and-novel-results.md`](./docs/research/literature-convergence-and-novel-results.md).
-- Active Roadmap: [`docs/roadmap.md`](./docs/roadmap.md).
-- Interactive Research Platform: [https://astro.subsurfaces.net](https://astro.subsurfaces.net) (`site/`).
+**Research programmes** (one page each in [`docs/programmes/`](./docs/programmes/)):
+- **P1 Cosmic dipole** ([`dipole.md`](./docs/programmes/dipole.md)): Quaia/CatWISE/NVSS machinery; Euclid DR1 (21 Oct 2026).
+- **P2 Accreting white dwarfs & recurrent novae** ([`novae.md`](./docs/programmes/novae.md)): T CrB status, the symbiotic RN family, "who's next".
+- **P3 Calibrated triage engines** ([`transients.md`](./docs/programmes/transients.md)): evidential classifiers + conformal gating, being rebuilt on real labelled data.
+- **P4 Theory threads** ([`theory.md`](./docs/programmes/theory.md)): idea ledger (inflation after ACT, f_NL, denoising, ...).
+
+**Where things live**:
+- Experiment ledger (single source of truth, with the 2026-10-14 audit status of every result): [`docs/ledger.md`](./docs/ledger.md).
+- Docs map: [`docs/README.md`](./docs/README.md). Results JSON: `docs/results/`. Figures: `docs/figures/`.
+- Observing calendar: [`celestrium/watchlist.py`](./celestrium/watchlist.py). Run `python -m celestrium calendar` at the start of a session and score any window it lists as closed (`--ics file.ics` exports).
+- Engineering roadmap: [`docs/engineering/roadmap.md`](./docs/engineering/roadmap.md). Web platform: https://astro.subsurfaces.net (`site/`).
+
+**Audit rule**: results marked SYNTHETIC ONLY / NEEDS RERUN / WITHDRAWN in the ledger must not be cited as findings.
+New results enter the ledger only with real data (or are labelled synthetic validation), clustering-aware or
+mock-validated errors, and no leaks of labels, coordinates or simulation truth (section 3).
 
 ---
 
-## 2. Repo Architecture & Key Pointers
+## 2. Repo Architecture
 
 ```
-celestrium/                 Core instrument package
-  core/                     Kernel: artifact (content-addressed DAG), ledger, capability, events
-  caps/                     Capability registry (@capability declarations)
-  astrojev.py               Evidential deep learning (Dirichlet, BALD, Krasnoselskii-Mann)
-  multimessenger.py         Multi-messenger GW+Neutrino+Optical triage & RLCD doubt head
-  data_streamer.py          Memory-mapped real data streaming & heteroscedastic noise
-  stream.py                 Streaming triage engine with conformal sets & error bars
-  too_protocol.py           Turnkey ToO protocol serializers (Gemini GMOS, LCOGT)
-  tap.py                    Unified Table Access Protocol client (pyvo + driver fallback)
-  cli.py                    Headless Typer CLI interface (run with --json)
-site/                       Interactive research platform & living manuscripts (Astro, OLED, https://astro.subsurfaces.net)
-docs/research/              Pre-registered proposals, experiment indexes, and literature dossiers
-tests/                      Hermetic test suite (247 passing tests, 100% network-independent)
-modal_app.py                Distributed GPU cloud training & triage service (Modal)
-wrangler.toml               Cloudflare Workers deployment config with automated [build] command
+celestrium/                 the package
+  core/  caps/  study/      kernel (content-addressed artifacts, ledger, capabilities), capability registry, study runner
+  archives/                 data access: TAP, HEASARC, MAST, VizieR, X-Match, SDSS, Data Lab, resolvers, cutouts, ADS/arXiv, ALeRCE, feeds
+  engines/                  evidential ML (AstroJev family, fused ops, calibration, data streamers)
+  dipole/                   P1 code     novae/  P2 code     transients/  P3 code     explore/  parked synthetic-only modules
+  cli.py hub.py dashboard.py config.py paths.py net.py watchlist.py modal_app.py   surfaces and shared infrastructure
+scripts/<programme>/        runnable experiments: dipole/ novae/ engines/ transients/ explore/ infra/
+docs/                       ledger.md, programmes/, results/, figures/, reference/, engineering/, manuscripts/, history/
+tests/                      hermetic test suite (`python -m pytest`; 269 fast tests, slow ones marked `slow`)
+data/ checkpoints/ cache/   local only (git-ignored)
+Archive/                    shelved June 2026 dipole pipeline (G)
+site/                       Astro web platform; wrangler.toml deploys it to Cloudflare Workers
 ```
+
+New programme code goes in its subpackage and its scripts in `scripts/<programme>/`; scripts set
+`ROOT = Path(__file__).resolve().parents[2]`. Data for a programme goes in `data/<programme-or-object>/`.
 
 ---
 
@@ -77,7 +83,7 @@ wrangler.toml               Cloudflare Workers deployment config with automated 
 
 ### F. Hermetic Test Integrity
 - **Standard**: All tests in `tests/` must execute 100% hermetically without internet access. Data streamers, brokers (GraceDB, ALeRCE), and TAP clients must supply local synthetic/cached fallbacks.
-- Verify regularly: `python -m pytest` (currently 247 passing tests).
+- Verify regularly: `python -m pytest` (269 fast tests pass as of 2026-10-14).
 
 ### G. Windows PowerShell UTF-8 Encoding for Modal CLI
 - **Gotcha**: Windows PowerShell defaults to `cp1252` encoding, causing Modal CLI to crash with `'charmap' codec can't encode character '\u2713'` (checkmark) when rendering terminal status.
@@ -132,6 +138,6 @@ wrangler.toml               Cloudflare Workers deployment config with automated 
 
 ## 5. Collaboration Conventions
 
-- Three agents (Claude, Codex, Gemini) collaborate here under the local git identity `Sub-Surface`.
+- Leon and Claude work here under the local git identity `Sub-Surface` (Leon's account). Older results written by earlier agents (Codex, Gemini; mid-2026) are treated as unverified until rerun with principled methods.
 - Always check `git status` and test suite before modifying code.
-- Avoid introducing extra markdown files as redundant sources of truth; update [`docs/research/experiment-index.md`](./docs/research/experiment-index.md) and [`docs/research/literature-convergence-and-novel-results.md`](./docs/research/literature-convergence-and-novel-results.md).
+- Avoid introducing extra markdown files as redundant sources of truth: experiments go in [`docs/ledger.md`](./docs/ledger.md), programme context and literature matrices in the programme page.

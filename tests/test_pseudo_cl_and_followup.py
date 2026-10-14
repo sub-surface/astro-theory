@@ -5,12 +5,12 @@ import pytest
 from astropy_healpix import HEALPix
 from typer.testing import CliRunner
 
-from celestrium.experiments.quaia_pseudo_cl import (
+from celestrium.dipole.quaia_pseudo_cl import (
     real_ylm_basis,
     compute_mode_coupling,
     deconvolve_dipole,
 )
-from celestrium.followup import triage_sources, triage_candidates_for_followup
+from celestrium.transients.followup import triage_sources, triage_candidates_for_followup
 from celestrium.cli import app
 
 

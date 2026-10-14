@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 import torch
 
-from scripts.modal_scaled_continuous_flow_cross_calibration import (
+from scripts.engines.modal_scaled_continuous_flow_cross_calibration import (
     run_continuous_flow_benchmark,
     sanitize_payload,
 )

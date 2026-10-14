@@ -18,8 +18,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from .. import paths
-from .artifact import Artifact, jsonable, now_utc
+from celestrium import paths
+from celestrium.core.artifact import Artifact, jsonable, now_utc
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS artifact (

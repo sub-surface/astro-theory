@@ -5,7 +5,7 @@ https://api.alerce.online/ztf/v1/swagger.json during implementation (see
 transients.py's module docstring); these tests pin the shape with a
 fake fetcher so they never touch the network.
 """
-from celestrium import transients
+from celestrium.archives import alerce as transients
 
 _ITEM = {
     "oid": "ZTF25aaaa", "meanra": 187.7059, "meandec": 12.3911,

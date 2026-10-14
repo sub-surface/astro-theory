@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import torch
 
-from celestrium.space_weather import (
+from celestrium.explore.space_weather import (
     simulate_space_weather_dataset,
     SpaceWeatherEvidentialNet,
     SpaceWeatherTriageEngine,

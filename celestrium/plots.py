@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.table import Table
 
-from . import paths
+from celestrium import paths
 
 KINDS = ("scatter", "hist", "sky", "cmd")
 

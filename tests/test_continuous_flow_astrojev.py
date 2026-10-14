@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import torch
 
-from celestrium.continuous_flow_astrojev import (
+from celestrium.engines.continuous_flow_astrojev import (
     ALLOCATION_CLASSES,
     NUM_ALLOCATION_CLASSES,
     TOTAL_OBSERVABLE_DIM,

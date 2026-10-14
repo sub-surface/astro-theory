@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from . import paths
+from celestrium import paths
 
 CONFIG_PATH = paths.DATA / "config.json"
 
@@ -45,12 +45,12 @@ def set(key: str, value: Any) -> None:
 # Static Instrument Data Tables
 # --------------------------------------------------------------------------- #
 class _TapAdaptor:
-    """Expose uniform .query(adql) over the consolidated celestrium.tap engine."""
+    """Expose uniform .query(adql) over the consolidated celestrium.archives.tap engine."""
     def __init__(self, key: str):
         self.key = key
 
     def query(self, adql: str):
-        from . import tap
+        from celestrium.archives import tap
         return tap.query(self.key, adql)
 
 
@@ -86,7 +86,7 @@ ARCHIVES = {
                        "https://heasarc.gsfc.nasa.gov/xamin/vo/tap/availability"),
     "desi": Archive(
         "desi", "NOIRLab Astro Data Lab — DESI/Legacy", True,
-        _LazyAdaptor("celestrium.datalab_desi", lambda m, q: m.query(q, fmt="table")),
+        _LazyAdaptor("celestrium.archives.datalab_desi", lambda m, q: m.query(q, fmt="table")),
         "https://datalab.noirlab.edu/tap/availability",
     ),
     "casda": Archive(
@@ -112,9 +112,9 @@ def resolve_query_source(key: str, table: Optional[dict] = None):
 
 
 GLOBAL_FEED_EXECUTORS = {
-    "neo": ("celestrium.neos", "fetch_close_approaches"),
-    "satellite": ("celestrium.satellites", "fetch_visible_satellites"),
-    "transient": ("celestrium.transients", "fetch_latest_transients"),
+    "neo": ("celestrium.archives.neos", "fetch_close_approaches"),
+    "satellite": ("celestrium.archives.satellites", "fetch_visible_satellites"),
+    "transient": ("celestrium.archives.alerce", "fetch_latest_transients"),
 }
 
 FEED_ALIASES = {

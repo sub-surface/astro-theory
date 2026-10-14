@@ -11,7 +11,7 @@ import ast
 
 import numpy as np
 
-from ..core.capability import Param, capability
+from celestrium.core.capability import Param, capability
 
 TABLE_IN = Param("artifact", help="artifact id (or unambiguous prefix) of a table")
 
@@ -119,7 +119,8 @@ def table_columns(ctx, table, keep):
     summary="CDS X-Match a table against a VizieR catalogue.",
 )
 def table_xmatch(ctx, table, catalog, radius_arcsec):
-    from .. import tables, xmatch
+    from celestrium import tables
+    from celestrium.archives import xmatch
     source = ctx.load(table)
     ra_col, dec_col = tables.find_coord_columns(source)
     ctx.progress(f"X-matching {len(source)} rows against {catalog}")
@@ -137,7 +138,7 @@ def table_xmatch(ctx, table, catalog, radius_arcsec):
     summary="Quick-look plot of table columns → PNG.",
 )
 def table_plot(ctx, table, x, y, kind, title):
-    from .. import plots
+    from celestrium import plots
     source = ctx.load(table)
     path = plots.plot_table(source, x=x or None, y=y or None, kind=kind,
                             title=title, out=ctx.out_path(".png"))
@@ -182,7 +183,7 @@ def table_stats(ctx, table, columns):
     summary="Export a table to data/exports/ in a portable format.",
 )
 def table_export(ctx, table, fmt):
-    from .. import paths
+    from celestrium import paths
     source = ctx.load(table)
     art = ctx.artifact(table)
     paths.EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -202,7 +203,7 @@ def table_export(ctx, table, fmt):
     summary="Persist a table as a named candidate list.",
 )
 def table_save_list(ctx, table, name, note):
-    from .. import candidates
+    from celestrium import candidates
     source = ctx.load(table)
     art = ctx.artifact(table)
     path = candidates.save(name, source, origin=(art.cap if art else "kernel"),
@@ -218,5 +219,5 @@ def table_save_list(ctx, table, name, note):
     summary="Load a saved candidate list back into the ledger.",
 )
 def table_load_list(ctx, name):
-    from .. import candidates
+    from celestrium import candidates
     return ctx.table(candidates.load(name), label=f"list {name}", list_name=name)

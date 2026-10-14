@@ -239,11 +239,11 @@ def render_dashboard(console: Console, payload: Dict[str, Any]) -> None:
     actions_text.append("• Conformal Risk:  ", style="cyan")
     actions_text.append("celestrium jev crc --risk 0.05\n", style="bold white")
     actions_text.append("• Mining Gallery:  ", style="cyan")
-    actions_text.append("python scripts/mine_remarkable_objects.py\n", style="bold white")
+    actions_text.append("python scripts/dipole/mine_remarkable_objects.py\n", style="bold white")
     actions_text.append("• Telescope Queue: ", style="cyan")
     actions_text.append("celestrium jev schedule --budget 360\n", style="bold white")
     actions_text.append("• View Experiments:", style="cyan")
-    actions_text.append("docs/research/experiment-index.md\n", style="dim")
+    actions_text.append("docs/ledger.md\n", style="dim")
     actions_panel = Panel(actions_text, title="[bold]Command Cockpit[/]", border_style="green", padding=(1, 2))
 
     row_3 = Columns([map_panel, actions_panel], expand=True)

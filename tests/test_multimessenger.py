@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from celestrium.multimessenger import (
+from celestrium.transients.multimessenger import (
     GWAlertRecord,
     IceCubeNeutrinoAlert,
     HostGalaxy,
@@ -37,7 +37,7 @@ from celestrium.multimessenger import (
     NUM_MM_CLASSES,
     MM_CLASSES,
 )
-from celestrium.too_protocol import ToOPipelineValidator
+from celestrium.transients.too_protocol import ToOPipelineValidator
 
 
 def test_gw_alert_record_and_likelihood():

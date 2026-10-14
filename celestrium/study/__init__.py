@@ -5,8 +5,8 @@ the vault already defines the *claim* half (signature, refutation, leverage,
 rows); this adds the machine half (pipeline, grid, metric) and binds the two by
 `id`, so neither side duplicates the other.
 """
-from .model import P, Ref, Step, Study, dig, step
-from .library import STUDIES, get, names
+from celestrium.study.model import P, Ref, Step, Study, dig, step
+from celestrium.study.library import STUDIES, get, names
 
 __all__ = ["P", "Ref", "Step", "Study", "step", "dig",
            "STUDIES", "get", "names"]

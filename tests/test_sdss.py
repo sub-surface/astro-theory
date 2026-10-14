@@ -1,7 +1,7 @@
 import numpy as np
 from astropy.table import Table
 
-from celestrium import sdss
+from celestrium.archives import sdss
 
 
 def test_fetch_spectrum_renders_first_sdss_table(monkeypatch, tmp_path):

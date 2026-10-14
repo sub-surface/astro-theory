@@ -5,7 +5,7 @@ import math
 import pytest
 import numpy as np
 
-from celestrium.active_tiling import (
+from celestrium.transients.active_tiling import (
     angular_distance_deg,
     generate_gw_tiling_field,
     ActiveEvidentialTilingMDP,

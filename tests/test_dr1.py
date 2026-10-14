@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 from astropy_healpix import HEALPix
 
-from celestrium import forecast, mocks, ellis_baldwin
+from celestrium.dipole import forecast
+
+from celestrium.dipole import mocks
+
+from celestrium.dipole import ellis_baldwin
 from celestrium.core.kernel import Kernel
 from celestrium.core.ledger import Ledger
 import celestrium.caps  # noqa: F401

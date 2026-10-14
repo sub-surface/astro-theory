@@ -3,7 +3,9 @@ from astropy.table import Table
 from typer.testing import CliRunner
 import pytest
 
-from celestrium import hub, resolvers, config
+from celestrium import hub, config
+
+from celestrium.archives import resolvers
 from celestrium.core.kernel import Kernel
 from celestrium.core.artifact import Artifact
 

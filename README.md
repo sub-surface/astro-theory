@@ -123,8 +123,8 @@ celestrium match gaia-bright-nearby vizier:VIII/65/nvss
 celestrium poster M87 --resolution 4k --style label
 
 # 5. Run local calibrated decision benchmarks
-python scripts/benchmark_multi_tracer_co_inference.py
-python scripts/benchmark_continuous_flow_cross_calibration.py
+python scripts/dipole/benchmark_multi_tracer_co_inference.py
+python scripts/engines/benchmark_continuous_flow_cross_calibration.py
 ```
 
 ### Serverless Cloud Scaling (Modal)
@@ -134,10 +134,10 @@ python scripts/benchmark_continuous_flow_cross_calibration.py
 $env:PYTHONIOENCODING="utf-8"; $env:PYTHONUTF8=1
 
 # Cloud GPU Multi-Messenger Stress Test (50k alerts)
-modal run scripts/modal_stress_test_multimessenger_rlcd.py --sources 50000
+modal run scripts/transients/modal_stress_test_multimessenger_rlcd.py --sources 50000
 
 # Cloud GPU Continuous-Flow Cross-Calibration (40k sources)
-modal run scripts/modal_scaled_continuous_flow_cross_calibration.py --sources 40000
+modal run scripts/engines/modal_scaled_continuous_flow_cross_calibration.py --sources 40000
 ```
 
 ---
@@ -145,45 +145,29 @@ modal run scripts/modal_scaled_continuous_flow_cross_calibration.py --sources 40
 ## Architecture & Repo Layout
 
 ```
-celestrium/
-  core/                  # Execution spine: kernel, capability, artifact, events
-  continuous_flow_astrojev.py # Simulation-free CFM + DESI fiber allocation engine (EXP-2026-V)
-  multi_tracer.py        # Joint Hierarchical Bayesian Poisson MCMC co-inference (EXP-2026-W)
-  multimessenger.py      # Real-time GW + Neutrino + Optical counterpart triage (EXP-2026-R)
-  active_tiling.py       # Active-Evidential 3D GW Error-Volume Tiling MDP (EXP-2026-U)
-  cosmic_dawn.py         # JWST/Euclid Lyman-break evidential discriminator (EXP-2026-S)
-  exoplanet.py           # Matérn-3/2 GP transit & RV Doppler disentanglement (EXP-2026-Q)
-  space_weather.py       # SDO/HMI solar flare & short-arc NEO impact triage (EXP-2026-T)
-  too_protocol.py        # Target-of-Opportunity API serializers (Gemini, LCOGT, VOEvent)
-  data_streamer.py       # High-throughput streaming across Quaia (1.3M) and real catalogs
-  astrojev.py            # Heteroscedastic Fourier encoder & KM contractive loop
-  caps/                  # Capability plugins (archives, objects, imaging, lit, analysis)
-  cli.py                 # Unified Typer CLI presenter (--json everywhere)
-
-site/                    # Interactive web platform & living manuscripts (astro.subsurfaces.net)
-  src/components/        # 5 interactive simulators (Dipole, Evidential, Tiling, Objects, Taxonomy)
-  src/layouts/           # Base and PaperLayout with dynamic OpenGraph & Swiss typography
-  src/pages/papers/      # Living portals for Papers A, B, C, D
-  public/                # Static assets, 5 bespoke OG share cards, vector SVG & ICO favicons
-
-docs/
-  research/
-    astronomy-work-index.md # Complete encyclopaedic taxonomy of all 23 astronomy sub-disciplines
-    experiment-index.md  # Complete research ledger with benchmarks and artifacts
-    literature-convergence-and-novel-results.md # Literature matrix & 6 novel frontiers
-    figures/             # Publication-grade figures for all benchmarks
-
-scripts/                 # Standalone reproducible benchmark and Modal cloud deployment scripts
-tests/                   # Offline-focused unit and integration tests
-wrangler.toml            # Cloudflare Workers deployment config with automated [build] command
+celestrium/              the package
+  core/ caps/ study/     execution kernel, capability registry, study runner
+  archives/              TAP/ADQL, HEASARC, MAST, VizieR, X-Match, SDSS, Data Lab, resolvers, cutouts, ADS/arXiv, feeds
+  engines/               evidential ML (AstroJev family), calibration, data streamers
+  dipole/ novae/ transients/   programme code (P1, P2, P3); explore/ holds parked synthetic-only modules
+  cli.py watchlist.py ...      CLI surface, observing calendar, shared infrastructure
+scripts/<programme>/     runnable experiments (dipole, novae, engines, transients, explore, infra)
+docs/                    ledger.md (all experiments + audit status), programmes/, results/, figures/, reference/, history/
+site/                    web platform (astro.subsurfaces.net); wrangler.toml deploys it
+tests/                   hermetic test suite
 ```
+
+Research programmes: **P1** cosmic dipole / Euclid DR1, **P2** accreting white dwarfs & recurrent novae (T CrB),
+**P3** calibrated triage engines on real data, **P4** theory threads. See [`docs/README.md`](./docs/README.md).
+The [ledger](./docs/ledger.md) records an audit (2026-10-14) of every earlier result; most pre-October benchmarks
+are synthetic-only or need reruns and should not be cited.
 
 ---
 
 ## Authors & Collaborators
 
-- **Leon** — Physical judgment, theoretical signatures, selection cut defensibility, and astrophysics intuition.
-- **Sub-Surface (Antigravity)** — Computational astrophysics architecture, evidential deep learning, continuous flow matching, Bayesian MCMC samplers, and cloud GPU scaling.
+- **Leon**: physical judgment, theoretical signatures, research direction.
+- **Claude** (Anthropic): analysis, code, and documentation, working with Leon.
 
 ---
-<p align="center"><sub>Agent technical standards codified in <a href="./CLAUDE.md">CLAUDE.md</a> · Research matrix in <a href="./docs/research/experiment-index.md">docs/research/experiment-index.md</a></sub></p>
+<p align="center"><sub>Agent technical standards codified in <a href="./CLAUDE.md">CLAUDE.md</a> · Research matrix in <a href="./docs/ledger.md">docs/ledger.md</a></sub></p>

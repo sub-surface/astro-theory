@@ -5,7 +5,7 @@ from astropy.table import Table
 
 from celestrium.core.kernel import Kernel
 from celestrium.core.ledger import Ledger
-from celestrium import resolvers
+from celestrium.archives import resolvers
 import celestrium.caps  # noqa: F401
 
 
@@ -63,7 +63,7 @@ def test_object_sweep_produces_table(monkeypatch, tmp_path):
 def test_object_watch_produces_table(monkeypatch, tmp_path):
     monkeypatch.setattr(resolvers, "resolve_target", _fake_resolve)
     
-    from celestrium import transients
+    from celestrium.archives import alerce as transients
     monkeypatch.setattr(transients, "fetch_transients_near",
                         lambda ra, dec, radius_arcmin, days: Table({
                             "main_id": ["ZTF20abc"], "ra": [187.70], "dec": [12.39],
@@ -81,7 +81,7 @@ def test_object_watch_produces_table(monkeypatch, tmp_path):
 
 def test_object_highenergy_produces_table(monkeypatch, tmp_path):
     monkeypatch.setattr(resolvers, "resolve_target", _fake_resolve)
-    from celestrium import heasarc
+    from celestrium.archives import heasarc
     monkeypatch.setattr(heasarc, "tap_query", lambda *args, **kwargs: None)
     
     k = Kernel(Ledger(tmp_path / "test.db"))

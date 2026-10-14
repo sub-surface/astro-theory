@@ -8,14 +8,14 @@ recorded as lineage rather than repeated silently.
 """
 from __future__ import annotations
 
-from ..core.capability import Param, capability
+from celestrium.core.capability import Param, capability
 
 TARGET = Param("str", help="object name, 'RA Dec', or sexagesimal position")
 
 
 def resolve(ctx, target):
     """Shared front door: resolve `target` through the cached child capability."""
-    from .. import resolvers
+    from celestrium.archives import resolvers
     art = ctx.child("object.resolve", target=target)
     payload = ctx.load(art.id)
     if not payload or payload.get("ra") is None:
@@ -35,7 +35,7 @@ def resolve(ctx, target):
     summary="Resolve a target to identity + position (SIMBAD/Horizons, layered).",
 )
 def object_resolve(ctx, target):
-    from .. import resolvers
+    from celestrium.archives import resolvers
     ctx.progress(f"resolving {target}")
     found = resolvers.resolve_target(target)
     if found is None:
@@ -53,7 +53,7 @@ def object_resolve(ctx, target):
     summary="Rank the capabilities that apply to this target.",
 )
 def object_products(ctx, target):
-    from ..core import capability as capmod
+    from celestrium.core import capability as capmod
     found = resolve(ctx, target)
     ranked = [{"capability": c.name, "kind": c.kind, "cost": c.cost,
                "wing": c.wing, "summary": c.summary}
@@ -85,7 +85,7 @@ def object_dossier(ctx, target, rows, fov, images, ned):
 
     if ned and found.object_class in ("galaxy_agn", "cluster"):
         try:
-            from .. import resolvers
+            from celestrium.archives import resolvers
             ned_tab = resolvers.extragalactic(found.display_name)
             if ned_tab is not None and len(ned_tab) > 0:
                 lines.append(f"- **NED Cross-ID:** {len(ned_tab)} records found")
@@ -126,7 +126,8 @@ def object_dossier(ctx, target, rows, fov, images, ned):
     tags=("target",),
 )
 def object_field(ctx, target, fov, images):
-    from .. import cutouts, resolvers
+    from celestrium.archives import cutouts
+    from celestrium.archives import resolvers
     found = resolve(ctx, target)
     ctx.progress(f"inspecting field at {found.ra:.4f}, {found.dec:+.4f}")
 
@@ -219,7 +220,7 @@ def object_sweep(ctx, target):
     applies_to=("galaxy_agn", "cluster"), tags=("target",),
 )
 def object_spectrum(ctx, target):
-    from .. import spectra
+    from celestrium.archives import spectra
     ctx.progress(f"NED spectrum for {target}")
     result = spectra.fetch_ned_spectrum(target, out=ctx.out_path(".png"))
     if result is None:
@@ -236,7 +237,7 @@ def object_spectrum(ctx, target):
     applies_to=("star", "exoplanet"), tags=("target",),
 )
 def object_lightcurve(ctx, target):
-    from .. import mast
+    from celestrium.archives import mast
     table = mast.fetch_lightcurves(target)
     if table is None or len(table) == 0:
         raise LookupError(f"no MAST time-series observations for {target!r}")
@@ -250,7 +251,7 @@ def object_lightcurve(ctx, target):
     applies_to=("star", "exoplanet"), tags=("target",),
 )
 def object_exoplanets(ctx, target):
-    from .. import exoplanet
+    from celestrium.explore import exoplanet
     table = exoplanet.query_target(target)
     if table is None or len(table) == 0:
         raise LookupError(f"no exoplanet-archive rows for {target!r}")
@@ -264,7 +265,7 @@ def object_exoplanets(ctx, target):
     applies_to=("star", "exoplanet"), tags=("target",),
 )
 def object_transits(ctx, target):
-    from .. import exoplanet
+    from celestrium.explore import exoplanet
     table = exoplanet.predict_transits(target)
     if table is None or len(table) == 0:
         raise LookupError(f"no transit ephemeris for {target!r}")
@@ -278,7 +279,7 @@ def object_transits(ctx, target):
     applies_to=("solar_system",), tags=("target",),
 )
 def object_ephemeris(ctx, target):
-    from .. import solarsystem
+    from celestrium.archives import solarsystem
     table = solarsystem.fetch_ephemeris(target)
     if table is None or len(table) == 0:
         raise LookupError(f"no Horizons ephemeris for {target!r}")
@@ -293,7 +294,7 @@ def object_ephemeris(ctx, target):
     tags=("target",),
 )
 def object_highenergy(ctx, target, catalog, radius_deg):
-    from .. import heasarc
+    from celestrium.archives import heasarc
     found = resolve(ctx, target)
     table = heasarc.query_region(found.ra, found.dec, catalog=catalog,
                                  radius_deg=radius_deg)
@@ -310,7 +311,7 @@ def object_highenergy(ctx, target, catalog, radius_deg):
     tags=("target",),
 )
 def object_catalogue(ctx, target, catalog, radius_arcmin):
-    from .. import vizier
+    from celestrium.archives import vizier
     found = resolve(ctx, target)
     table = vizier.cone_pull(found.ra, found.dec, radius_arcmin=radius_arcmin,
                              catalog=catalog)
@@ -329,7 +330,7 @@ def object_catalogue(ctx, target, catalog, radius_arcmin):
 )
 def object_watch(ctx, target, candidate_list, radius_arcmin, days, row_limit):
     from astropy.table import Table, vstack
-    from .. import transients
+    from celestrium.archives import alerce as transients
 
     if not target and not candidate_list:
         raise ValueError("object.watch needs a target or a candidate_list")
@@ -345,7 +346,7 @@ def object_watch(ctx, target, candidate_list, radius_arcmin, days, row_limit):
         return ctx.table(tab, label=f"watch {found.display_name}",
                          target=found.display_name, days=days, radius_arcmin=radius_arcmin)
 
-    from .. import candidates, tables
+    from celestrium import candidates, tables
     cand_tab = candidates.load(candidate_list)
     ra_col, dec_col = tables.find_coord_columns(cand_tab)
 

@@ -1,0 +1,196 @@
+# P4 · Theory threads (idea ledger)
+
+**Status**: exploring. Ideas that may graduate into a programme. Current candidates from the 2026-10-13 discussion:
+inflation after ACT DR6 (n_s ≈ 0.974 vs Starobinsky/R², a calibrated model comparison on public likelihoods);
+local f_NL from Quaia scale-dependent bias (× CMB lensing); physics-informed denoising for under-mined archives
+(TESS FFIs, DASCH plates, Gaia XP), validated by injection. Run an ADS novelty check before graduating any thread.
+
+---
+
+## Thread ledger
+
+The theory wing's running list of **lines of inquiry**: physics questions and methodological
+bets we're thinking about, *before* (and whether) they harden into a concrete build. This is
+deliberately more speculative than its neighbours:
+
+- [`directions.md`](../reference/directions.md) / [`candidates.md`](../history/candidates-2026-06.md) / [`field-map.md`](../reference/field-map.md)
+  rank the **data-project backlog** (A–H) on leverage — the "what to pull and test" map.
+- [`../roadmap.md`](../engineering/roadmap.md) tracks the **Celestrium tool's** technical development.
+- **This file** tracks the *ideas* — including ones that may never become a data pull, or that
+  cut across several projects. A thread graduates to `directions.md` when it becomes a ranked,
+  desk-tractable build.
+
+**Shared math theory** (Leech lattice / quasicrystal BAO seeds, codes → lattices → moonshine, the number 24)
+lives in [`math/group-theory/`](../../../math/group-theory/README.md) — see its `leech-cosmology-program.md`.
+
+**Thread template:** one-line question · why it's live · key refs · honest desk-tractability ·
+status (`watch` / `exploring` / `graduating` / `parked`) · cross-links.
+
+---
+
+## T1 · Non-Gaussian tails, ζ⁴, and "beyond perturbation theory" (the Creminelli line)
+**Question.** Primordial black hole (PBH) abundance is set by the *far tail* of the probability
+distribution P(ζ) of the curvature perturbation — you need ζ above an O(1) collapse threshold.
+But that tail is exactly where the standard expansion in correlators (bispectrum ⟨ζ³⟩↔f_NL,
+trispectrum ⟨ζ⁴⟩↔g_NL/τ_NL) breaks down: for ζ ≳ 1/f_NL each higher cumulant matters *more*, not
+less, so people "resort to numerics" (stochastic-inflation Fokker–Planck, δN, lattice).
+
+**Why it's live.** Creminelli & collaborators' **"Beyond perturbation theory in inflation"**
+(2021, JCAP 06 051) computes the tail non-perturbatively via a semiclassical / saddle-point
+(ħ→0) treatment — resumming all tree-level Witten diagrams — giving a tail like
+P(ζ) ~ exp(−c·ζ^(3/2)/√λ), *non-analytic* in the coupling. The 2024 follow-up
+("Non-perturbative wavefunction of the universe…", JHEP 03 010) and 2026 "Large n-point
+functions in resonant inflation" (JCAP 01 064) push the same program. The community tail
+literature is converging here too (e.g. "non-perturbative non-Gaussianity and PBHs"
+arXiv:2211.08348; "The hand-made tail" JHEP 05 (2022) 052; "Large power spectrum and PBHs in
+the EFT of inflation" JHEP 01 (2022) 074). The talk's "ζ⁴ for PBHs at the tail" is the entry
+point; the "and beyond" is precisely that truncating at ζ³/ζ⁴ is *not enough* — the tower
+resums into a non-perturbative exponential.
+
+**Desk-tractability.** The *analytics* (saddle-point profiles, large-deviation / instanton
+methods for P(ζ)) are genuinely paper-and-pencil + light numerics — within reach of a theory
+desk with the right hands. The *forecasting* angle (which inflation+tail model predicts what PBH
+mass function, vs. which observational window) is a structured-table artifact we build well.
+
+**Status:** `exploring`. Refs added to `refs.bib`. Cross-links: PBH attack-surface (project **D**,
+[`candidates.md`](../history/candidates-2026-06.md)); reheating/oscillons (project **F**, [`directions.md`](../reference/directions.md)).
+
+---
+
+## T2 · Learnability under a compute bound — *epiplexity as the diagnostic* (surrogates downstream)
+**Question.** The recurring frustration in T1 (and across inflation/reheating) is being forced
+into expensive numerics. Before asking *how* to learn a surrogate, ask the prior question:
+**for a computationally bounded observer, how much of this is learnable structure vs. irreducible
+noise — at our budget?** That is exactly what **epiplexity** measures.
+
+**Epiplexity (Finzi, Qiu, Jiang, Izmailov, Kolter, Wilson, 2026, [arXiv:2601.03220](https://arxiv.org/abs/2601.03220)).**
+Relative to a compute budget T, it splits a source's information into **epiplexity** S_T (learnable
+structure) and **time-bounded entropy** H_T (what *looks* like noise to a T-bounded observer).
+Formally S_T(X)=|P⋆| for the program minimizing a time-bounded two-part code
+P⋆=argmin_{P∈𝒫_T}{|P|+𝔼[log 1/P(X)]}; H_T(X)=𝔼[log 1/P⋆(X)]. Estimated by **prequential coding**
+(area under the training loss curve above the final loss — cheap, heuristic) or **requential
+coding** (cumulative teacher→student KL — rigorous, 2–10× compute). Tellingly, the paper's
+testbed includes **elementary cellular automata**: Rule 30 (chaotic) → high H_T, *low* S_T =
+computationally irreducible; Rule 54 → *high* S_T = learnable emergent structure. "The same object
+may appear random or structured depending on the computational resources of the observer."
+
+**Why this is the stronger tool (and reframes the NCA idea).** Epiplexity is a *diagnostic*
+(is there a learnable nail, and can our budget reach it?); a surrogate like NCA is a *generative*
+hammer. They compose — **measure first, build second** — and epiplexity directly adjudicates the
+T1/T2 questions:
+- The **ζ-tail** is *epiplectically simple*: Creminelli's saddle-point P(ζ)~exp(−c·ζ^{3/2}/√λ) IS
+  the short program (high S_T, low H_T). So epiplexity predicts "don't throw a surrogate at it —
+  a cheap closed form exists"; the win is analytic, exactly as Creminelli found. (Caveat: epiplexity
+  says a short program *exists*; it doesn't hand you the physics — it's descriptive, not generative.)
+- **Preheating / oscillon lattices** (project **F**) are the open case: parametric resonance →
+  turbulent fields → is the evolution Rule-54-like (surrogate-worthy) or Rule-30-like (irreducible,
+  surrogate will memorise noise and fail to extrapolate)? **Measure the epiplexity of the lattice
+  data before sinking compute into any NCA/neural-operator surrogate.** This is the rigorous version
+  of "which bottlenecks are ML-tractable."
+- A deep reframing of "resort to numerics": simulation *creates* epiplexity a bounded observer
+  couldn't access from the initial data + equations alone (the paper's first paradox). "Resort to
+  numerics" = the structure is real but locked behind compute; the live question is whether a
+  *cheaper* program — analytic (Creminelli) or learned — can unlock it at our budget.
+
+**The desk-tractable build (this is what *we* could actually do — and it fits Leon's ML background):**
+an **"epiplexity triage of cosmological numerics."** Generate 2–3 cheap datasets (a 1D
+stochastic-inflation ζ-trajectory ensemble; a 1D/2D preheating toy lattice; a δN map), estimate
+epiplexity via prequential coding at a fixed FLOP budget, and rank them simple↔irreducible — using
+the ζ-tail (known to be epiplectically simple) as a *validation* case the estimator should confirm.
+Output: a principled map of where ML surrogates can help in the inflation/PBH/reheating program.
+Small-GPT-scale, on-brand for our wing, and hard for a pure-physics *or* pure-ML group to produce.
+
+**Honest caveats.** Epiplexity is (1) **budget-relative** — conclusions can flip with T, so the
+FLOP budget must be fixed and reported; (2) **representation-dependent** — measured on a *encoding*
+of the field (real-space vs. Fourier modes vs. multipoles), and the right physics variables can
+expose structure a naïve tokenisation hides (this is where physics judgment enters, and it rhymes
+with the EFT/squeezed-limit choice of variables); (3) **estimator-young** — prequential is
+heuristic, requential is compute-hungry; (4) NCA-as-surrogate keeps its own caveats (discretised
+not symbolic operator; chaotic fields won't extrapolate) — but now we'd only reach for it *after*
+epiplexity says the structure is there.
+
+**Empirical update — the GNCA run (Gemini, 2026-06-25; `../../../GNCA/`).** An overnight autonomous
+run built **GNCA+** — a log-space, probability-conserving graph "cellular automaton" (a learned
+Fokker–Planck stepper) — and benchmarked it on 10 inflation regimes for the PBH mass fraction β.
+The result is a **clean, valuable negative** and a near-perfect confirmation of the epiplexity
+thesis: the model reproduces β only where the tail is *mild* (quantum-diffusion ratio 0.86,
+plateau-Starobinsky 0.49) and is wrong by **7–8 orders of magnitude in every deep-tail regime**
+(axion-resonance ×1.9e7, extreme-multifield ×2.1e8, ghost-condensate ×1.3e7) — i.e. it fails
+*exactly* in the PBH-relevant rare-event regime. Three takeaways to fold in:
+- **Believe the table, not the prose.** Gemini's own notes call it a "revolutionary breakthrough …
+  accurate to 10⁻⁴⁵", flatly contradicted by its own benchmark. Autonomous-LLM grandiosity — always
+  re-derive the verdict from the numbers. (And the headline GRAPE/symmetry architecture in the scope
+  doc is an unimplemented `pass` stub; the real artifact is the much simpler Log-CFR stepper.)
+- **The negative *is* the epiplexity result, obtained the expensive way.** The 10-regime table sorts
+  regimes into learnable (mild tail) vs. not (deep tail) — which is what an epiplexity estimate would
+  have told us *before* training. Strong motivation to measure first.
+- **One genuinely reusable nugget:** the **Log-CFR** — doing the probability-conservation update
+  entirely in log-space to dodge float underflow down to ~1e-300. Worth keeping for any tail work.
+- **The reframe that would actually help:** don't regress deep-tail PDF *values* (sample-starved —
+  you can't observe a 1e-15 event); learn the **drift/diffusion operator in the data-rich bulk** and
+  let the conservative stepper *extrapolate* into the tail, **validated against the saddle-point
+  analytic tail (T1)** — and get tail samples via importance sampling / normalising flows (→ T4),
+  not brute Langevin.
+
+**Status:** `exploring` (upgraded from `watch` — epiplexity gives the thread a concrete, testable
+first move; the GNCA negative sharpens it). Cross-links: T1 (the ζ-tail as the epiplectically-simple
+validation case); project **F** (preheating lattices = the open epiplexity question); project **C′**
+(the triage as a methods census); sibling experiment `GNCA/`.
+
+---
+
+## T3 · Simulation-based inference (SBI) for the Euclid dipole — *ML that serves the active line*
+**Question.** The cosmic-dipole measurement on Euclid DR1 has an **intractable likelihood**: a
+partial, non-uniform footprint × a selection function × clustering noise. That is the textbook
+setting for **simulation-based inference** (neural posterior / ratio estimation, e.g. the `sbi`
+package): forward-model mock catalogues on the DR1 footprint, train a neural estimator to infer the
+dipole amplitude D *and its degeneracy with selection systematics*, with calibrated uncertainties.
+
+**Why it's the strongest ML thread we have.** It plugs straight into the **active build**
+([`euclid-dr1-prep.md`](./dipole.md), tasks 3–4: partial-sky estimator + mock/null suite):
+SBI *is* a principled partial-sky estimator with built-in significance calibration, and it reuses the
+M1–M5 machinery as the forward model. Small-GPU-tractable, plays to Leon's ML background, and — unlike
+T1/T2 — it earns its keep on the line we're actually committed to. **Priority candidate.**
+**Status:** `exploring`. Cross-links: project **G** (the dipole); `euclid-dr1-prep.md`.
+
+## T4 · Normalising flows — selection functions *and* rare-event importance sampling (dual-use)
+**Question.** Two of our hardest problems are both density-estimation problems a normalising flow fits
+natively: (a) **learn a survey's selection function** as a flow over the catalogue density, to cleanly
+separate a *kinematic* dipole from a *selection* gradient (serves G/Euclid); (b) use a flow as an
+**importance-sampling proposal** to actually draw deep-tail ζ events (the exact fix for the GNCA
+sample-starvation in T2). One tool, two of our bottlenecks. **Status:** `watch`. Cross-links: T2
+(rare-event sampling), T3 (selection modelling), project **G**.
+
+## T5 · Symbolic regression as the interpretable complement to NCA (PySR)
+**Question.** Where epiplexity says "learnable structure exists," can we *write it down*? Symbolic
+regression (PySR) finds parsimonious closed forms from simulation data — e.g. rediscover the ζ^(3/2)
+tail exponent, or an effective β(model-params) scaling law. Cheaper and far more interpretable than an
+NCA/black-box surrogate, and on-brand for a wing that prizes defensible, legible results. The natural
+**third step** after epiplexity (is there structure?) and before any black-box surrogate.
+**Status:** `watch`. Cross-links: T1, T2 (the interpretable alternative to NCA).
+
+---
+
+## Backlog (unstarted threads to flesh out later)
+- Consistency relations / squeezed limits as model-independent discriminators (the other half of
+  the Creminelli toolkit) — does any live anomaly touch them?
+- EFT-of-inflation operator basis → which operators are observationally reachable by 2027 data.
+- Diffusion/generative models for fast survey mocks on the DR1 footprint (feeds T3's null suite).
+
+### Unfiled reading set (July 2026 — PDFs local in `docs/reference/papers/`, git-ignored)
+Seven papers pulled but not yet classified into a thread; two visible clusters:
+
+**Self-organized criticality + stochastic-dynamics machinery** (reads T2-adjacent —
+the SPDE/ergodicity toolkit under stochastic inflation's Fokker–Planck):
+- Moffat, *A Self-Organized Critical Universe* (gr-qc/9702014, 1997)
+- Jin & Li, *The Self-Organized Criticality of Dark Matter in the Early Universe* (arXiv:2409.18103)
+- Hairer & Mattingly, *Yet another look at Harris' ergodic theorem for Markov chains* (arXiv:0810.2777)
+- Bruned, Chandra, Chevyrev & Hairer, *Renormalising SPDEs in regularity structures* (JEMS 23, 2021)
+
+**Horizons, complexity, wormholes** (new territory — no existing thread covers it):
+- Susskind, *Computational complexity and black hole horizons* (Fortschr. Phys. 64, 2016)
+- Betzios & Papadoulaki, *Wilson Loops and Wormholes* (arXiv:2311.09289)
+- *Is Time Reversal in de Sitter Space a Spontaneously Broken Gauge Symmetry?* (arXiv:2603.12434, 2026)
+
+Next touch: either fold cluster 1 into T2's stochastic-dynamics story or open a T6;
+say why cluster 2 is here (idle curiosity is a fine answer — then park it explicitly).

@@ -5,8 +5,8 @@ location is its content address and reruns are free.
 """
 from __future__ import annotations
 
-from ..core.capability import Param, capability
-from .objects import TARGET, resolve
+from celestrium.core.capability import Param, capability
+from celestrium.caps.objects import TARGET, resolve
 
 STYLES = ("clean", "label", "science")
 
@@ -26,7 +26,7 @@ def _fov(found, requested: float) -> float:
     tags=("target",),
 )
 def imaging_cutout(ctx, target, fov, pix, survey):
-    from .. import cutouts
+    from celestrium.archives import cutouts
     found = resolve(ctx, target)
     fov_arcmin = _fov(found, fov)
     chosen = survey if survey in cutouts.COLOR_SURVEYS else None
@@ -46,7 +46,7 @@ def imaging_cutout(ctx, target, fov, pix, survey):
     tags=("target",),
 )
 def imaging_panel(ctx, target, fov):
-    from .. import cutouts
+    from celestrium.archives import cutouts
     found = resolve(ctx, target)
     ctx.progress(f"multi-wavelength panel {found.display_name}")
     path = cutouts.panel(found.ra, found.dec, fov_arcmin=fov,
@@ -64,7 +64,7 @@ def imaging_panel(ctx, target, fov):
     tags=("target",),
 )
 def imaging_poster(ctx, target, fov, width, height, style):
-    from .. import cutouts
+    from celestrium.archives import cutouts
     found = resolve(ctx, target)
     fov = _fov(found, fov)
     ctx.progress(f"poster {found.display_name} {width}×{height} ({style})")
@@ -81,7 +81,8 @@ def imaging_poster(ctx, target, fov, width, height, style):
     summary="Contact sheet of the curated atlas targets.",
 )
 def imaging_atlas(ctx, limit, fov):
-    from .. import cutouts, config
+    from celestrium import config
+    from celestrium.archives import cutouts
     targets = config.ATLAS_TARGETS[:max(1, limit)]
     rendered = []
     for entry in targets:
@@ -110,7 +111,7 @@ def imaging_atlas(ctx, limit, fov):
 def imaging_shootout(ctx, target, fov):
     """A diagnostic for the imaging guide's own footprint logic: tile one field
     across Legacy/Pan-STARRS/DES/DSS2 rather than showing only the winner."""
-    from .. import cutouts
+    from celestrium.archives import cutouts
     found = resolve(ctx, target)
     rendered = []
     for key in cutouts.COLOR_SURVEYS:

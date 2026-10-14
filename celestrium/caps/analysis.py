@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..core.capability import Param, capability
+from celestrium.core.capability import Param, capability
 
 DENSITY_IN = Param("artifact", help="artifact id of a sky-density map")
 FRAMES = ("icrs", "galactic")
@@ -208,7 +208,7 @@ def sky_density(ctx, table, nside, frame, ra_col, dec_col, weight_col, empty):
     from astropy.coordinates import SkyCoord
     from astropy.table import Table
     from astropy_healpix import HEALPix
-    from .. import tables as table_utils
+    from celestrium import tables as table_utils
 
     source = ctx.load(table)
     if ra_col == "auto" or dec_col == "auto":
@@ -520,7 +520,7 @@ def compare(ctx, measured, expected):
 def dr1_footprint(ctx, nside, area_deg2):
     from astropy.table import Table
     from astropy_healpix import HEALPix
-    from .. import forecast
+    from celestrium.dipole import forecast
 
     mask, meta = forecast.build_dr1_footprint(nside=nside, area_deg2=area_deg2)
     hp = HEALPix(nside=nside, order="ring")
@@ -550,7 +550,7 @@ def dr1_footprint(ctx, nside, area_deg2):
     summary="Analytic σ_D forecast and gate decision (measurement vs rehearsal).",
 )
 def dr1_forecast(ctx, area_deg2, density_arcmin2, nside, d_anom, d_kin, c2_clustering):
-    from .. import forecast
+    from celestrium.dipole import forecast
 
     res = forecast.forecast_dr1(
         area_deg2=area_deg2,
@@ -579,7 +579,7 @@ def dr1_forecast(ctx, area_deg2, density_arcmin2, nside, d_anom, d_kin, c2_clust
     summary="Monte Carlo mock catalogue suite validating DR1 variance & null.",
 )
 def dr1_mocks(ctx, n_mocks, area_deg2, n_sources, amplitude, nside, seed):
-    from .. import mocks
+    from celestrium.dipole import mocks
 
     res = mocks.run_mock_suite(
         n_mocks=n_mocks,
@@ -604,7 +604,7 @@ def dr1_mocks(ctx, n_mocks, area_deg2, n_sources, amplitude, nside, seed):
     summary="Pre-registered Ellis-Baldwin kinematic predictions for Euclid bands.",
 )
 def dr1_ellis_baldwin(ctx, n_samples, seed):
-    from .. import ellis_baldwin
+    from celestrium.dipole import ellis_baldwin
 
     res = ellis_baldwin.predict_all_bands(n_samples=n_samples, seed=seed)
     vis = res["predictions"]["VIS"]
@@ -624,7 +624,7 @@ def dr1_ellis_baldwin(ctx, n_samples, seed):
     summary="Head-to-head calibration benchmark: AstroJev (Local ERET) vs Hosted Jev.",
 )
 def astrojev_benchmark_cap(ctx):
-    from .. import astrojev_benchmark
+    from celestrium.engines import astrojev_benchmark
     res = astrojev_benchmark.run_comparative_benchmark()
     local = res["astrojev"]
     hosted = res["hosted_jev"]
@@ -646,7 +646,7 @@ def astrojev_benchmark_cap(ctx):
 )
 def quaia_pseudo_cl_cap(ctx, catalog, model_checkpoint, nside, b_cut_deg):
     from pathlib import Path
-    from ..experiments import quaia_pseudo_cl
+    from celestrium.dipole import quaia_pseudo_cl
     ckpt = model_checkpoint if Path(model_checkpoint).is_file() else None
     res = quaia_pseudo_cl.run_quaia_deconvolution(
         catalog_path=catalog,
@@ -674,7 +674,7 @@ def quaia_pseudo_cl_cap(ctx, catalog, model_checkpoint, nside, b_cut_deg):
 )
 def active_inference_followup_cap(ctx, candidates, u_epi_threshold, noul_min, limit):
     from pathlib import Path
-    from ..followup import triage_candidates_for_followup
+    from celestrium.transients.followup import triage_candidates_for_followup
     ckpt_path = Path("checkpoints/astrojev_evidential_h100_scaled.pt")
     ckpt = str(ckpt_path) if ckpt_path.is_file() else None
     res = triage_candidates_for_followup(
@@ -705,7 +705,7 @@ def active_inference_followup_cap(ctx, candidates, u_epi_threshold, noul_min, li
 )
 def telescope_schedule_cap(ctx, candidates, time_budget_min, u_epi_threshold, limit):
     from pathlib import Path
-    from ..followup import triage_candidates_for_followup, TelescopeQueueMDP
+    from celestrium.transients.followup import triage_candidates_for_followup, TelescopeQueueMDP
 
     ckpt_path = Path("checkpoints/astrojev_evidential_h100_scaled.pt")
     ckpt = str(ckpt_path) if ckpt_path.is_file() else None
@@ -738,8 +738,8 @@ def telescope_schedule_cap(ctx, candidates, time_budget_min, u_epi_threshold, li
 )
 def conformal_risk_control_cap(ctx, catalog, alpha_risk, model_checkpoint):
     from pathlib import Path
-    from ..astrojev import conformal_risk_control_calibrate
-    from ..experiments import quaia_pseudo_cl
+    from celestrium.engines.astrojev import conformal_risk_control_calibrate
+    from celestrium.dipole import quaia_pseudo_cl
 
     # Calibrate risk control on Quaia / synthetic benchmark
     import numpy as np
@@ -794,7 +794,7 @@ def conformal_risk_control_cap(ctx, catalog, alpha_risk, model_checkpoint):
     summary="Real-Time Multi-Messenger Triage: evidential counterpart triage with Conformal Risk Control.",
 )
 def multimessenger_triage_cap(ctx, superevent, distance_mpc, error_area_deg2, alpha_crc, crc_lambda, n_candidates):
-    from ..multimessenger import (
+    from celestrium.transients.multimessenger import (
         fetch_gracedb_alert,
         generate_multimessenger_scenario,
         MultiMessengerTriageEngine,

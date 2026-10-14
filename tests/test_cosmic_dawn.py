@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import torch
 
-from celestrium.cosmic_dawn import (
+from celestrium.explore.cosmic_dawn import (
     RealCosmicDawnStreamer,
     CosmicDawnEvidentialNet,
     CosmicDawnTriageEngine,

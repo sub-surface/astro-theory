@@ -10,7 +10,7 @@ not an observable" — and it shows up here as `status: idea`.
 """
 from __future__ import annotations
 
-from .model import P, Ref, Study, step
+from celestrium.study.model import P, Ref, Study, step
 
 # CatWISE-style colour-selected AGN. Row-capped by design: the desk version
 # asks "does the pipeline reproduce the published amplitude on the sky I can
@@ -91,7 +91,7 @@ _register(Study(
     metrics=("sigma_amplitude", "shot_noise_amplitude", "significance",
              "direction.l", "direction.b", "n_sources"),
     note="Offline and free — this is the 'measure vs rehearse' decision from "
-         "docs/research/euclid-dr1-prep.md, answerable before DR1 lands "
+         "docs/programmes/dipole.md, answerable before DR1 lands "
          "(21 Oct 2026). Compare against analysis.kinematic_dipole.",
 ))
 

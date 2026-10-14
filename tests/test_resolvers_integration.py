@@ -3,7 +3,9 @@ from pathlib import Path
 import pytest
 from astropy.table import Table
 
-from celestrium import resolvers, config
+from celestrium import config
+
+from celestrium.archives import resolvers
 from celestrium.core.artifact import Artifact
 from celestrium.core.kernel import Kernel
 

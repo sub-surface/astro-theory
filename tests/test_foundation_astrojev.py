@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import torch
 
-from celestrium.foundation_astrojev import (
+from celestrium.engines.foundation_astrojev import (
     FoundationAstroJev,
     heteroscedastic_evidential_loss,
     PHENOMENA_CLASSES,
@@ -12,7 +12,7 @@ from celestrium.foundation_astrojev import (
     NUM_UNCERTAINTIES,
     NUM_MASKS,
 )
-from celestrium.data_streamer import SyntheticPhenomenaGenerator, AstroStreamingDataset
+from celestrium.engines.data_streamer import SyntheticPhenomenaGenerator, AstroStreamingDataset
 
 
 def test_synthetic_phenomena_generator():

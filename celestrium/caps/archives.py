@@ -1,8 +1,8 @@
 """Archive pulls — ADQL against the registered TAP services."""
 from __future__ import annotations
 
-from .. import config
-from ..core.capability import Param, capability
+from celestrium import config
+from celestrium.core.capability import Param, capability
 
 ARCHIVE_KEYS = tuple(config.ARCHIVES)
 
@@ -55,7 +55,7 @@ def archive_sample(ctx, recipe):
     summary="Ping every archive's availability endpoint.",
 )
 def archive_health(ctx):
-    from .. import doctor
+    from celestrium import doctor
     ctx.progress("pinging archive availability endpoints")
     rows = doctor.check_archives() if hasattr(doctor, "check_archives") else []
     if not rows:                       # doctor's shape varies; fall back to raw

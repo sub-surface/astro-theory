@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .. import paths
+from celestrium import paths
 
 # Payload kinds. `surface` is a study result grid (params → metric); it is a
 # table, but tagged apart so views can render it as the answer, not as rows.

@@ -40,4 +40,5 @@ include = ["celestrium*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = ["slow: long-running inversion / injection tests (deselect with -m \"not slow\")"]
 

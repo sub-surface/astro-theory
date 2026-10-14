@@ -6,14 +6,14 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from celestrium.data_streamer import (
+from celestrium.engines.data_streamer import (
     RealAstroDataStreamer,
     RealAstroStreamingDataset,
     RealMultiMessengerStreamer,
     RealMultiMessengerStreamingDataset,
     PhenomenaRecord,
 )
-from celestrium.multimessenger import (
+from celestrium.transients.multimessenger import (
     MultiMessengerEvidentialNet,
     MultiMessengerTriageEngine,
     evaluate_multimessenger_calibration,

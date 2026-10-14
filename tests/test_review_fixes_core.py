@@ -6,7 +6,9 @@ import numpy as np
 import pytest
 from astropy.table import MaskedColumn, Table
 
-from celestrium import paths, resolvers
+from celestrium import paths
+
+from celestrium.archives import resolvers
 from celestrium.caps.tabular import _safe_eval
 from celestrium.core import events as ev
 from celestrium.core.artifact import Artifact, jsonable
@@ -145,7 +147,7 @@ def test_scalar_filter_expression_is_a_value_error():
 
 # ----- cutouts / CLI ------------------------------------------------------ #
 def test_zero_fov_does_not_divide_by_zero():
-    from celestrium import cutouts
+    from celestrium.archives import cutouts
     assert cutouts.fetch_direct_cutout("CDS/P/DESI-Legacy-Surveys/DR10/color",
                                        10.0, 20.0, 0.0) is None
     with pytest.raises(ValueError):

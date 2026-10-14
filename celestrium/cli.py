@@ -18,11 +18,19 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table as RichTable
 
-from . import candidates, config, cutouts, paths, resolvers, spectra, tables, xmatch
-from .config import QUERY_ARCHIVES, SAMPLE_RECIPES, ATLAS_TARGETS
-from .core import capability as capmod
-from .core import events as ev
-from .core import kernel as kernelmod
+from celestrium import candidates, config, paths, tables
+
+from celestrium.archives import cutouts
+
+from celestrium.archives import resolvers
+
+from celestrium.archives import spectra
+
+from celestrium.archives import xmatch
+from celestrium.config import QUERY_ARCHIVES, SAMPLE_RECIPES, ATLAS_TARGETS
+from celestrium.core import capability as capmod
+from celestrium.core import events as ev
+from celestrium.core import kernel as kernelmod
 
 console = Console()
 _STATE = {"json": False}
@@ -133,7 +141,7 @@ def _parse_pairs(pairs: Optional[List[str]]) -> dict:
 @app.command("dashboard", rich_help_panel="Observatory Cockpit & Dashboard")
 def cli_dashboard():
     """Display the rich research lab dashboard with telemetry, clocks, and experiments."""
-    from .dashboard import build_dashboard_data, render_dashboard
+    from celestrium.dashboard import build_dashboard_data, render_dashboard
     data = build_dashboard_data()
     _emit(data, lambda: render_dashboard(console, data))
 
@@ -273,8 +281,8 @@ app.add_typer(study_app, name="study", rich_help_panel=KERNEL_PANEL)
 @study_app.command("list")
 def study_list(leverage: bool = typer.Option(False, "--leverage", help="sort by leverage per row")):
     """List registered studies."""
-    from .study import library
-    from .study.model import leverage_score
+    from celestrium.study import library
+    from celestrium.study.model import leverage_score
     specs = list(library.STUDIES.values())
     if leverage:
         specs.sort(key=leverage_score, reverse=True)
@@ -312,6 +320,32 @@ def study_estimate(study_id: str = typer.Argument(..., help="study id")):
     except Exception as exc:
         raise _fail(exc)
     _emit(payload, lambda: console.print(payload))
+
+
+@app.command("calendar", rich_help_panel="Observatory Cockpit & Dashboard")
+def cli_calendar(days: int = typer.Option(120, help="look-ahead window in days"),
+                 ics: Optional[Path] = typer.Option(None, help="also write these events to an .ics file")):
+    """Data drops, pre-registered observables and forecasts due soon (celestrium/watchlist.py)."""
+    from celestrium import watchlist
+    soon, late, trig = watchlist.upcoming(days), watchlist.overdue(), watchlist.triggered()
+    if ics:
+        ics.write_text(watchlist.to_ics(soon), encoding="utf-8")
+    payload = {"upcoming": [e.to_dict() for e in soon], "overdue_for_scoring": [e.to_dict() for e in late],
+               "triggered": [e.to_dict() for e in trig]}
+
+    def render():
+        table = RichTable("when", "kind", "target", "what", title=f"next {days} days")
+        for e in soon:
+            when = e.start if e.end in (None, e.start) else f"{e.start} → {e.end}"
+            table.add_row(when, e.kind, e.target, e.title)
+        console.print(table)
+        for e in late:
+            console.print(f"[yellow]score me:[/] {e.id} (window closed {e.end or e.start}) — {e.test or e.title}")
+        for e in trig:
+            console.print(f"[magenta]on trigger:[/] {e.target} — {e.title}")
+        if ics:
+            console.print(f"[green]wrote[/] {ics}")
+    _emit(payload, render)
 
 
 # --------------------------------------------------------------------------- #
@@ -357,7 +391,7 @@ def cite(query: List[str] = typer.Argument(..., help="ADS query"),
 
     docs = payload.get("docs", [])
     if add and docs:
-        from . import ads
+        from celestrium.archives import ads
         bibcodes = [d["bibcode"] for d in docs if "bibcode" in d]
         added = ads.add_to_refs(bibcodes)
         console.print(f"[green]added {added} citations to refs.bib[/]")
@@ -525,7 +559,7 @@ def poster(target: str, resolution: str = typer.Option("1080p", help="720p|1080p
 @app.command(rich_help_panel=WORKFLOWS)
 def runbook(name: str):
     """Execute a named research runbook."""
-    from .study import library
+    from celestrium.study import library
     try:
         art = _run("study.runbook", name=name) if "study.runbook" in capmod.CAPS else _run("archive.sample", recipe="gaia-bright-nearby")
     except Exception:
@@ -592,7 +626,7 @@ def forecast(
     dkin: float = typer.Option(0.0047, help="kinematic prediction"),
 ):
     """Euclid DR1 cosmic dipole forecast and gate decision."""
-    from . import forecast as fc
+    from celestrium.dipole import forecast as fc
     res = fc.forecast_dr1(
         area_deg2=area,
         density_arcmin2=density,
@@ -633,7 +667,7 @@ def mock(
     seed: int = typer.Option(42, help="random seed"),
 ):
     """Run hermetic Monte Carlo signal and null mocks on DR1 footprint."""
-    from . import mocks as mc
+    from celestrium.dipole import mocks as mc
     res = mc.run_mock_suite(
         n_mocks=nmock,
         n_sources=nsources,
@@ -662,7 +696,7 @@ def ellis_baldwin_cmd(
     seed: int = typer.Option(42, help="random seed"),
 ):
     """Pre-registered Ellis-Baldwin kinematic predictions for Euclid bands."""
-    from . import ellis_baldwin as eb
+    from celestrium.dipole import ellis_baldwin as eb
     res = eb.predict_all_bands(n_samples=samples, seed=seed)
 
     def render():
@@ -697,7 +731,7 @@ def ellis_baldwin_cmd(
 @app.command(rich_help_panel=VALIDATION)
 def astrojev():
     """Run AstroJev benchmark: Local ERET+RLCD vs Hosted TypeSafe Jev."""
-    from . import astrojev_benchmark as aj_bench
+    from celestrium.engines import astrojev_benchmark as aj_bench
     res = aj_bench.run_comparative_benchmark()
 
     def render():
@@ -771,7 +805,7 @@ def fetch(target: str, product: Optional[str] = typer.Option(None, help="capabil
 @app.command(rich_help_panel=WORKFLOWS)
 def export(target: str, out: Optional[str] = None):
     """Export a table artifact or candidate list to CSV."""
-    from . import paths
+    from celestrium import paths
     table = None
     if candidates.find_record(target) is not None:
         table = candidates.load(target)
@@ -800,7 +834,7 @@ def candidates_cmd():
 @app.command(rich_help_panel=WORKFLOWS)
 def doctor(ping: bool = typer.Option(True)):
     """Check archive reachability and local instrument health."""
-    from . import doctor as doc
+    from celestrium import doctor as doc
     report = doc.run_checks(ping=ping)
 
     def render():
@@ -857,8 +891,8 @@ def jev_classify(
     import time
     import torch
     from astropy.table import Table
-    from .astrojev import AstroJev, CLASSES, NUM_FEATURES
-    from .evidential_astrojev import EvidentialAstroJev
+    from celestrium.engines.astrojev import AstroJev, CLASSES, NUM_FEATURES
+    from celestrium.engines.evidential_astrojev import EvidentialAstroJev
 
     cat_file = Path(catalog)
     if not cat_file.is_file():
@@ -995,7 +1029,7 @@ def jev_dipole(
     fig_path: Optional[str] = typer.Option(None, "--fig-path", help="Diagnostic figure save path"),
 ):
     """Perform pseudo-Cl mode-coupling dipole mask deconvolution on an all-sky catalog."""
-    from .experiments import quaia_pseudo_cl
+    from celestrium.dipole import quaia_pseudo_cl
 
     ckpt = model_path if (model_path and Path(model_path).is_file()) else None
     res = quaia_pseudo_cl.run_quaia_deconvolution(
@@ -1056,8 +1090,8 @@ def jev_evaluate(
 ):
     """Run real-time System One contractive deliberation on an individual source."""
     import torch
-    from .astrojev import AstroJev, CLASSES, NUM_FEATURES
-    from .evidential_astrojev import EvidentialAstroJev
+    from celestrium.engines.astrojev import AstroJev, CLASSES, NUM_FEATURES
+    from celestrium.engines.evidential_astrojev import EvidentialAstroJev
 
     ckpt_path = Path(model_path) if model_path else Path("checkpoints/astrojev_evidential_h100_scaled.pt")
     d_model = 128
@@ -1180,7 +1214,7 @@ def jev_stream(
     crc_lambda: float = typer.Option(0.80, "--crc-lambda", help="Conformal confidence threshold"),
 ):
     """Real-time transient alert stream ingestion and sub-15ms evidential triage."""
-    from .stream import RubinBurstSimulator, FinkLiveAlertSource, StreamingTriageEngine
+    from celestrium.transients.stream import RubinBurstSimulator, FinkLiveAlertSource, StreamingTriageEngine
 
     # Select alert broker
     if broker.lower() in ("fink", "fink-live"):

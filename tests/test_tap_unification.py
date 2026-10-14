@@ -2,7 +2,7 @@
 import pytest
 from astropy.table import Table
 
-from celestrium import tap
+from celestrium.archives import tap
 
 
 class DummyTableEntry:

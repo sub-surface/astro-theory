@@ -6,7 +6,7 @@ surveys until one has signal. We stub hips2fits so this stays network-free.
 """
 import numpy as np
 
-from celestrium import cutouts
+from celestrium.archives import cutouts
 
 
 def test_candidates_ordered_deepest_first_dss2_last():

@@ -1,7 +1,7 @@
 """Compatibility layer mapping legacy hub imports to unified celestrium.cli."""
 import sys
-from . import cli
-from .cli import (
+from celestrium import cli
+from celestrium.cli import (
     app,
     _ensure_utf8_console,
     _emit,

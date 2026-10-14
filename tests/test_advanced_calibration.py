@@ -13,19 +13,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from celestrium.astrojev import (
+from celestrium.engines.astrojev import (
     debiased_squared_calibration_error,
     evaluate_calibration,
     ScalingBinningCalibrator,
 )
-from celestrium.evidential_astrojev import (
+from celestrium.engines.evidential_astrojev import (
     evidential_brier_carl_loss,
     evidential_brier_loss,
     EvidentialAstroJev,
     NUM_CLASSES,
 )
-from celestrium.followup import evaluate_truthrl_policy
-from celestrium.experiments.quaia_pseudo_cl import compute_risk_sensitive_weights
+from celestrium.transients.followup import evaluate_truthrl_policy
+from celestrium.dipole.quaia_pseudo_cl import compute_risk_sensitive_weights
 
 
 def test_debiased_squared_calibration_error_basic():

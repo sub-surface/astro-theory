@@ -1,0 +1,110 @@
+# celestrium/ — query cookbook
+
+Known-good, minimal query patterns for every public archive in
+[`../data-atlas.md`](../docs/reference/data-atlas.md). The point: when we start a new probe, we don't
+re-derive how to talk to an archive — we copy the locked-in pattern and change the ADQL.
+
+Each file is a **standalone, runnable** script: `python celestrium/<archive>.py` prints a few
+rows so you can confirm connectivity before building anything on top. They are deliberately
+tiny — the value is the *exact* import + method + return-type, which differs per archive.
+
+## The one pattern, six dialects
+
+Almost everything here is **TAP + ADQL** (SQL for catalogues). The differences are only the
+client class and how you get an astropy `Table` back:
+
+`✓` = smoke-tested live on this machine (astroquery 0.4.11 / astropy 8.0 / pyvo 1.9.1,
+2026-06-25); `·` = API verified against current docs, not yet run here.
+
+| Archive | Script | Import / call | Status | Notes |
+|---|---|---|:--:|---|
+| ESA Gaia | `gaia.py` | `Gaia.launch_job_async(adql).get_results()` | ✓ | anonymous OK; results purged 72h |
+| ESA Euclid | `euclid.py` | `Euclid.launch_job(adql).get_results()` | · | Q1/Q2 public; DR1 Oct 2026 |
+| NASA IRSA | `irsa.py` | `Irsa.query_tap(adql).to_table()` | ✓ | WISE/CatWISE/2MASS/SPHEREx |
+| NASA MAST | `mast.py` | `Observations.query_criteria(...)` | · | JWST/HST/TESS; obs-metadata model |
+| NASA HEASARC | `heasarc.py` | `Heasarc.query_tap(adql)` | · | X-ray/γ; returns Table directly |
+| VizieR | `vizier.py` | `Vizier(...).query_constraints(...)` | ✓ | any *published* catalogue (NVSS, …) |
+| NOIRLab Data Lab | `datalab_desi.py` | `queryClient.query(sql=...)` | · | needs `astro-datalab`; server-side |
+| Generic IVOA TAP | `vo_generic.py` | `pyvo.dal.TAPService(url).search(adql)` | ✓ | RACS/CASDA, LoTSS, anything VO |
+| SIMBAD + NED | `resolvers.py` | `Simbad.query_object` / `Ned.query_object` | ✓¹ | object ID, type, **per-object bibliography** |
+| CDS X-Match | `xmatch.py` | `XMatch.query(cat1, cat2, max_distance)` | ✓ | scale cross-match — the audit primitive |
+| *(cache)* | `cache.py` | `cached_query(archive, adql, fetch)` | ✓ | wrap any pull → local cache + provenance log |
+| *(imaging)* | `cutouts.py` | `smart(ra,dec)` / `panel` / `color` | ✓ | survey-aware multi-λ + colour cutout from coords |
+| ADS / SciX | `ads.py` | `ads.search(q)` / `ads.add_to_refs(...)` | ✓² | literature search + BibTeX → `../refs.bib` |
+| *(data)* | `registry.py` | archives · recipes · targets · runbooks | ✓ | the hub's data tables (CLI + future TUI read these) |
+| *(builders)* | `packets.py` | `build_object_packet` / `build_field_packet` / … | ✓ | service layer: dataclasses with `.to_dict()` (JSON/TUI) + `.to_markdown()` (reports) |
+| *(CLI)* | `hub.py` | `python -m celestrium --help` | ✓ | thin typer+rich front-end over registry+packets; `--json` everywhere |
+
+² ADS plumbing verified (token discovery + REST path); live results need a free token
+(see `ads.py` header). Imaging is survey-aware — see [`../imaging-guide.md`](../docs/reference/imaging-guide.md);
+the CLI/TUI roadmap is in [`../roadmap.md`](../docs/engineering/roadmap.md).
+
+¹ SIMBAD paths live-tested; NED depends on a frequently-slow server (snippet degrades
+gracefully on timeout). See [`../toolbox.md`](../docs/reference/toolbox.md) for the wider tooling map.
+
+## Install
+
+```bash
+pip install -r celestrium/requirements.txt
+```
+
+## Composing: cache any pull, then look
+
+```python
+from celestrium import gaia, cache, cutouts
+adql = "SELECT TOP 100 source_id, ra, dec FROM gaiadr3.gaia_source WHERE ..."
+tab = cache.cached_query("gaia", adql, lambda: gaia.query(adql))  # cached + logged
+cutouts.panel(213.6905918, -12.5801013)  # multi-wavelength PNG of a position
+```
+
+`cache.cached_query` wraps *any* of the query helpers: identical query → instant disk
+hit; every fetch is appended to `data/manifest.jsonl` so each figure traces to its query.
+`cutouts.panel(ra, dec)` / `cutouts.color(ra, dec)` render a position across the spectrum
+(SkyView UV→radio + CDS HiPS colour). Both write to `data/` (git-ignored).
+
+## Hub: thin CLI over a shared service layer
+
+The CLI is a presenter. Its data tables live in `registry.py` (archives, sample recipes,
+atlas targets, runbooks) and its logic in `packets.py` (builders returning dataclasses with
+`.to_dict()` for JSON/the TUI and `.to_markdown()` for reports). Add `--json` before any
+subcommand for machine-readable output.
+
+```bash
+python -m celestrium query gaia "SELECT TOP 5 source_id, ra, dec FROM gaiadr3.gaia_source"
+python -m celestrium match gaia-bright-nearby vizier:VIII/65/nvss --radius 5  # audit primitive
+python -m celestrium log                       # provenance; --open <hash> / --rerun <hash>
+python -m celestrium dossier M87 --ned         # +NED redshift for extragalactic objects
+python -m celestrium field 213.6906 -12.5801 --fov 6
+python -m celestrium papers year:2025-2026 --phrase "Euclid Quick Data Release" --report
+python -m celestrium sample list
+python -m celestrium atlas-targets --limit 4
+python -m celestrium poster M87 --resolution 1080p --style label
+python -m celestrium runbook euclid-q1         # data-driven; `runbook list` to see them
+python -m celestrium atlas | toolbox           # pretty-print the hub maps
+```
+
+Reports are written under `data/reports/`, atlas contact sheets under `data/atlas/`, and
+wallpapers under `data/posters/` — all local and git-ignored. `sample`/`match` pulls are
+row-capped and routed through `cache.cached_query`, so the manifest stays complete. The full
+roadmap (incl. the Textual TUI) is in [`../roadmap.md`](../docs/engineering/roadmap.md).
+
+## Conventions baked into every snippet
+
+- **`TOP n` / row caps** — never pull the whole table; the desk filter is "select rows, not
+  pixels." Start with `TOP 5`, widen deliberately.
+- **Discovery helpers** — most clients can list tables/columns (`Gaia.load_tables()`,
+  `Irsa.list_catalogs()`, `Heasarc.list_catalogs()`, `Vizier.find_catalogs()`,
+  `queryClient.schema()`). Use them before guessing column names.
+- **Cone vs. full-table** — for a position use a `CONTAINS(POINT, CIRCLE)` ADQL clause or the
+  client's `query_region`; for a science cut use a `WHERE` on magnitudes/flags.
+- **Not included: Rubin** — DP1/DP2 are data-rights-gated (Rubin Science Platform account),
+  not anonymously queryable. Add a `rubin.py` only once we have rights / an open release.
+
+## Gotchas worth knowing once
+
+- **Table/column names drift between releases** — always confirm against the live schema,
+  don't trust a hard-coded name from an old script.
+- **Sync vs async** — sync (`launch_job`) is fine under ~2k rows; use `_async` above that.
+- **IRSA `query_tap`** returns a PyVO result → call `.to_table()`.
+- **Euclid bulk** — for images/cutouts run on ESA Datalabs (notebooks next to the data),
+  not local download; see the ESA-Datalabs/Euclid-Q1 GitHub tutorials.

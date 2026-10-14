@@ -109,8 +109,8 @@ if modal is not None:
                 return
 
             import torch
-            from celestrium.astrojev import NUM_FEATURES, NUM_CLASSES, ScalingBinningCalibrator
-            from celestrium.evidential_astrojev import EvidentialAstroJev
+            from celestrium.engines.astrojev import NUM_FEATURES, NUM_CLASSES, ScalingBinningCalibrator
+            from celestrium.engines.evidential_astrojev import EvidentialAstroJev
 
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             print(f"[Celestrium Cloud] Initializing model on device: {self.device}")
@@ -151,7 +151,7 @@ if modal is not None:
             self._ensure_model_loaded()
             import torch
             import numpy as np
-            from celestrium.astrojev import CLASSES, dirichlet_bald_information_gain
+            from celestrium.engines.astrojev import CLASSES, dirichlet_bald_information_gain
 
             t0 = time.time()
             x_arr = np.asarray(features, dtype=np.float32)
@@ -201,7 +201,7 @@ if modal is not None:
             """Sub-millisecond transient alert triage for Rubin LSST / Fink / ALeRCE brokers."""
             self._ensure_model_loaded()
             import numpy as np
-            from celestrium.astrojev import CLASSES, dirichlet_bald_information_gain
+            from celestrium.engines.astrojev import CLASSES, dirichlet_bald_information_gain
 
             # Parse feature vector
             g = float(alert_dict.get("phot_g", alert_dict.get("mag", 19.5)))
@@ -268,7 +268,7 @@ if modal is not None:
             night_hours: float = 8.0,
         ) -> Dict[str, Any]:
             """Autonomous Telescope Queue Scheduler optimizing cumulative BALD information gain."""
-            from celestrium.followup import TelescopeQueueMDP
+            from celestrium.transients.followup import TelescopeQueueMDP
 
             mdp = TelescopeQueueMDP(site_lat_deg=site_lat_deg, time_budget_min=night_hours * 60.0)
             schedule = mdp.schedule_night(candidate_sources)

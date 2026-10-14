@@ -202,5 +202,5 @@ def wings() -> dict:
 
 def load_all() -> int:
     """Import every capability module so the registry is populated. Idempotent."""
-    from .. import caps  # noqa: F401  (its __init__ imports each module)
+    from celestrium import caps  # noqa: F401  (its __init__ imports each module)
     return len(CAPS)

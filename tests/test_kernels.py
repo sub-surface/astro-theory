@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import pytest
 
-from celestrium.kernels import (
+from celestrium.engines.fused_ops import (
     fused_crelu,
     fused_brier_loss,
     fused_rewarding_doubt_loss,

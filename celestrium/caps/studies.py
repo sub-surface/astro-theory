@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..core.capability import Param, capability
-from ..study import P, Ref, dig
+from celestrium.core.capability import Param, capability
+from celestrium.study import P, Ref, dig
 
 
 def _resolve_value(value, combo: dict, named: dict, prev):
@@ -54,7 +54,7 @@ def _column(values: list):
 )
 def study_run(ctx, study, grid, limit):
     from astropy.table import Table
-    from ..study import library
+    from celestrium.study import library
 
     spec = library.get(study)
     if not spec.pipeline:
@@ -148,8 +148,8 @@ def study_run(ctx, study, grid, limit):
 )
 def study_rank(ctx):
     from astropy.table import Table
-    from ..study import library
-    from ..study.model import leverage_score
+    from celestrium.study import library
+    from celestrium.study.model import leverage_score
 
     rows = sorted(library.STUDIES.values(), key=leverage_score, reverse=True)
     table = Table({
@@ -170,7 +170,7 @@ def study_rank(ctx):
     summary="What a study would cost before you commit to running it.",
 )
 def study_estimate(ctx, study, grid):
-    from ..study import library
+    from celestrium.study import library
     spec = library.get(study)
     if not spec.pipeline:
         return ctx.data({"study": study, "runnable": False, "status": spec.status},

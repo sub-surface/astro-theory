@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any, Callable, Optional
 
-from . import candidates, config
+from celestrium import candidates, config
 
 
 def _default_pinger(url: str, timeout: float) -> tuple[bool, str]:
@@ -48,12 +48,12 @@ def check_archives(pinger: Optional[Callable] = None,
 def check_local() -> dict[str, Any]:
     """Local instrument state: token footprint, provenance, candidates."""
     try:
-        from . import ads
+        from celestrium.archives import ads
         ads._token()
         ads_ok = True
     except Exception:
         ads_ok = False
-    from . import paths
+    from celestrium import paths
     artifact_files = list(paths.ARTIFACTS.glob("*.*")) if paths.ARTIFACTS.exists() else []
     artifact_bytes = sum(f.stat().st_size for f in artifact_files)
     manifest_file = paths.DATA / "manifest.jsonl"

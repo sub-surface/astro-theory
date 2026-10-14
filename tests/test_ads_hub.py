@@ -9,7 +9,13 @@ import pytest
 from typer.testing import CliRunner
 from astropy.table import Table
 
-from celestrium import hub, ads, config, cutouts, resolvers
+from celestrium import hub, config
+
+from celestrium.archives import ads
+
+from celestrium.archives import cutouts
+
+from celestrium.archives import resolvers
 from celestrium.core.kernel import Kernel
 from celestrium.core.artifact import Artifact
 
